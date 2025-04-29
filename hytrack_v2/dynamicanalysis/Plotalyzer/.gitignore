@@ -1,0 +1,10 @@
+/target/*
+/project/project/*
+/project/target/*
+/.bsp/*
+/.idea/*
+*checkpoint.ipynb
+/plugins/*
+/resources/
+!/resources/config.exmaple.json
+!/resources/db.example.json

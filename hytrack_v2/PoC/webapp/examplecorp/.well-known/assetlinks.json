@@ -1,0 +1,11 @@
+[{
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target" : { "namespace": "android_app", "package_name": "org.hytrack.app.track.crossapptrackerone",
+                 "sha256_cert_fingerprints": ["80:2D:69:37:9F:B7:44:8D:CA:CC:71:FA:43:75:92:03:15:13:34:78:B4:B2:D6:D5:29:03:FA:A2:5C:0A:3C:0F"] }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target" : { "namespace": "android_app", "package_name": "org.hytrack.app.track.crossapplauncher",
+                 "sha256_cert_fingerprints": ["80:2D:69:37:9F:B7:44:8D:CA:CC:71:FA:43:75:92:03:15:13:34:78:B4:B2:D6:D5:29:03:FA:A2:5C:0A:3C:0F"] }
+  }
+]

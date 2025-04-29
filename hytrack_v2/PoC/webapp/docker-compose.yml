@@ -1,0 +1,16 @@
+services:
+  examplecorp:
+    build: .
+    container_name: hytrack-examplecorp
+    ports: 
+      - "80:80"
+    volumes:
+      - "./examplecorp:/var/www/html"
+
+  ravioli:
+    build: .
+    container_name: hytrack-ravioli
+    ports: 
+      - "8080:80"
+    volumes:
+      - "./ravioli:/var/www/html"

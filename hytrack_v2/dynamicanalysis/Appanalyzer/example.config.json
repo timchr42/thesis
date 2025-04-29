@@ -1,0 +1,75 @@
+{
+  "timeoutMilli" : 900000,
+  "verbose" : false,
+  "appium" : "appium",
+  "appiumURLExtension" : "",
+  "tmpFolder" : "/tmp/folder/",
+  "mitm" : {
+    "path" : "mitmdump",
+    "addonScript" : "./resources/trafficCollection/mitm-addon.py",
+    "port" : "8080"
+  },
+  "plugin" : {
+    "folder" : "./plugins/",
+      "available" : {
+        "TrafficCollection": {
+          "owner": "simkoc",
+          "repo": "appanalyzer-plugin-trafficcollection"
+        }
+      }
+  },
+  "email": {
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "user": "ad\\exchange",
+    "email": "exchange@optional.org",
+    "password": "",
+    "recipients": ["email1", "email2"]
+  },
+  "emulator" : {
+    "emulator" : "/path/to/emulator",
+    "avd" : "name-of-avd",
+    "snapshot" : "thesnapshottouseifset",
+    "proxyIP" : "theipoftheproxyifset",
+    "proxyPort" : "theportoftheproxyifset"
+  },
+  "db" : {
+    "host" : "localhost",
+    "port" : 5432,
+    "name" : "hytrack",
+    "user" : "hytracker",
+    "pwd"  : "1234567890"
+  },
+  "devicePrep" : {
+    "clipboard" : "sd325fEr23q2",
+    "latitude" : 0.0000,
+    "longitude" : 0.000,
+    "altitude" : 0.000
+  },
+  "android" : {
+    "dexdump" : "dexdump",
+    "adb" : "adb",
+    "appium" : false,
+    "objection" : "objection",
+    "osVersion" : "14",
+    "apkanalyzer" : "apkanalyzer"
+  },
+  "ios" : {
+    "appium" : false,
+    "rootpwd" : "alpine",
+    "ip" : "iPhone IP",
+    "ideviceinstaller" : "ideviceinstaller",
+    "ideviceinfo" : "ideviceinfo",
+    "fridaps" : "frida-ps",
+    "deviceName" : "Device Name",
+    "xcodeOrgId" : "xoodeOrgId",
+    "xcodeSigningId" : "iPhone Developer",
+    "osv" : "14.5",
+    "permissionPopup" : {
+      "interaction" : "deny",
+      "text" : ["would like to", "wants to join", "turn on bluetooth to allow"],
+      "allowButton" : ["allow","ok","join","settings","allow access to all photos"],
+      "dontAllowButton" : ["don.t allow", "close", "cancel"]
+    }
+  }
+}
