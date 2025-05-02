@@ -4,15 +4,34 @@
 
 % An introduction into the field, the problem (including the research questions), and the proposed solution.
 
+% -----------------------------------------------------------
 
-\blindtext[1]
+% Motivation for CTs and TWAs
+In recent years, Android applications have increasingly leveraged web content within their interfaces to enhance user experience and streamline features such as authentication and monetization.
+To enable this, developers often use Custom Tabs (CTs) and Trusted Web Activities (TWAs), technologies that provide seamless, browser-backed web integration while maintaining native-like performance and features.
+This approach allows web-based functionality like Single Sign-On (SSO), for example login via Facebook or embedded advertising, without forcing users to switch between app and browser.
 
-% Example figue
-		\begin{figure}
-			\lstinputlisting[language=C, firstline=\interestingstart, lastline=\interestingend]{\somecfile}
-			\caption{caption}
-			\label{code:aes_unsealdata}
-		\end{figure}
+% Outline Issue
+However, these benefits come at a cost. CTs and TWAs share the browser’s cookie storage across all apps, enabling continuity of web sessions—but also opening serious privacy vulnerabilities. Recent research by Wessels et al. introduced HyTrack, a novel tracking technique that exploits this shared browser state to persistently track users across different applications and the web, even surviving device changes, cookie clearing, or browser switching \cite{USENIX:Wessels:2025}. \change{Cite here or directly after name?}
+HyTrack works by embedding a third-party library into multiple unrelated apps.
+Each app, unaware of the library’s true purpose, opens a CT or TWA to the same tracking domain.
+This domain sets a unique identifier in a cookie, stored in the browser’s shared cookie jar.
+When another app using the same library loads content from the same domain, the cookie is sent, enabling the tracker to correlate activity across apps—and even into regular browser use.
+Due to Android’s backup mechanisms, the tracking ID can be restored even after a factory reset, rendering it more persistent than traditional evercookies
+
+% Proposed Solution
+This thesis explores whether Capabilities, a fine-grained access control model, can be used to limit or prevent these privacy issues without breaking legitimate use cases of CTs and TWAs.
+Specifically, we aim to design and evaluate a framework that allows developers to retain the benefits of third-party libraries—such as SSO or monetization—without exposing users to invisible, cross-app tracking.
+The framework should be simple to integrate, practical in real-world deployments, and minimize interference with established app workflows.
+
+% -----------------------------------------------------------
+
+% % Example figue
+% 		\begin{figure}
+% 			\lstinputlisting[language=C, firstline=\interestingstart, lastline=\interestingend]{\somecfile}
+% 			\caption{caption}
+% 			\label{code:aes_unsealdata}
+% 		\end{figure}
 
 
 
