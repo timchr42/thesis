@@ -4,3 +4,40 @@
 
 % The evaluation you want to use to assess how well you solution works.
 % Provide details on verifying the stated hypotheses (experiments, subjects, measures, ...)
+
+
+% -----------------------------Evaluation---------------------------
+
+To assess the effectiveness of our proposed mitigation strategy, I adopt the three primary goals identified by the authors of HyTrack as essential for any viable defense:
+
+\begin{enumerate}[label=\arabic*)]
+  \item \textbf{Support all features of the web platform:} The solution must allow applications to display fully functional web content, including support for cookies, JavaScript, and modern APIs.
+  \item \textbf{Preserve seamless integration:} The user experience must remain uninterrupted.
+This includes avoiding obtrusive permission dialogs and maintaining smooth transitions between native and web content.
+\item \textbf{Enable controlled access to shared browser state:} While isolation is required to prevent cross-app tracking, legitimate scenarios such as Single Sign-On (SSO) should continue to work within the context of a single application.
+\end{enumerate}
+
+These criteria reflect the fact that HyTrack exploits standard Android behavior—specifically, the shared browser state exposed through Custom Tabs and Trusted Web Activities—rather than relying on unauthorized access or system vulnerabilities.
+Therefore, naive approaches like disabling shared cookies entirely would break common use cases and are not acceptable.
+
+To validate these hypotheses, I will build on the open-sourced measurement tooling and proof of concept applications provided by the authors of HyTrack.
+Specifically, I plan to:
+\begin{itemize}
+  \item Replicate the original HyTrack experiments under controlled conditions using two unrelated Android apps that embed the tracking library.
+  \item Instrument network traffic (e.g., using mitmproxy or Frida) to observe cookie setting and reuse across CTs and TWAs.
+  \item Apply our mitigation framework and compare observed behavior against the baseline.
+\end{itemize} \unsure{Use itemize again?}
+
+I will collect and analyze the following metrics:
+\begin{itemize}
+  \item Number of tracking cookies set and sent across app boundaries.
+  \item Detection of identifier reuse across apps.
+  \item \dots \change{add more}
+\end{itemize}
+
+In doing so, \change{keep this?} we aim to demonstrate that our solution effectively blocks HyTrack's cross-app tracking channel while maintaining compatibility and usability.
+
+% Adhere to the goals of HyTrack
+% Use proof of concept apps and open-sourced measurement tooling
+
+% ------------------------------------------------------------------
