@@ -12,10 +12,12 @@
 % What's the problem?
 Trusted Web Activities and Custom Tabs enable Android developers to seamlessly integrate web content into native applications, offering a powerful tool for features such as Single Sign-On and in-app monetization. However, as shown by HyTrack, this integration also introduces severe privacy risks by blurring the boundary between web and app contexts, allowing persistent cross-app tracking through the browser’s shared cookie storage.
 
+\todo[inline]{Adjust to "final" solution}
 % How it has been handled/solved/measured?
 In this work, we propose a novel framework based on capability-based access control to mitigate these risks. 
 By issuing fine-grained security tokens, our framework limits the access of third-party libraries to browser state, without compromising core functionalities such as SSO or web-based UI components.
 
+\todo[inline]{Adjust Results}
 % What are the results?
 We evaluate our solution against the threat model and methodology introduced in HyTrack.
 Preliminary results indicate that our framework is easy to integrate, preserves application behavior, and successfully blocks unauthorized cookie access across applications.

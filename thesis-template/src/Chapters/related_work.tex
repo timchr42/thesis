@@ -1,8 +1,38 @@
 \chapter{Related Work}
 
-\todo[inline]{Write the related work (hytrack)}
-
 % A discussion of the related work that has been conducted before.
 % Discuss how your proposed work is related (and how it advances the state of the art).
 
-Citation to Hytrack\cite{USENIX:Wessels:2025}
+% Notes:
+% - Webtracking "Einordnung" in general!
+% - Attempt of mitigation directly related
+
+% --------------------Related Work--------------------------
+
+\todo[inline]{
+Explaining difference between stateful and stateless tracking here wrong place??? \\
+Cite same sources as HyTrack?
+}
+Tracking mechanisms are typically divided into two broad categories: stateful and stateless tracking.
+
+Stateful tracking relies on storing unique identifiers on the client device, most commonly through cookies or local storage.
+When a user revisits a site or interacts with embedded third-party content across domains, these identifiers are sent along with requests, allowing persistent recognition.
+While straightforward and highly effective, stateful tracking has become increasingly restricted through browser policies (e.g., third-party cookie blocking) and mobile platform changes such as the ability to disable the Google Advertising ID (GAID) on Android.
+
+Stateless tracking, also known as fingerprinting, infers a user's identity based on a combination of device-specific attributes. \unsure{cite same source as HyTrack? + similar work on fingerprinting on mobile devices?}
+These can include screen dimensions, installed fonts, and even subtle hardware or rendering quirks.
+Although this method is harder to detect and block—since it does not rely on persistent storage—it is also inherently less reliable, as small system changes may alter the fingerprint and disrupt identification.
+
+Despite mitigation efforts, stateful tracking techniques are now re-emerging in new contexts.
+A notable example is HyTrack \cite{USENIX:Wessels:2025}, which demonstrates a novel cross-app and cross-web tracking technique in the Android ecosystem. \unsure{add that Zimmeck et al. have shown existence of cross-device tracking?}
+HyTrack exploits the shared cookie storage between Custom Tabs and Trusted Web Activities (TWAs) to persistently track users across multiple applications and the browser, even surviving user efforts to reset or sanitize their environments.
+While HyTrack highlights a serious privacy vulnerability, no concrete mitigation has been proposed that balances privacy with the legitimate need for seamless web integration—such as Single Sign-On or ad delivery—within mobile apps.
+
+% How it advances the state of the art
+Our work addresses this gap by proposing a capability-based access control framework for Android applications using CTs and TWAs.
+By issuing fine-grained tokens that restrict third-party libraries’ access to shared browser state, we prevent cross-app cookie tracking without breaking essential functionality.
+In contrast to prior work that focuses on browser-side or user-driven defenses (e.g., partitioned storage \info{like Safari} or consent prompts \info{current state when opening TWA}), our approach provides developers with a practical and enforceable way to contain third-party behavior within application boundaries. \change{check if current idea works; adjust accordingly}
+
+
+
+% ----------------------------------------------------------
