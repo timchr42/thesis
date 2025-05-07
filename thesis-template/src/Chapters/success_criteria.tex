@@ -1,7 +1,5 @@
 \chapter{Success Criteria}
 
-\todo[inline]{Write the success criteria.}
-
 % Explicit sucess criteria that will help to assess your thesis, as a list of items:
 % - Must-have criteria: Things your thesis must cover to be successful.
 % - May-have criteria: Things your thesis can cover to improve its value.
@@ -9,12 +7,30 @@
 
 % -------------------------------Success Criteria----------------------------
 
-The following list of success criteria will help assess the proposed solution's effictiveness and demonstrate the works' value \unsure{right word?}.
+The following criteria define the scope of this thesis and provide measurable goals to assess its success.
+
+\section{Must-have criteria}
 
 \begin{itemize}
-  \item \textbf{Must-have criteria:} The solution must effectively prevent or limit cross-app tracking by blocking unauthorized cookie reuse across applications using the same tracking domain (i.e., blocks HyTrack-style tracking) while adhering to the outlined goals in x \change{reference to evaluation}.
-  \item \textbf{May-have criteria:} \dots
-  \item \textbf{Must-not-have criteria:} \dots
+  \item The solution must effectively prevent or significantly limit cross-app tracking via the shared browser state, while preserving the core functionality of Custom Tabs and Trusted Web Activities (e.g., Single Sign-On).
+  \item It must adhere to the three primary goals outlined by HyTrack: (1) support all features of the Web platform , (2) do not break the seamless integration, and (3) make shared state available to the Custom Tab or Trusted Web Activity. \info{directly from HyTrack paper}
+  \item A working proof of concept must be implemented to demonstrate the feasibility of the approach and to reproduce and compare against the HyTrack attack methodology.
+  \item The thesis must provide a thorough discussion of how capability-based access control contributes to mitigating the identified tracking risks, including analysis of potential trade-offs (e.g., ambient authority). \info{Because concept of Capability technically not needed for implmentation but makes solution nicer and helps to circumvent Ambient Authority.}
+\end{itemize}
+
+\section{May-have criteria}
+
+\begin{itemize}
+  \item Provide an analysis of the solution’s impact in terms of performance, usability, integration effort for developers, and potential security limitations. \info{anything else?}
+  \item Evaluate the framework across multiple Chromium-based browsers to assess generalizability.
+  \item Investigate whether enhancements to the Digital Asset Links (DAL) mechanism could further strengthen the solution or propose a good alternative. \info{If not already necessary in solution.}
+\end{itemize}
+
+\section{Must-not-have criteria}
+\begin{itemize}
+  \item The thesis will not produce a production-ready implementationk, as the focus is on proof-of-concept and feasibility.
+  \item The solution is not intended to prevent all forms of cross-app tracking, particularly not against malicious developers who intentionally bypass protections. The goal is to protect well-meaning developers from inadvertently integrating tracking libraries.
+  \item It will not attempt to mitigate stateless tracking methods such as fingerprinting, which are outside the scope of shared state via cookies.
 \end{itemize}
 
 % ---------------------------------------------------------------------------
