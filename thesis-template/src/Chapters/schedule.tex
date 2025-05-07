@@ -1,6 +1,5 @@
 \chapter{Schedule}
-
-\todo[inline]{Write the schedule. Something like this?}
+\label{chap:schedule}
 
 % A schedule with verifiable milestones to be reached on a specified date.
 % State potential risks for the proposal and their impact, as well as how to mitigate them, including alternatives
@@ -10,22 +9,44 @@
 I plan to complete the project in the following phases:
 
 \begin{itemize}
-  \item \textbf{Phase 1 (Weeks a-b):} Literature review and background research on cross-app tracking and existing mitigation strategies.
-  \item \textbf{Phase 2 (Weeks c-d):} Design and implement the proposed mitigation framework \dots
-  \item \textbf{Phase 3 (Weeks e-f):} Conduct experiments to evaluate the effectiveness of the framework against HyTrack.
-  \item \textbf{Phase 4 (Weeks g-h):} Analyze results, refine the framework based on findings, and \dots
-  \item \textbf{Phase x (\dots):} \dots
+  \item \textbf{Phase 1 (Weeks a-b):} \textit{Background Research and Literature Review} \\
+  Study existing work on web and cross-app tracking, especially the HyTrack paper.
+  Familiarize with Android's Custom Tabs (CTs), Trusted Web Activities (TWAs), and Chromium’s cookie storage mechanisms.
+  Reproduce the HyTrack proof of concept to establish a baseline for evaluation.
+
+  \item \textbf{Phase 2 (Weeks c-d):} \textit{Framework Design and Initial Implementation} \\
+  Design the capability-based access control framework.
+  Define requirements, threat model, and integration points. \info{same threat model, how to integrate not sure yet}
+  Begin implementation of a prototype mitigation layer in an Android environment.
+
+  \item \textbf{Phase 3 (Weeks e-f):} \textit{Evaluation and Experimentation} \\
+  Set up experimental infrastructure using HyTrack’s open-source tooling.
+  Measure the effectiveness of the proposed solution by replicating tracking scenarios and comparing cookie behaviors across test cases.
+
+  \item \textbf{Phase 4 (Weeks g-h):} \textit{Analysis and Refinement} \\
+  Analyze experiment results.
+  Identify any shortcomings and refine the framework.
+  Evaluate performance and integration feasibility.
+  Summarize findings in preparation for documentation.    
+
+  \item \textbf{Phase 5 (\dots):} \textit{Thesis Writing and Finalization} \\
+  Write the thesis document, including all sections: introduction, background, methodology, evaluation, and discussion. Prepare for final presentation and submission.
+
+  \item \textbf{Phase x (Weeks \dots):} \textit{\dots} \\
+
 \end{itemize}
 
-\todo[inline]{State potential risks and how to mitigate them.}
+\thiswillnotshow[inline]{State potential risks and how to mitigate them.}
+\section{Risks, Impact and Mitigation}
+At worst, the (capability-based)\unsure{wait for Mauthe Feedback} approach may not effectively prevent cross-app tracking in practice and indeed a complete redesign of the Custom Tab and Trusted Web Activity API is needed-as suggested by the authors of HyTrack.
+If this occurs, the thesis will pivot to a critical analysis of why the capability model falls short in this context.
+The focus will shift towards identifying structural barriers in the Android platform and recommending future improvements, such as \dots. \change{figure this out}.
 
-At worst, I might come to the conclusion that my approach does not work and indeed, a completely redesign of the Custom Tab and Trusted Web Activity API is needed to prevent cross-app tracking deployed by HyTrack.
-In this case, I will have to adjust my thesis accordingly and focus on the aspects why the fine grained nature of capabilities/tokens fails and is not sufficient to prevent such tracking.
-Subsequently, I try to work out aspects what could and has to be done to allow for an easier solution to the problem. \change{clean this up!!!}
+At much lower impact, the implementation may not be feasible within the given timeframe or due to unforseen technical challenges.
+In this case, development will focus on a minimal viable proof-of-concept that demonstrates core functionality and missing features will be discussed as future work.
 
-In case I run out of time or struggle with the implementation, I will focus on the most important aspects of the framework and provide a proof of concept that demonstrates the core functionality.
-
-\unsure{More here?}
+\todo[inline]{what else can go wrong?}
+\vdots
 
 % ----------------------------------------------------------------
 

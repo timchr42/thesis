@@ -1,8 +1,6 @@
 \chapter{Evaluation}
 \label{chap:eval}
 
-\todo[inline]{Write the evaluation.}
-
 % The evaluation you want to use to assess how well you solution works.
 % Provide details on verifying the stated hypotheses (experiments, subjects, measures, ...)
 
@@ -26,7 +24,7 @@ Specifically, I plan to:
 \begin{itemize}
   \item Replicate the original HyTrack experiments under controlled conditions using two unrelated Android apps that embed the tracking library.
   \item Instrument network traffic (e.g., using mitmproxy or Frida) to observe cookie setting and reuse across CTs and TWAs.
-  \item Apply our mitigation framework and compare observed behavior against the baseline.
+  \item Apply the mitigation framework and compare observed behavior against the baseline.
 \end{itemize} \unsure{Use itemize again?}
 
 I will collect and analyze the following metrics:
@@ -36,7 +34,7 @@ I will collect and analyze the following metrics:
   \item \dots \change{add more}
 \end{itemize}
 
-In doing so, \change{keep this?} we aim to demonstrate that our solution effectively blocks HyTrack's cross-app tracking channel while maintaining compatibility and usability.
+In doing so, I aim to demonstrate that the solution effectively blocks HyTrack's cross-app tracking channel while maintaining compatibility and usability.\unsure{optimally yes, but possible in practice?}
 
 % Adhere to the goals of HyTrack
 % Use proof of concept apps and open-sourced measurement tooling
