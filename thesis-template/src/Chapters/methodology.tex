@@ -1,4 +1,5 @@
 \chapter{Methodology}
+\label{chap:methodology}
 
 \todo[inline]{Write the methodology after sync-up with Noah}
 
@@ -10,12 +11,23 @@
 
 % ----------------------------Methodology--------------------------
 
-Our evaluation is guided by the following hypotheses:
+- Browser State Isolation with Shared Cookie Storage ONLY for trusted URLs \\
+  -> still allows SSO for facebook but blocks Cookie reuse for tracking for ad.com \\
+  -> ad.com can still use cookies (but different cookie jar per app) if insist needing cookie for functionality (better ads etc.) \\
+  -> idea of Domain signed with different Domain Authentication Keys (Ambient Domain -> shared -> signed with same key)\\
+- How to decide which URLs are trusted or not? \\
+- Does Developer need to specify trusted URLs? Default Value -> blocked? and has to be requested by library? \\
+
+\section{Hypotheses}
+
+My evaluation is guided by the following hypotheses:
 
 \begin{itemize}
-  \item \textbf{H1}: Our framework prevents unauthorized cookie reuse across applications using the same tracking domain (i.e., blocks HyTrack-style tracking).
+  \item \textbf{H1}: The framework prevents a hytrack deployed third-party library from tracking users across different apps.
   \item \textbf{H2}: It does not break legitimate web interactions within a single app, including login flows and session persistence.
   \item \textbf{H3}: It preserves the seamless user experience expected from CTs and TWAs.
+    \\ \vdots
+  \item \textbf{Hx}: \dots
 \end{itemize}
 
 % -----------------------------------------------------------------
