@@ -22,18 +22,19 @@ Therefore, naive approaches like disabling shared cookies entirely would break c
 To validate these hypotheses, I will build on the open-sourced measurement tooling and proof of concept applications provided by the authors of HyTrack.
 Specifically, I plan to:
 \begin{itemize}
-  \item Replicate the original HyTrack experiments under controlled conditions using two unrelated Android apps that embed the tracking library.
-  \item Instrument network traffic (e.g., using mitmproxy or Frida) to observe the Capabilities wrapping cookies and their interactions with the browser.
+  \item Replicate the original HyTrack experiments under controlled conditions using two unrelated Android apps that embed the tracking library (similar to the HyTrack demo).
+  \item Instrument network traffic (e.g., using mitmproxy or Frida) to observe the in capabilities wrapped cookies and their interactions with the browser.
   \item Apply the mitigation framework and compare observed behavior against the baseline.
 \end{itemize} \unsure{Use itemize again?}
 
 I will collect and analyze the following metrics:
 \begin{itemize}
   \item Number of Capabilities created and used by the browser.
+  \item The latency of framework operations, such as creating and validating Capabilities, in comparison with the baseline.
   \item \dots \change{add more}
 \end{itemize}
 
-In doing so, I aim to demonstrate that the solution effectively blocks HyTrack's cross-app tracking channel while maintaining compatibility and usability.\unsure{optimally yes, but possible in practice?}
+In doing so, I aim to demonstrate that the solution effectively blocks HyTrack's cross-app tracking channel while maintaining compatibility and usability along with introducing the possibliity for the developer to send cookies in a fine-grained manner. \unsure{how to best write this?}
 
 % Adhere to the goals of HyTrack
 % Use proof of concept apps and open-sourced measurement tooling
