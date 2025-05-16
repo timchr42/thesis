@@ -1,5 +1,5 @@
-\chapter{Methodology}
-\label{chap:methodology}
+\chapter{Methodology: Preventing Cross-App Tracking in CTs and TWAs via Capabilities}
+\label{chap:method}
 
 \todo[inline]{see draft}
 
@@ -11,16 +11,78 @@
 
 % ----------------------------Methodology--------------------------
 
-\section{Hypotheses}
+Custom Tabs (CTs) and Trusted Web Activities (TWAs) enable a seamless integration between apps and the web by sharing browser state — notably session cookies.
+While this improves user experience, it also introduces a significant privacy concern: third-party libraries can exploit this shared browser state to track users across apps that embed them.
+HyTrack, for example, requires only a single shared third-party library used across multiple apps to persistently identify and track users, circumventing typical browser or OS sandboxing.
 
-My evaluation is guided by the following hypotheses:
+Our \unsure{or rather "my"} solution seeks to preserve the seamless user experience of CTs/TWAs while enforcing cookie isolation across apps to prevent unauthorized cross-app tracking - particularly from embedded third-party libraries.
 
+\section{Proposed Solution: Capability-Based Cookie Isolation}
+To address the issue, we propose a developer-defined policy mechanism paired with cryptographically enforced capabilities that dictate how cookies are managed and isolated per app.
+
+% Developer Policy Declaration
+ Upon app installation, the installer sends a policy crafted by the devoloper to the browser that defines:
+ \begin{itemize}
+   \item A list of trusted web servers (e.g., the developer’s domains or select third parties).
+   \item A set of predefined cookie names expected to be used by those servers.
+ \end{itemize}
+
+This policy is used to create capabilities, which wrap cookie metadata (e.g., app ID, domain, name, and rights) into a secure structure.
+These capabilities are encoded and signed by the browser (similar to JWT-tokens) \unsure{how to put this here} and then to the app.
+
+Capabilities serve as authorization tokens for cookie access and are either:
 \begin{itemize}
-  \item \textbf{H1}: The framework prevents a hytrack deployed third-party library from tracking users across different apps.
-  \item \textbf{H2}: It does not break legitimate web interactions within a single app, including login flows and session persistence.
-  \item \textbf{H3}: It preserves the seamless user experience expected from CTs and TWAs.
-    \\ \vdots
-  \item \textbf{Hx}: \dots
+  \item \textbf{Wildcard Capabilities}, that allows the app to set any cookie name and value to be "filled" later or
+  \item \textbf{Predefined Capabilities}, which have a fixed cookie name according to the policy and can only be stored in app-specific cookie jars.
 \end{itemize}
+
+% App-to-Browser Communication via Capabilities
+When the app opens a URL via CT or TWA, it includes a list of capabilities along with the regular intent with the target URL.
+
+The browser parses and verifies each capability by checking the following fields:
+\begin{itemize}
+  \item \textbf{Signature} to ensure the capability was issued by the browser and has not been tampered with.
+  \item \textbf{App ID} to validate the origin, i.e. to ensure the app is authorized to use the capability.
+  \item \textbf{Domain} to ensure the correct destination.
+  \item \textbf{App Version Number}: to ensure the policy has not changed, i.e. to identify potential policy changes.
+  \item \textbf{Rights} to restrict the access scope of the app, such as whether it can request the browser to read cookies. This is necessary to prevent libraries from using the browser to read capability values, which could otherwise be exploited for tracking.
+  \item \textbf{Global Jar Flag} to determine whether to use the shared or app-specific cookie jar.
+\end{itemize}
+
+Cookies are included in the request only if the capability passes all checks.
+
+The communication between Browser and Webserver remains unchanged, i.e. the browser sends Request and Set-Cookie headers as usual and the webserver responds with an (customized) Response and possibly new Cookies.
+
+The browser them matches received cookies to capabilities:
+\begin{itemize}
+  \item If the cookie name is predefined, only the value is updated in the capability.
+  \item If it's new and a wildcard capability exists, the browser creates a new capability by copying the wildcard capability and setting the name and value accordingly.
+\end{itemize}
+
+Additionally, if the global jar flag is set, the cookie is stored in the browser's cookie jar and the capability is sent back to the app. Otherwise, the capability is directly returned to the app and stored in its private app jar.
+
+If validation fails at any point, the browser ensures a failsafe default by creating a fresh state before sending the request to the webserver, making sure that no cookies are sent along with it. 
+
+\section{Benefits} 
+Besides eliminating the possibility of cross-app tracking and the by hytrack postulated goals, I see several additional benefits this approach offers:
+\begin{enumerate}[label=B\arabic*)]
+  \item \textbf{Fine-Grained Control}: Developers can specify which cookies are shared and which are isolated, allowing for a more tailored approach to privacy.
+  \item \textbf{No Browser State for Apps}: The browser does not need to remember app capabilities — the app holds and re-sends them with each intent.
+  \item \textbf{No Ambient Authority}: By avoiding the need for the browser to store app states, we minimize the attack surface and potential vulnerabilities.
+  \item \textbf{No Third-Party Code Changes}: The webserver does not need to be aware of the capabilities or make any changes to its code, as the browser handles the capability management.
+  \item \textbf{Backwards Compatibility}: With minor adjustments, \dots \change{What has to be done exactly?}
+\end{enumerate}
+
+% -----------------------------------------------------------------
+
+% Hypotheses
+\section{Hypotheses}
+My evaluation is guided by the following hypotheses:
+\begin{enumerate}[label=H\arabic*)]
+  \item Sending capabilities with each intent is sufficient to ensure that the browser can validate and manage cookies effectively.
+  \item The installer can send the developer-defined policy to the browser and can return it to the app.
+  \item The approach adheres to the goals of HytTrack (stated in \ref{chap:eval}).
+  \item The approach fully eliminates cross-app tracking. \unsure{is this a Hypothesis?}
+\end{enumerate}
 
 % -----------------------------------------------------------------
