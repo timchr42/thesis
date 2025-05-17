@@ -64,7 +64,7 @@ Additionally, if the global jar flag is set, the cookie is stored in the browser
 If validation fails at any point, the browser ensures a failsafe default by creating a fresh state before sending the request to the webserver, making sure that no cookies are sent along with it. 
 
 \section{Benefits} 
-Besides eliminating the possibility of cross-app tracking and the by hytrack postulated goals, I see several additional benefits this approach offers:
+Besides eliminating the possibility of cross-app tracking and the by hytrack postulated goals \unsure{reference to chap:eval where statet?}, I see several additional benefits this approach offers:
 \begin{enumerate}[label=B\arabic*)]
   \item \textbf{Fine-Grained Control}: Developers can specify which cookies are shared and which are isolated, allowing for a more tailored approach to privacy.
   \item \textbf{No Browser State for Apps}: The browser does not need to remember app capabilities — the app holds and re-sends them with each intent.
@@ -86,3 +86,16 @@ My evaluation is guided by the following hypotheses:
 \end{enumerate}
 
 % -----------------------------------------------------------------
+
+\todo[inline]{keep components section?}
+\section{Components}
+In summary, the proposed solution requires the following components to be changed or added:
+\begin{itemize}
+  \item \textbf{Installer} to send the developer-defined policy to the browser upon app installation.
+  \item \textbf{Browser} to function as Policy Enforcement Point.
+    For this, new functionality for creating capabilities according to the policy and validating them is necessary.
+    In addition, it needs to be capable of storing a secret key for signing capabilities and verifying the signature.
+    Ofcourse, decision making according to the capabilities context is unavoidable, i.e. where to store the capability, or the pair of name and value, either in the app-specific or the global cookie jar.
+  \item \textbf{App} to send capabilities with each intent and to store the capabilities returned by the browser. It must also support functionality to send specific capabilities to the browser.
+\end{itemize}
+
