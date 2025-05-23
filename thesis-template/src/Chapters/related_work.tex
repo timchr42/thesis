@@ -10,10 +10,6 @@
 
 % --------------------Related Work--------------------------
 
-\todo[inline]{
-  - Explain "related work" hytrack again \\
-  - Also other works like JWT etc. contributing to method \\
-}
 Tracking mechanisms are typically divided into two broad categories: stateful and stateless tracking.
 Stateless tracking, also known as fingerprinting, infers a user's identity based on a combination of device-specific attributes.
 Consequently, this method is hard to detect and block, but is also inherently less reliable, as small system changes may alter the fingerprint and disrupt identification
@@ -29,14 +25,9 @@ While HyTrack highlights a serious privacy vulnerability, no concrete mitigation
 
 % How it advances the state of the art
 Our work addresses this gap by proposing a capability-based access control framework for Android applications using CTs and TWAs.
-By wrapping Cookies into fine-grained capability tokens created by the browser according to the app developers policy, the browser decides which cookies are allowed to be stored in the by default shared cookie storage and which are stored in the app-specific storage and thus not accessible to third-party libraries.
+By wrapping Cookies into fine-grained capability tokens created by the browser according to the app developers policy, the browser decides which cookies are allowed to be stored in the by default shared cookie storage and which are stored in the app-specific storage, and thus not accessible to third-party libraries.
 As the shared cookie storage still exists for domains declared as first-party or trusted by the app developer, core functionality like seamless integration of web content \unsure{correct writing it like this} is preserved.
-In contrast to prior work that focuses on browser-side or user-driven defenses (e.g., partitioned storage \info{like Safari} or consent prompts \info{current state when opening TWA}), our approach provides developers with a practical and enforceable way to render cross-app tracking infeasible while adhering to the goals stated by the HyTrack authors.
 
-\todo[inline]{
-  - no change of webservers code
-  - elaborate on "Discussion" and mitigation idead stated in HyTrack \\
-}
-
+In contrast to prior discussed mitigation strategies like \dots \change{cont. here},this approach provides developers with a practical and enforceable way to render cross-app tracking infeasible while adhering to the goals stated by the HyTrack authors.
 
 % ----------------------------------------------------------
