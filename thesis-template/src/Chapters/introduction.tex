@@ -18,8 +18,7 @@ HyTrack works by embedding a third-party library into multiple unrelated apps.
 Each app, unaware of the library’s true purpose, opens a CT or TWA to the same tracking domain.
 This domain sets a unique identifier in a cookie, stored in the browser’s shared cookie jar.
 When another app using the same library loads content from the same domain, the cookie is sent, enabling the tracker to correlate activity across apps—and even into regular browser use.
-Due to Android’s backup mechanisms, the tracking ID can be restored even after a factory reset, rendering it more persistent than traditional evercookies.
-\change{cite this paper!}
+Due to Android’s backup mechanisms, the tracking ID can be restored even after a factory reset, rendering it more persistent than the evercookie~\cite{evercookie}.
 
 % Proposed Solution
 This thesis explores whether capabilities, a fine-grained access control model, can be used to limit or prevent these privacy issues without breaking legitimate use cases of CTs and TWAs.
