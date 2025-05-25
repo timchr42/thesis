@@ -21,7 +21,7 @@ While straightforward and highly effective, stateful tracking has become increas
 Despite these mitigation efforts, stateful tracking techniques are now re-emerging in new contexts.
 A notable example is HyTrack \cite{USENIX:Wessels:2025}, which demonstrates a novel cross-app and cross-web tracking technique in the Android ecosystem.
 HyTrack exploits the shared cookie storage between Custom Tabs and Trusted Web Activities (TWAs) to persistently track users across multiple applications and the browser, even surviving user efforts to reset or sanitize their environments.
-While HyTrack highlights a serious privacy vulnerability, no concrete mitigation has been proposed that balances privacy with the legitimate need for seamless web integration-such as Single Sign-On or ad delivery-within mobile apps.
+While HyTrack highlights a serious privacy vulnerability, no concrete mitigation has been proposed that balances privacy with the legitimate need for seamless web integration -- such as Single Sign-On or ad delivery -- within mobile apps.
 
 This can be seen by taking a closer look at two mitigation strategies discussed by the authors, namely Browser State Partitioning and Forced User Interaction. 
 However, both approaches introduce significant drawbacks. 
@@ -36,7 +36,7 @@ Other strategies, such as Limiting CT and TWAs to First-Party Domainsm or introd
 
 % How it advances the state of the art
 This work addresses this gap by proposing a capability-based access control framework for Android applications using CTs and TWAs.
-By wrapping Cookies into fine-grained capability tokens created by the browser according to the app developers policy, the browser decides which cookies are allowed to be stored in the-by default-shared cookie storage and which are stored in the app-specific storage, and thus not accessible to third-party libraries. 
+By wrapping Cookies into fine-grained capability tokens created by the browser according to the app developers policy, the browser decides which cookies are allowed to be stored in the (by default) shared cookie storage and which are stored in the app-specific storage, and thus not accessible to third-party libraries. 
 This ensures that there is no cross-app tracking possible for untrusted thrird-party libraries, as each app stores its own  tracking cookie.
 As the shared cookie storage still exists for domains declared as first-party or trusted by the app developer, legitimate uses of the shared browser state (e.g. SSO) are preserved.
 Seamless integration of web content remains also untouched, as theres is no need for user interaction or changes to the UI.

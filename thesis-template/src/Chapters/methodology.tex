@@ -13,7 +13,7 @@ Custom Tabs (CTs) and Trusted Web Activities (TWAs) enable a seamless integratio
 While this improves user experience, it also introduces a significant privacy concern: third-party libraries can exploit this shared browser state to track users across apps that embed them.
 HyTrack, for example, requires only a single shared third-party library used across multiple apps to persistently identify and track users, circumventing typical browser or OS sandboxing.
 
-This solution seeks to preserve the seamless user experience of CTs/TWAs while enforcing cookie isolation across apps to prevent unauthorized cross-app tracking - particularly from embedded third-party libraries.
+This solution seeks to preserve the seamless user experience of CTs/TWAs while enforcing cookie isolation across apps to prevent unauthorized cross-app tracking -- particularly from embedded third-party libraries.
 
 \section{Proposed Solution: Capability-Based Cookie Isolation}
 To address the issue, we propose a developer-defined policy mechanism paired with cryptographically enforced capabilities that dictate how cookies are managed and isolated per app.
@@ -31,7 +31,7 @@ Consequently, these capabilities serve as authorization tokens for cookie access
 \begin{itemize}
   \item \textbf{Wildcard Capabilities}, that allows the app to set any cookie name and value to be "filled" later or
   \item \textbf{Predefined Capabilities}, which have a fixed cookie name according to the policy and can only be stored in app-specific cookie jars.
-  \item \textbf{Ambient Capabilities}, which signals the browser to behave like it would "normally"-by storing any received cookie in the browsers cookie jar and including all cookies stored for certain webserver upon next requests.
+  \item \textbf{Ambient Capabilities}, which signals the browser to behave like it would "normally" by storing any received cookie in the browsers cookie jar and including all cookies stored for certain webserver upon next requests.
     Hence, they do not provide any security and solely exists to keep the program flow from functioning in case the developer does not provide a policy!
     \unsure{check this again!}
 \end{itemize}
