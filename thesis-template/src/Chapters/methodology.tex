@@ -13,7 +13,7 @@ Custom Tabs (CTs) and Trusted Web Activities (TWAs) enable a seamless integratio
 While this improves user experience, it also introduces a significant privacy concern: third-party libraries can exploit this shared browser state to track users across apps that embed them.
 HyTrack, for example, requires only a single shared third-party library used across multiple apps to persistently identify and track users, circumventing typical browser or OS sandboxing.
 
-Our \unsure{or rather "my"} solution seeks to preserve the seamless user experience of CTs/TWAs while enforcing cookie isolation across apps to prevent unauthorized cross-app tracking - particularly from embedded third-party libraries.
+This solution seeks to preserve the seamless user experience of CTs/TWAs while enforcing cookie isolation across apps to prevent unauthorized cross-app tracking - particularly from embedded third-party libraries.
 
 \section{Proposed Solution: Capability-Based Cookie Isolation}
 To address the issue, we propose a developer-defined policy mechanism paired with cryptographically enforced capabilities that dictate how cookies are managed and isolated per app.
@@ -70,9 +70,9 @@ Besides eliminating the possibility of cross-app tracking and the by hytrack pos
   \item \textbf{No Browser State for Apps}: The browser does not need to remember app capabilities — the app holds and re-sends them with each intent.
   \item \textbf{No Ambient Authority}: By avoiding the need for the browser to store app states, we minimize the attack surface and potential vulnerabilities.
   \item \textbf{No Third-Party Code Changes}: The webserver does not need to be aware of the capabilities or make any changes to its code, as the browser handles the capability management.
-  \item \textbf{Backwards Compatibility}: When the developer does not provide the framework with a policy, it will default to allowing any webserver using the shared browser state, in result behaving like current cookie management. \change{is this corrent?} \unsure{ "cookie management" correct word?}
-    This is done by also allowing wildcards for the domain name in addition to the cookie name and value.
-    Ofcourse, for the cookie to be stored in the shared cookie jar, the global jar flag must also be set by default. \unsure{rethink this concept again! Do i even this? fin what other sense could backwards comapatibility? exist}
+  \item \textbf{Backwards Compatibility}: When the developer does not implement its own policy, the policy will default to allowing any webserver using the shared browser state, consequently behaving like the state of the art cookie management. 
+    This is done by allowing wildcards for the domain name in addition to the cookie name and value.
+    Ofcourse, for the cookie to be stored in the shared cookie jar, the global jar flag must also be set by default. \unsure{rethink this concept again! Do i even need this? in what other sense could backwards comapatibility exist?}
     \info{Maybe there exist a trusted authority that can declare a domain as trusted e.g. Facebook for SSO etc. for default policy? But also not optimal I guess}
 \end{enumerate}
 
@@ -93,7 +93,7 @@ My evaluation is guided by the following hypotheses:
 
 % -----------------------------------------------------------------
 
-\todo[inline]{keep components section?}
+%\todo[inline]{keep components section?}
 \section{Components}
 In summary, the proposed solution requires the following components to be changed or added:
 \begin{itemize}
