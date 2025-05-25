@@ -14,17 +14,17 @@ The following criteria define the scope of this thesis and provide measurable go
 
 \begin{itemize}
   \item The solution must effectively prevent or significantly limit cross-app tracking via the shared browser state, while preserving the core functionality of Custom Tabs and Trusted Web Activities (e.g., Single Sign-On).
-  \item It must adhere to the three primary goals outlined by HyTrack: (1) support all features of the Web platform , (2) do not break the seamless integration, and (3) make shared state available to the Custom Tab or Trusted Web Activity. \info{directly from HyTrack paper}
-  \item A working proof of concept must be implemented to demonstrate the feasibility of the approach and to reproduce and compare against the HyTrack attack methodology.
-  \item The thesis must provide a thorough discussion of how capability-based access control contributes to mitigating the identified tracking risks, including analysis of potential trade-offs (e.g., ambient authority). \info{Because concept of Capability technically not needed for implmentation but makes solution nicer and helps to circumvent Ambient Authority.}
+  \item It must adhere to the three primary goals outlined by HyTrack: (1) support all features of the Web platform , (2) do not break the seamless integration, and (3) make shared state available to the Custom Tab or Trusted Web Activity.
+  \item A working proof-of-concept must be implemented to demonstrate the feasibility of the approach and to reproduce and compare against the HyTrack attack methodology.
+  \item The thesis must provide a thorough discussion of how capability-based access control contributes to mitigating the identified tracking risks, including analysis of potential trade-offs (e.g., small form of ambient authority as based on identity).
 \end{itemize}
 
 \section{May-have criteria}
 
 \begin{itemize}
-  \item Provide an analysis of the solution’s impact in terms of performance, usability, integration effort for developers, and potential security limitations. \info{anything else?}
+  \item Provide an analysis of the solution’s impact on attributes like performance, usability, integration effort for developers, and potential security limitations.
   \item Evaluate the framework across multiple Chromium-based browsers to assess generalizability.
-  \item Investigate whether enhancements to the Digital Asset Links (DAL) mechanism could further strengthen the solution or propose a good alternative. \info{If not already necessary in solution.}
+  \item Investigate whether enhancements to the Digital Asset Links (DAL) mechanism could further strengthen the solution or propose a good alternative.
 \end{itemize}
 
 \section{Must-not-have criteria}
