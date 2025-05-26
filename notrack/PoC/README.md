@@ -4,4 +4,4 @@
 - It includes changes to the Installer, Browser, and a sample App, along with the implementation of the Capabilities mechanism itself.
 - This setup was used to produce the demo video showcasing the mitigation in action.
 
-The same setup steps were used as outlined by the authors of HyTrack. For reference see `README.setup.md`.
+The same setup steps were used as outlined by the authors of HyTrack. For reference see `README_setup.md`.
