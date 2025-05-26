@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">Launcher TWA</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">Launcher Demo</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+
+    <string name="asset_statements">
+        [{
+        \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+        \"target\": {
+        \"namespace\": \"web\",
+        \"site\": \"http://10.0.2.2\"}
+        }]
+
+    </string>
+
+    <string-array name="additional_trusted_origins">
+        <item>https://www.schnellnochraviolimachen.de</item>
+    </string-array>
+
+</resources>
