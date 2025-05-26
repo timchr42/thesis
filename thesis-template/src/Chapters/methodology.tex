@@ -9,7 +9,7 @@
 
 % ----------------------------Methodology--------------------------
 
-Custom Tabs (CTs) and Trusted Web Activities (TWAs) enable a seamless integration between apps and the web by sharing browser state — notably session cookies.
+Custom Tabs (CTs) and Trusted Web Activities (TWAs) enable a seamless integration between apps and the web by sharing browser state -- notably session cookies.
 While this improves user experience, it also introduces a significant privacy concern: third-party libraries can exploit this shared browser state to track users across apps that embed them.
 HyTrack, for example, requires only a single shared third-party library used across multiple apps to persistently identify and track users, circumventing typical browser or OS sandboxing.
 
@@ -19,7 +19,7 @@ This solution seeks to preserve the seamless user experience of CTs/TWAs while e
 To address the issue, we propose a developer-defined policy mechanism paired with cryptographically enforced capabilities that dictate how cookies are managed and isolated per app.
 
 % Developer Policy Declaration
- Upon app installation, the installer sends a policy crafted by the devoloper to the browser that defines:
+Upon app installation, the installer sends a policy declared by the developer in their app manifest \unsure{or a config file} to the browser that defines:
  \begin{itemize}
    \item A list of trusted web servers (e.g., the developer’s domains or select third parties).
    \item A set of predefined cookie names expected to be used by those servers.
@@ -95,13 +95,15 @@ My evaluation is guided by the following hypotheses:
 
 %\todo[inline]{keep components section?}
 \section{Components}
-In summary, the proposed solution requires the following components to be changed or added:
+In summary, the proposed solution requires the framework to change or add the following components:
 \begin{itemize}
+  \item \textbf{Manifest or config file} for the developers to define which origins should retain shared browser state. 
   \item \textbf{Installer} to send the developer-defined policy to the browser upon app installation.
   \item \textbf{Browser} to function as Policy Enforcement Point.
     For this, new functionality for creating capabilities according to the policy and validating them is necessary.
     In addition, it needs to be capable of storing a secret key for signing capabilities and verifying the signature.
     Ofcourse, decision making according to the capabilities context is unavoidable, i.e. where to store the capability, or the pair of name and value, either in the app-specific or the global cookie jar.
   \item \textbf{App} to send capabilities with each intent and to store the capabilities returned by the browser. It must also support functionality to send specific capabilities to the browser.
+  \item \textbf{Capabilities} to wrap the regular cookie data, app ID, domain, global Jar flag and rights.
 \end{itemize}
 
