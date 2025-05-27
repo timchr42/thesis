@@ -64,7 +64,7 @@ Additionally, if the global jar flag is set, the cookie is stored in the browser
 If validation fails at any point, the browser ensures a failsafe default by creating a fresh state before sending the request to the webserver, making sure that no cookies are sent along with it. 
 
 \section{Benefits} 
-Besides eliminating the possibility of cross-app tracking and the by hytrack postulated goals \unsure{reference to chap:eval where statet?},I see the following additional benefits this approach offers:
+Besides eliminating the possibility of cross-app tracking and the by hytrack postulated goals\unsure{reference to chap:eval where statet?}, we see the following additional benefits this approach offers:
 \begin{enumerate}[label=B\arabic*)]
   \item \textbf{Fine-Grained Control}: Developers can specify which cookies are shared and which are isolated, allowing for a more tailored approach to privacy.
   \item \textbf{No Browser State for Apps}: The browser does not need to remember app capabilities — the app holds and re-sends them with each intent.
@@ -73,22 +73,23 @@ Besides eliminating the possibility of cross-app tracking and the by hytrack pos
   \item \textbf{Backwards Compatibility}: When the developer does not implement its own policy, the policy will default to allowing any webserver using the shared browser state, consequently behaving like the state of the art cookie management. 
     This is done by allowing wildcards for the domain name in addition to the cookie name and value.
     Ofcourse, for the cookie to be stored in the shared cookie jar, the global jar flag must also be set by default. \unsure{rethink this concept again! Do i even need this? in what other sense could backwards comapatibility exist?}
-    \info{Maybe there exist a trusted authority that can declare a domain as trusted e.g. Facebook for SSO etc. for default policy? But also not optimal I guess}
+    \info{Maybe there exist a trusted authority that can declare a domain as trusted e.g. Facebook for SSO etc. for default policy? predefined policies?} 
 \end{enumerate}
 
 % -----------------------------------------------------------------
 
 % Hypotheses
 \section{Hypotheses}
-My evaluation is guided by the following hypotheses:
+The evaluation is based on the following hypotheses:
+
 \begin{enumerate}[label=H\arabic*)]
-  \item Sending capabilities with each intent is sufficient to ensure that the browser can validate and manage cookies effectively.
-  \item The installer can send the developer-defined policy to the browser and can return it to the app.
-  \item The approach adheres to each goal of HytTrack (stated in \ref{chap:eval}). \unsure{own section label for the goals?}
-  \item The approach fully eliminates cross-app tracking. \unsure{is this a Hypothesis?}
-  \item Backwards compatibility can be implemented via "Ambient Capabilities".
-  \item Empty Requests can be used to provide a failsafe default in cases of invalid capabilites.
-  \item There are no code changes of webservers required.
+  \item Passing capabilities with each intent enables the browser to validate and manage cookies securely and effectively. It also ensures the browser does not need to store app states.
+  \item The installer can transmit developer-defined policies to the browser and return them to the requesting app reliably.
+  \item The proposed mechanism is compatible with the original three goals of HyTrack as outlined in Section~\ref{chap:eval}.
+  \item The mechanism significantly mitigates cross-app tracking by isolating browser state based on trusted policy definitions.
+  \item Backwards compatibility with existing systems can be ensured through the use of "Ambient Capabilities"\unsure{Check concept of ACs again}.
+  \item In the case of invalid or missing capabilities, a default-deny policy can be enforced via empty requests, preventing fallback to shared state.
+  \item The proposed approach requires no modifications to existing third-party webserver code.
 \end{enumerate}
 
 % -----------------------------------------------------------------

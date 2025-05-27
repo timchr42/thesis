@@ -7,7 +7,7 @@
 
 % -----------------------------Evaluation---------------------------
 
-To assess the effectiveness of our proposed mitigation strategy, I adopt the three primary goals identified by the authors of HyTrack as essential for any viable defense:
+To assess the effectiveness of our proposed mitigation strategy, we adopt the three primary goals identified by the authors of HyTrack as essential for any viable defense:
 
 \begin{enumerate}[label=\arabic*)]
   \item \textbf{Support all features of the web platform:} The solution must allow applications to display fully functional web content, including support for cookies, JavaScript, and modern APIs.
@@ -19,22 +19,22 @@ This includes avoiding obtrusive permission dialogs and maintaining smooth trans
 These criteria reflect the fact that HyTrack exploits standard Android behavior -- specifically, the shared browser state exposed through Custom Tabs and Trusted Web Activities -- rather than relying on unauthorized access or system vulnerabilities.
 Therefore, naive approaches like disabling shared cookies entirely would break common use cases and are not acceptable.
 
-To validate these hypotheses, I will build on the open-sourced measurement tooling and proof of concept applications provided by the authors of HyTrack.
-Specifically, I plan to:
+To validate these hypotheses, we will build on the open-sourced measurement tooling and proof of concept applications provided by the authors of HyTrack.
+Specifically, we plan to:
 \begin{itemize}
   \item Replicate the original HyTrack experiments under controlled conditions using two unrelated Android apps that embed the tracking library (similar to the HyTrack demo).
   \item Instrument network traffic (e.g., using mitmproxy or Frida) to observe the in capabilities wrapped cookies and their interactions with the browser.
   \item Apply the mitigation framework and compare observed behavior against the baseline.
 \end{itemize}
 
-I will collect and analyze the following metrics: \unsure{keep this?}
+We will collect and analyze the following metrics: \unsure{keep this?}
 \begin{itemize}
   \item Number of Capabilities created and used by the browser.
   \item The latency of framework operations, such as creating and validating Capabilities, in comparison with the baseline.
 \end{itemize}
 
-In doing so, I aim to demonstrate that the proposed solution effectively blocks HyTrack's cross-app tracking channel while preserving compatibility with existing web features and maintaining seamless user experience.
-Additionally, I will show that this strategy can be used by developers to control cookie transmission in a fine-grained and policy-driven manner to enable safer and more transparent integration of third-party web content.
+In doing so, we aim to demonstrate that the proposed solution effectively blocks HyTrack's cross-app tracking channel while preserving compatibility with existing web features and maintaining seamless user experience.
+Additionally, we will show that this strategy can be used by developers to control cookie transmission in a fine-grained and policy-driven manner to enable safer and more transparent integration of third-party web content.
 
 % Adhere to the goals of HyTrack
 % Use proof of concept apps and open-sourced measurement tooling
