@@ -16,11 +16,9 @@ Consequently, this method is hard to detect and block, but is also inherently le
 
 Instead, stateful tracking relies on storing unique identifiers on the client device, most commonly through cookies or local storage.
 When a user revisits a site or interacts with embedded third-party content across domains, these identifiers are sent along with requests, allowing persistent recognition.
-
 While straightforward and highly effective, stateful tracking has become increasingly restricted through browser policies (e.g., third-party cookie blocking) and mobile platform changes such as the ability to disable the Google Advertising ID (GAID) on Android.
-Despite these mitigation efforts, stateful tracking techniques are now re-emerging in new contexts.
-A notable example is HyTrack \cite{USENIX:Wessels:2025}, which demonstrates a novel cross-app and cross-web tracking technique in the Android ecosystem.
-HyTrack exploits the shared cookie storage between Custom Tabs and Trusted Web Activities (TWAs) to persistently track users across multiple applications and the browser, even surviving user efforts to reset or sanitize their environments.
+
+HyTrack \cite{USENIX:Wessels:2025} demonstrates a novel cross-app and cross-web tracking technique in the Android ecosystem by exploiting the shared cookie storage between Custom Tabs and Trusted Web Activities (TWAs). This allows to persistently track users across multiple applications and the browser, even surviving user efforts to reset or sanitize their environments.
 While HyTrack highlights a serious privacy vulnerability, no concrete mitigation has been proposed that balances privacy with the legitimate need for seamless web integration -- such as Single Sign-On or ad delivery -- within mobile apps.
 
 This can be seen by taking a closer look at two mitigation strategies discussed by the authors, namely Browser State Partitioning and Forced User Interaction. 
@@ -31,7 +29,6 @@ The seamless integration of web content remains intact, as no changes to the UI 
 In contrast, Forced User Interaction does not have this problem, as it allows the browser to use its shared cookie storage.
 But this highly introduces a significant usability issue, as the user is forced to interact witht the browser every time a web content is loaded, which is not only annoying but also breaks the seamless integration of web content into the app.
 Furthermmore, this approach hands control and responsibility to the user, which is not ideal from a security perspective, as user might not be aware of the implication of their actions and may inadvertently allow tracking by not interacting with the browser a s required.
-
 Other strategies, such as Limiting CT and TWAs to First-Party Domainsm or introducing browser options to the user to disable CT and TWAs for certain domains boil down to the strategies mentioned above and hence are not workable as remedies against HyTrack.
 
 % How it advances the state of the art
@@ -40,7 +37,6 @@ By wrapping Cookies into fine-grained capability tokens created by the browser a
 This ensures that there is no cross-app tracking possible for untrusted thrird-party libraries, as each app stores its own  tracking cookie.
 As the shared cookie storage still exists for domains declared as first-party or trusted by the app developer, legitimate uses of the shared browser state (e.g. SSO) are preserved.
 Seamless integration of web content remains also untouched, as theres is no need for user interaction or changes to the UI.
-
-Thus, in contrast to prior discussed mitigation strategies, this approach provides developers with a practical and enforceable way to render cross-app tracking infeasible while adhering to the goals stated by the HyTrack authors. \unsure{reference again here to goals?}
+Thus, in contrast to prior discussed mitigation strategies, this approach provides developers with a practical and enforceable way to render cross-app tracking infeasible.
 
 % ----------------------------------------------------------

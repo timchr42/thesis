@@ -25,15 +25,15 @@ Upon app installation, the installer sends a policy declared by the developer in
    \item A set of predefined cookie names expected to be used by those servers.
  \end{itemize}
 
- According to this policy, the browser creates a creates creates the capabilities for each app wrapping important cookie meta data (e.g., app ID, domain, name, and rights) into a secure structure-encoded and signed by the browser similar to JWT-tokes \cite{rfc7519}.
+ According to this policy, the browser creates a creates the capabilities for each app wrapping important cookie meta data (e.g., app ID, domain and name) into a secure structure -- encoded and signed by the browser similar to JWT-tokes \cite{rfc7519}.
 
 Consequently, these capabilities serve as authorization tokens for cookie access and are either:
 \begin{itemize}
-  \item \textbf{Wildcard Capabilities}, that allows the app to set any cookie name and value to be "filled" later or
-  \item \textbf{Predefined Capabilities}, which have a fixed cookie name according to the policy and can only be stored in app-specific cookie jars.
+  \item \textbf{Wildcard Capabilities}, that allows the app to set any cookie name and value to be "filled" later,
+  \item \textbf{Predefined Capabilities}, which have a fixed cookie name according to the policy and can only be stored in app-specific cookie jars or
   \item \textbf{Ambient Capabilities}, which signals the browser to behave like it would "normally" by storing any received cookie in the browsers cookie jar and including all cookies stored for certain webserver upon next requests.
+    This is done by setting the global jar flag in the capability and extending the wildcard capability to include the domain name in addition to the cookie name and value.
     Hence, they do not provide any security and solely exists to keep the program flow from functioning in case the developer does not provide a policy!
-    \unsure{check this again!}
 \end{itemize}
 
 % App-to-Browser Communication via Capabilities
@@ -42,14 +42,12 @@ When the app opens a URL via CT or TWA, it includes a list of capabilities along
 The browser parses and verifies each capability by checking the following fields:
 \begin{itemize}
   \item \textbf{Signature} to ensure the capability was issued by the browser and has not been tampered with.
-  \item \textbf{App ID} to validate the origin, i.e. to ensure the app is authorized to use the capability.
+  \item \textbf{App ID} to validate the origin, i.e. to ensure the app is authorized to hold the capability. \unsure{Ask Noah about annotation}
   \item \textbf{Domain} to ensure the correct destination.
   \item \textbf{App Version Number}: to ensure the policy has not changed, i.e. to identify potential policy changes.
   \item \textbf{Rights} to restrict the access scope of the app, such as whether it can request the browser to read cookies. This is necessary to prevent libraries from using the browser to read capability values, which could otherwise be exploited for tracking.
   \item \textbf{Global Jar Flag} to determine whether to use the shared or app-specific cookie jar.
 \end{itemize}
-
-Cookies are included in the request only if the capability passes all checks.
 
 The communication between Browser and Webserver remains unchanged, i.e. the browser sends Request and Set-Cookie headers as usual and the webserver responds with an (customized) Response and possibly new Cookies.
 
@@ -61,19 +59,13 @@ The browser them matches received cookies to capabilities:
 
 Additionally, if the global jar flag is set, the cookie is stored in the browser's cookie jar and the capability is sent back to the app. Otherwise, the capability is directly returned to the app and stored in its private app jar.
 
-If validation fails at any point, the browser ensures a failsafe default by creating a fresh state before sending the request to the webserver, making sure that no cookies are sent along with it. 
-
 \section{Benefits} 
 Besides eliminating the possibility of cross-app tracking and the by hytrack postulated goals\unsure{reference to chap:eval where statet?}, we see the following additional benefits this approach offers:
 \begin{enumerate}[label=B\arabic*)]
   \item \textbf{Fine-Grained Control}: Developers can specify which cookies are shared and which are isolated, allowing for a more tailored approach to privacy.
-  \item \textbf{No Browser State for Apps}: The browser does not need to remember app capabilities — the app holds and re-sends them with each intent.
-  \item \textbf{No Ambient Authority}: By avoiding the need for the browser to store app states, we minimize the attack surface and potential vulnerabilities.
+  \item \textbf{No Browser State for Apps}: The browser does not need to remember app capabilities -- the app holds and re-sends them with each intent.
   \item \textbf{No Third-Party Code Changes}: The webserver does not need to be aware of the capabilities or make any changes to its code, as the browser handles the capability management.
-  \item \textbf{Backwards Compatibility}: When the developer does not implement its own policy, the policy will default to allowing any webserver using the shared browser state, consequently behaving like the state of the art cookie management. 
-    This is done by allowing wildcards for the domain name in addition to the cookie name and value.
-    Ofcourse, for the cookie to be stored in the shared cookie jar, the global jar flag must also be set by default. \unsure{rethink this concept again! Do i even need this? in what other sense could backwards comapatibility exist?}
-    \info{Maybe there exist a trusted authority that can declare a domain as trusted e.g. Facebook for SSO etc. for default policy? predefined policies?} 
+  \item \textbf{Backwards Compatibility}: In case the developer does not implement its own policy, it will default to allowing any domain using the shared browser state, consequently behaving like the state-of-the art cookie management. 
 \end{enumerate}
 
 % -----------------------------------------------------------------
@@ -87,7 +79,7 @@ The evaluation is based on the following hypotheses:
   \item The installer can transmit developer-defined policies to the browser and return them to the requesting app reliably.
   \item The proposed mechanism is compatible with the original three goals of HyTrack as outlined in Section~\ref{chap:eval}.
   \item The mechanism significantly mitigates cross-app tracking by isolating browser state based on trusted policy definitions.
-  \item Backwards compatibility with existing systems can be ensured through the use of "Ambient Capabilities"\unsure{Check concept of ACs again}.
+  \item Backwards compatibility with existing systems can be ensured through the use of \textit{Ambient Capabilities}.
   \item In the case of invalid or missing capabilities, a default-deny policy can be enforced via empty requests, preventing fallback to shared state.
   \item The proposed approach requires no modifications to existing third-party webserver code.
 \end{enumerate}
@@ -96,9 +88,9 @@ The evaluation is based on the following hypotheses:
 
 %\todo[inline]{keep components section?}
 \section{Components}
-In summary, the proposed solution requires the framework to change or add the following components:
+In summary, the proposed solution requires the following components to be modified or extended:
 \begin{itemize}
-  \item \textbf{Manifest or config file} for the developers to define which origins should retain shared browser state. 
+\item \textbf{Manifest} or \textbf{config file} for the developers to define which origins should retain shared browser state. 
   \item \textbf{Installer} to send the developer-defined policy to the browser upon app installation.
   \item \textbf{Browser} to function as Policy Enforcement Point.
     For this, new functionality for creating capabilities according to the policy and validating them is necessary.

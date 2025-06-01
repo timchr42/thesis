@@ -11,15 +11,15 @@
 
 % What's the problem?
 Trusted Web Activities and Custom Tabs enable Android developers to seamlessly integrate web content into native applications, offering a powerful tool for features such as Single Sign-On and in-app monetization.
-However, as shown by HyTrack, this integration also introduces severe privacy risks by blurring the boundary between web and app contexts, allowing persistent cross-app tracking through the browser’s shared cookie storage.
+However, as shown by HyTrack, this integration also introduces severe privacy risks by blurring the boundary between web and app contexts, allowing persistent tracking through the browser’s shared cookie storage.
 
 % How it has been handled/solved/measured?
 In this work, we propose a novel mitigation framework that applies capability-based access control to browser cookie handling.
 Cookie access is encapsulated in fine-grained, identity-bound capabilities, ensuring that only trusted first-party or explicitly authorized third-party web servers-defined by a developer-controlled policy-can access the shared browser state.
 All other untrusted third-party servers are confined to isolated, in-app cookie jars.
-This empowers developers to continue leveraging third-party libraries while preventing them from performing unauthorized cross-app tracking.
+This empowers well-meaning developers to continue leveraging third-party libraries while preventing them from performing unauthorized cross-app tracking.
 At the same time, essential features such as Single Sign-On and personalized content delivery remain fully functional.
-Our approach strikes a deliberate balance between privacy and usability, enabling secure web-app integration regarding tracking without compromising user experience or developer effort.
+Our approach strikes a deliberate balance between privacy and usability, enabling secure web-app integration regarding tracking without compromising user experience. 
 
 % \todo[inline]{Add results later for thesis}
 % % What are the results?

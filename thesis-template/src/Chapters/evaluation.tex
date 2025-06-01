@@ -13,7 +13,7 @@ To assess the effectiveness of our proposed mitigation strategy, we adopt the th
   \item \textbf{Support all features of the web platform:} The solution must allow applications to display fully functional web content, including support for cookies, JavaScript, and modern APIs.
   \item \textbf{Preserve seamless integration:} The user experience must remain uninterrupted.
 This includes avoiding obtrusive permission dialogs and maintaining smooth transitions between native and web content.
-\item \textbf{Enable controlled access to shared browser state:} While isolation is required to prevent cross-app tracking, legitimate scenarios such as Single Sign-On (SSO) should continue to work within the context of a single application.
+\item \textbf{Enable controlled access to shared browser state:} While isolation is required to prevent cross-app tracking, legitimate scenarios such as Single Sign-On (SSO) must remain functional.
 \end{enumerate}
 
 These criteria reflect the fact that HyTrack exploits standard Android behavior -- specifically, the shared browser state exposed through Custom Tabs and Trusted Web Activities -- rather than relying on unauthorized access or system vulnerabilities.
@@ -23,14 +23,14 @@ To validate these hypotheses, we will build on the open-sourced measurement tool
 Specifically, we plan to:
 \begin{itemize}
   \item Replicate the original HyTrack experiments under controlled conditions using two unrelated Android apps that embed the tracking library (similar to the HyTrack demo).
-  \item Instrument network traffic (e.g., using mitmproxy or Frida) to observe the in capabilities wrapped cookies and their interactions with the browser.
+  \item Instrument network traffic (e.g., using mitmproxy or Frida) to observe the in capabilities wrapped cookies and their interactions with the browser. \change{check annotation again}
   \item Apply the mitigation framework and compare observed behavior against the baseline.
 \end{itemize}
 
-We will collect and analyze the following metrics: \unsure{keep this?}
+We will collect and analyze the following metrics:
 \begin{itemize}
   \item Number of Capabilities created and used by the browser.
-  \item The latency of framework operations, such as creating and validating Capabilities, in comparison with the baseline.
+  \item The latency of framework operations, such as creating and validating Capabilities, in comparison with the baseline. \change{check annotation again}
 \end{itemize}
 
 In doing so, we aim to demonstrate that the proposed solution effectively blocks HyTrack's cross-app tracking channel while preserving compatibility with existing web features and maintaining seamless user experience.
