@@ -11,20 +11,19 @@ We plan to complete the project in the following phases:
 
 \begin{itemize}
 
-  \item \textbf{Phase 1 (Week 1):} \textit{Background Research and Literature Review} \\
+\item \textbf{Week 1:} \textit{Background Research and Literature Review} \par
   Study existing work on web and cross-app tracking, especially the HyTrack paper.
   Familiarize with Android's Custom Tabs (CTs), Trusted Web Activities (TWAs), and Chromium’s cookie storage mechanisms.
   Reproduce the HyTrack proof of concept to establish a baseline for evaluation.
 
-  \item \textbf{Phase 2 (Weeks 2-4):} \textit{Framework Design and Initial Implementation} \\
-  Design the capability-based access control framework.
-  Define requirements, threat model, and integration points. \info{similar threat model to HyTrack (not consider malicious dev and thus false policies)}
-  Begin implementation of the framework, touching on the Installer, App and Chromium browser components.
+  \item \textbf{Weeks 2-4:} \textit{Implementation} \par
+    Figure out what exact components of Chromium and App need to be modified.
+    Implement the capability-based cookie isolation framework.
 
-  \item \textbf{Phase 4 (Weeks 5):} \textit{Testing} \\
-    Thoroughly test the framework to ensure it works as intended and meets the requirements. \change{write requirements here again?}
+  \item \textbf{Week 5:} \textit{Testing} \par
+    Thoroughly test the framework to ensure it works as intended and meets the requirements.
 
-  \item \textbf{Phase 3 (Week 6):} \textit{Evaluation and Experimentation} \\
+  \item \textbf{Week 6:} \textit{Evaluation and Experimentation} \par
   Set up experimental infrastructure using HyTrack’s open-source tooling.
   Measure the effectiveness of the proposed solution by replicating tracking scenarios and comparing cookie behaviors across test cases.
   Conduct experiments to evaluate the framework's performance, feasibility of integration and backwards compatibility.
@@ -32,18 +31,15 @@ We plan to complete the project in the following phases:
 \end{itemize}
 
 \thiswillnotshow[inline]{State potential risks and how to mitigate them.}
-\section{Risks, Impact and Mitigation}
+\section*{Risks, Impact and Mitigation}
 At worst, the capability-based approach may not effectively prevent cross-app tracking in practice and indeed a complete redesign of the Custom Tab and Trusted Web Activity API is needed, as suggested by the authors of HyTrack.
 If this occurs, the thesis will pivot to a critical analysis of why the capability model falls short in this context.
 The focus will shift towards identifying structural barriers in the Android platform and recommending future improvements to make such defenses feasible.
 
-In case we encounter problems in adapting the Installer to send the policy to the browser, we will explore sending the policy on each app launch via a modified Zygote instead.
+In case we encounter problems in adapting the Installer to send the policy to the browser, we will explore sending the policy on each launch of the app via a modified Zygote instead.
 
 At much lower impact, the implementation may not be feasible within the given timeframe or due to unforseen technical challenges.
 In this case, development will focus on a minimal viable proof-of-concept that demonstrates core functionality and missing features will be discussed as future work.
-
-\todo[inline]{what else can go wrong?}
-\vdots
 
 % ----------------------------------------------------------------
 

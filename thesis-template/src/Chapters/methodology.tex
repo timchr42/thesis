@@ -19,7 +19,7 @@ This solution seeks to preserve the seamless user experience of CTs/TWAs while e
 To address the issue, we propose a developer-defined policy mechanism paired with cryptographically enforced capabilities that dictate how cookies are managed and isolated per app.
 
 % Developer Policy Declaration
-Upon app installation, the installer sends a policy declared by the developer in their app manifest \unsure{or a config file} to the browser that defines:
+Upon app installation, the installer sends a policy declared by the developer in their app manifest (or a config file) to the browser that defines:
  \begin{itemize}
    \item A list of trusted web servers (e.g., the developer’s domains or select third parties).
    \item A set of predefined cookie names expected to be used by those servers.
@@ -60,7 +60,7 @@ The browser them matches received cookies to capabilities:
 Additionally, if the global jar flag is set, the cookie is stored in the browser's cookie jar and the capability is sent back to the app. Otherwise, the capability is directly returned to the app and stored in its private app jar.
 
 \section{Benefits} 
-Besides eliminating the possibility of cross-app tracking and the by hytrack postulated goals\unsure{reference to chap:eval where statet?}, we see the following additional benefits this approach offers:
+Besides eliminating the possibility of cross-app tracking and the by hytrack postulated goals, we see the following additional benefits this approach offers:
 \begin{enumerate}[label=B\arabic*)]
   \item \textbf{Fine-Grained Control}: Developers can specify which cookies are shared and which are isolated, allowing for a more tailored approach to privacy.
   \item \textbf{No Browser State for Apps}: The browser does not need to remember app capabilities -- the app holds and re-sends them with each intent.
