@@ -12,7 +12,7 @@ android {
     compileSdk 34
 
     defaultConfig {
-        applicationId "org.hytrack.app.track.crossapptrackerone"
+        applicationId "org.hytrack.app.track.crossapptrackerone.instrumented"
         minSdk 29
         targetSdk 34
         versionCode 1
