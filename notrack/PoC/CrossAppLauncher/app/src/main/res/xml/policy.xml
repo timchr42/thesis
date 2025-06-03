@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<policy xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- TODO: Enter predefined capability/cookie names-->
+    <capability name="a"/>
+    <capability name="b"/>
+    <capability name="c"/>
+
+    <!-- TODO: Enter Domains to white-list -->
+    <whitelist>
+        <domain>examplecorp.de</domain> <!-- maps to 10.0.2.2 -->
+        <domain>schnellnochraviolimachen.de</domain> <!-- maps to 10.0.2.2:8080 -->
+    </whitelist>
+</policy>

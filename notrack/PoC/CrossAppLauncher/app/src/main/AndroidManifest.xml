@@ -16,6 +16,11 @@
             android:name="asset_statements"
             android:resource="@string/asset_statements" />
 
+        <!--Put policy in application tag so accessible by whole app-->
+        <meta-data
+            android:name="policy"
+            android:resource="@xml/policy" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

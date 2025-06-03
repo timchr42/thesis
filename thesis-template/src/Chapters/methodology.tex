@@ -19,13 +19,13 @@ This solution seeks to preserve the seamless user experience of CTs/TWAs while e
 To address the issue, we propose a developer-defined policy mechanism paired with cryptographically enforced capabilities that dictate how cookies are managed and isolated per app.
 
 % Developer Policy Declaration
-Upon app installation, the installer sends a policy declared by the developer in their app manifest (or a config file) to the browser that defines:
+Upon app installation, the installer extracts, error checks, encrypts and subsequently sends a policy declared by the developer in their app manifest and a config file to the browser that defines:
  \begin{itemize}
    \item A list of trusted web servers (e.g., the developer’s domains or select third parties).
    \item A set of predefined cookie names expected to be used by those servers.
  \end{itemize}
 
- According to this policy, the browser creates a creates the capabilities for each app wrapping important cookie meta data (e.g., app ID, domain and name) into a secure structure -- encoded and signed by the browser similar to JWT-tokes \cite{rfc7519}.
+ According to this policy, the browser creates the capabilities for each app wrapping important cookie meta data (e.g., app ID, domain and name) into a secure structure -- encoded and signed by the browser similar to JWT-tokes \cite{rfc7519}.
 
 Consequently, these capabilities serve as authorization tokens for cookie access and are either:
 \begin{itemize}
@@ -90,8 +90,8 @@ The evaluation is based on the following hypotheses:
 \section{Components}
 In summary, the proposed solution requires the following components to be modified or extended:
 \begin{itemize}
-\item \textbf{Manifest} or \textbf{config file} for the developers to define which origins should retain shared browser state. 
-  \item \textbf{Installer} to send the developer-defined policy to the browser upon app installation.
+\item \textbf{Manifest} and \textbf{config file} for the developers to define which origins should retain shared browser state.
+  \item \textbf{Installer} to extract, error check, encrypt and send the developer-defined policy to the browser upon app installation.
   \item \textbf{Browser} to function as Policy Enforcement Point.
     For this, new functionality for creating capabilities according to the policy and validating them is necessary.
     In addition, it needs to be capable of storing a secret key for signing capabilities and verifying the signature.
