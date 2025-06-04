@@ -19,7 +19,7 @@ This solution seeks to preserve the seamless user experience of CTs/TWAs while e
 To address the issue, we propose a developer-defined policy mechanism paired with cryptographically enforced capabilities that dictate how cookies are managed and isolated per app.
 
 % Developer Policy Declaration
-Upon app installation, the installer extracts, error checks, encrypts and subsequently sends a policy declared by the developer in their app manifest and a config file to the browser that defines:
+Upon app installation, the installer extracts, error checks, encrypts and subsequently sends a policy to the browser. This policy, declared by the app developer in the manifest and config file, defines the following:
  \begin{itemize}
    \item A list of trusted web servers (e.g., the developer’s domains or select third parties).
    \item A set of predefined cookie names expected to be used by those servers.
@@ -27,13 +27,15 @@ Upon app installation, the installer extracts, error checks, encrypts and subseq
 
  According to this policy, the browser creates the capabilities for each app wrapping important cookie meta data (e.g., app ID, domain and name) into a secure structure -- encoded and signed by the browser similar to JWT-tokes \cite{rfc7519}.
 
-Consequently, these capabilities serve as authorization tokens for cookie access and are either:
+ Consequently, these capabilities act as \textbf{authorization tokens} for cookie access and fall into one of the following categories:
 \begin{itemize}
-  \item \textbf{Wildcard Capabilities}, that allows the app to set any cookie name and value to be "filled" later,
-  \item \textbf{Predefined Capabilities}, which have a fixed cookie name according to the policy and can only be stored in app-specific cookie jars or
-  \item \textbf{Ambient Capabilities}, which signals the browser to behave like it would "normally" by storing any received cookie in the browsers cookie jar and including all cookies stored for certain webserver upon next requests.
-    This is done by setting the global jar flag in the capability and extending the wildcard capability to include the domain name in addition to the cookie name and value.
-    Hence, they do not provide any security and solely exists to keep the program flow from functioning in case the developer does not provide a policy!
+  \item \textbf{Wildcard Capabilities:} Allow the webserver to define arbitrary cookie names and values, which are "filled in" at runtime.
+    These capabilities allow conversion of regular cookies into cookie capabilities, hence each authorized app receives such a capability.
+  \item \textbf{Predefined Capabilities:} Have fixed cookie names as specified by the policy and can only be stored in app-specific cookie jars. This enables stricter control over cookie access and isolation.
+  \item \textbf{Ambient Capabilities:} Instruct the browser to revert to default behavior by storing all received cookies in the global cookie jar and including them in subsequent requests to the corresponding web server.
+    These are created by setting the global jar flag and extending a wildcard capability to include the domain name, cookie name, and value.
+
+\textit{Ambient capabilities do not provide security guarantees and exist solely as a fallback to maintain program flow when no explicit policy is defined by the developer.}
 \end{itemize}
 
 % App-to-Browser Communication via Capabilities
@@ -41,12 +43,13 @@ When the app opens a URL via CT or TWA, it includes a list of capabilities along
 
 The browser parses and verifies each capability by checking the following fields:
 \begin{itemize}
-  \item \textbf{Signature} to ensure the capability was issued by the browser and has not been tampered with.
-  \item \textbf{App ID} to validate the origin, i.e. to ensure the app is authorized to hold the capability. \unsure{Ask Noah about annotation}
-  \item \textbf{Domain} to ensure the correct destination.
-  \item \textbf{App Version Number}: to ensure the policy has not changed, i.e. to identify potential policy changes.
-  \item \textbf{Rights} to restrict the access scope of the app, such as whether it can request the browser to read cookies. This is necessary to prevent libraries from using the browser to read capability values, which could otherwise be exploited for tracking.
-  \item \textbf{Global Jar Flag} to determine whether to use the shared or app-specific cookie jar.
+  \item \textbf{Signature:} Ensures the capability was issued by the browser and has not been tampered with.
+  \item \textbf{App ID:} Identifies the origin of the request, ensuring that only authorized apps can hold a given capability. This field is essential to prevent implicit delegation -- without it, a receiving app could exploit the capabilities granted to the sending app and potentially gain unauthorized access.
+  \item \textbf{Domain:} Specifies the intended destination web server for the capability, ensuring it is send to the correct endpoint.
+  \item \textbf{App Version Number}: Indicates the version of the app to detect potential policy changes and ensure consistency between app and policy.
+  \item \textbf{Rights} Define the scope of access granted to the app --for example, whether it may request the browser to read cookies.
+    This restriction is essential to prevent libraries from exploiting browser access to extract capability values, which could otherwise be used for tracking.
+  \item \textbf{Global Jar Flag} Determines whether the shared cookie jar or an app-specific cookie jar should be used.
 \end{itemize}
 
 The communication between Browser and Webserver remains unchanged, i.e. the browser sends Request and Set-Cookie headers as usual and the webserver responds with an (customized) Response and possibly new Cookies.
