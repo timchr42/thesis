@@ -29,8 +29,10 @@ Upon app installation, the installer extracts, error checks, encrypts and subseq
 
  Consequently, these capabilities act as \textbf{authorization tokens} for cookie access and fall into one of the following categories:
 \begin{itemize}
-  \item \textbf{Wildcard Capabilities:} Allow the webserver to define arbitrary cookie names and values, which are "filled in" at runtime.
-    These capabilities allow conversion of regular cookies into cookie capabilities, hence each authorized app receives such a capability.
+  \item \textbf{Wildcard Capabilities:} Allow the webserver to define arbitrary cookie names and values by leaving the corresponding fields empty.
+    These fields are then "filled in" at runtime upon receiving a cookie and stored in the browser's cookie jar.
+    Consequently, these capabilities allow conversion of regular cookies into cookie capabilities, hence each app receives such a capability for each domain it has defined in its policy.
+    For first-party domains, these capabilities are not necessary, as they can be replaced by Predefined Capabilities.
   \item \textbf{Predefined Capabilities:} Have fixed cookie names as specified by the policy and can only be stored in app-specific cookie jars. This enables stricter control over cookie access and isolation.
   \item \textbf{Ambient Capabilities:} Instruct the browser to revert to default behavior by storing all received cookies in the global cookie jar and including them in subsequent requests to the corresponding web server.
     These are created by setting the global jar flag and extending a wildcard capability to include the domain name, cookie name, and value.
@@ -47,9 +49,9 @@ The browser parses and verifies each capability by checking the following fields
   \item \textbf{App ID:} Identifies the origin of the request, ensuring that only authorized apps can hold a given capability. This field is essential to prevent implicit delegation -- without it, a receiving app could exploit the capabilities granted to the sending app and potentially gain unauthorized access.
   \item \textbf{Domain:} Specifies the intended destination web server for the capability, ensuring it is send to the correct endpoint.
   \item \textbf{App Version Number}: Indicates the version of the app to detect potential policy changes and ensure consistency between app and policy.
-  \item \textbf{Rights} Define the scope of access granted to the app --for example, whether it may request the browser to read cookies.
+  \item \textbf{Rights:} Define the scope of access granted to the app --for example, whether it may request the browser to read cookies.
     This restriction is essential to prevent libraries from exploiting browser access to extract capability values, which could otherwise be used for tracking.
-  \item \textbf{Global Jar Flag} Determines whether the shared cookie jar or an app-specific cookie jar should be used.
+  \item \textbf{Global Jar Flag:} Determines whether the shared cookie jar or an app-specific cookie jar should be used.
 \end{itemize}
 
 The communication between Browser and Webserver remains unchanged, i.e. the browser sends Request and Set-Cookie headers as usual and the webserver responds with an (customized) Response and possibly new Cookies.
@@ -57,10 +59,11 @@ The communication between Browser and Webserver remains unchanged, i.e. the brow
 The browser them matches received cookies to capabilities:
 \begin{itemize}
   \item If the cookie name is predefined, only the value is updated in the capability.
-  \item If it's new and a wildcard capability exists, the browser creates a new capability by copying the wildcard capability and setting the name and value accordingly.
+    If the global 
+  \item If it's new and a wildcard capability exists, the browser creates a new capability by copying the wildcard capability, setting the name and value accordingly and storing it in the browser's cookie jar.
+    The initial wildcard capability is then sent back to the app.
+  \item If it's new and no wildcard capability exists, the browser creates a new capability with the name and value, domain and app ID, restricted rights and version number, and hands it back to the app to store it in it's app-specific cookie jar.
 \end{itemize}
-
-Additionally, if the global jar flag is set, the cookie is stored in the browser's cookie jar and the capability is sent back to the app. Otherwise, the capability is directly returned to the app and stored in its private app jar.
 
 \section{Benefits} 
 Besides eliminating the possibility of cross-app tracking and the by hytrack postulated goals, we see the following additional benefits this approach offers:
