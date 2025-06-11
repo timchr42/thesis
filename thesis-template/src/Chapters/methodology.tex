@@ -19,21 +19,23 @@ This solution seeks to preserve the seamless user experience of CTs/TWAs while e
 To address the issue, we propose a developer-defined policy mechanism paired with cryptographically enforced capabilities that dictate how cookies are managed and isolated per app.
 
 % Developer Policy Declaration
-Upon app installation, the installer extracts, error checks, encrypts and subsequently sends a policy to the browser. This policy, declared by the app developer in the manifest and config file, defines the following:
+Upon app installation, the installer extracts, error checks, encrypts and finally sends such a policy to the browser.
+This policy -- declared by the app developer in the manifest and config file -- defines the following:
  \begin{itemize}
-   \item A list of trusted web servers (e.g., the developer’s domains or select third parties).
+   \item A list of trusted domains (e.g., the developer’s domains or selected third parties).
    \item A set of predefined cookie names expected to be used by those servers.
  \end{itemize}
 
- According to this policy, the browser creates the capabilities for each app wrapping important cookie meta data (e.g., app ID, domain and name) into a secure structure -- encoded and signed by the browser similar to JWT-tokes \cite{rfc7519}.
+ According to this policy, the browser creates capabilities for the app wrapping important cookie meta data (e.g., global jar flag, domain, name and value) into a secure structure, encoded and signed by the browser similar to JWT-tokes \cite{rfc7519}.
 
  Consequently, these capabilities act as \textbf{authorization tokens} for cookie access and fall into one of the following categories:
 \begin{itemize}
-  \item \textbf{Wildcard Capabilities:} Allow the webserver to define arbitrary cookie names and values by leaving the corresponding fields empty.
-    These fields are then "filled in" at runtime upon receiving a cookie and stored in the browser's cookie jar.
-    Consequently, these capabilities allow conversion of regular cookies into cookie capabilities, hence each app receives such a capability for each domain it has defined in its policy.
-    For first-party domains, these capabilities are not necessary, as they can be replaced by Predefined Capabilities.
-  \item \textbf{Predefined Capabilities:} Have fixed cookie names as specified by the policy and can only be stored in app-specific cookie jars. This enables stricter control over cookie access and isolation.
+  \item \textbf{Wildcard Capabilities:} Allow a webserver to define arbitrary cookie names and values by leaving these fields unspecified in the capability, which are later filled by the browser when it receives a cookie from the webserver.
+    This mechanism effectively transforms regular cookies into structured capabilities wrapping the cookie.
+    Hence, the app receives such a capability for each domain registered in the policy.
+    However, for first-party domains, wildcard capabilities are unnecessary, as the developer can define explicit cookie names in advance using predefined capabilities.
+  \item \textbf{Predefined Capabilities:} Specify fixed cookie names as declared in the policy and may either be stored in the app-specific cookie jar or the browser's shared cookie jar, depending on the configured global jar flag.
+    This allows for fine-grained control over cookie scope and enables stricter isolation when needed.
   \item \textbf{Ambient Capabilities:} Instruct the browser to revert to default behavior by storing all received cookies in the global cookie jar and including them in subsequent requests to the corresponding web server.
     These are created by setting the global jar flag and extending a wildcard capability to include the domain name, cookie name, and value.
 
@@ -49,7 +51,7 @@ The browser parses and verifies each capability by checking the following fields
   \item \textbf{App ID:} Identifies the origin of the request, ensuring that only authorized apps can hold a given capability. This field is essential to prevent implicit delegation -- without it, a receiving app could exploit the capabilities granted to the sending app and potentially gain unauthorized access.
   \item \textbf{Domain:} Specifies the intended destination web server for the capability, ensuring it is send to the correct endpoint.
   \item \textbf{App Version Number}: Indicates the version of the app to detect potential policy changes and ensure consistency between app and policy.
-  \item \textbf{Rights:} Define the scope of access granted to the app --for example, whether it may request the browser to read cookies.
+  \item \textbf{Rights:} Define the scope of access granted to the app -- for example, whether it may request the browser to read cookies.
     This restriction is essential to prevent libraries from exploiting browser access to extract capability values, which could otherwise be used for tracking.
   \item \textbf{Global Jar Flag:} Determines whether the shared cookie jar or an app-specific cookie jar should be used.
 \end{itemize}
@@ -59,7 +61,6 @@ The communication between Browser and Webserver remains unchanged, i.e. the brow
 The browser them matches received cookies to capabilities:
 \begin{itemize}
   \item If the cookie name is predefined, only the value is updated in the capability.
-    If the global 
   \item If it's new and a wildcard capability exists, the browser creates a new capability by copying the wildcard capability, setting the name and value accordingly and storing it in the browser's cookie jar.
     The initial wildcard capability is then sent back to the app.
   \item If it's new and no wildcard capability exists, the browser creates a new capability with the name and value, domain and app ID, restricted rights and version number, and hands it back to the app to store it in it's app-specific cookie jar.
@@ -97,7 +98,7 @@ The evaluation is based on the following hypotheses:
 In summary, the proposed solution requires the following components to be modified or extended:
 \begin{itemize}
 \item \textbf{Manifest} and \textbf{config file} for the developers to define which origins should retain shared browser state.
-  \item \textbf{Installer} to extract, error check, encrypt and send the developer-defined policy to the browser upon app installation.
+  \item \textbf{Custom Installer} to extract, error check, encrypt and send the developer-defined policy to the browser upon app installation.
   \item \textbf{Browser} to function as Policy Enforcement Point.
     For this, new functionality for creating capabilities according to the policy and validating them is necessary.
     In addition, it needs to be capable of storing a secret key for signing capabilities and verifying the signature.
