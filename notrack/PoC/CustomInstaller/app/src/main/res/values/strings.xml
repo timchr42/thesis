@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">CustomInstaller</string>
+
+    <string name="installing_asset">Installing %1$s...</string>
+    <string name="apk_error">The following error occurred: %1$s</string>
+    <string name="policy_origin_content">Policy from %1$s: %2$s</string>
+    <string name="app_not_found">App not found: %1$s</string>
+    <string name="policy_not_found">Policy not found in assets of: %1$s</string>
+    <string name="policy_reading_error">Error reading policy from %1$s: %2$s</string>
 </resources>

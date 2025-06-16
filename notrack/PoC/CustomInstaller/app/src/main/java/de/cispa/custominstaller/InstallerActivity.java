@@ -75,9 +75,9 @@ public class InstallerActivity extends AppCompatActivity {
 
             apkInstallLauncher.launch(intent);
 
-            statusText.setText("Installing " + assetName + "...");
+            statusText.setText(getString(R.string.installing_asset, assetName));
         } catch (IOException e) {
-            statusText.setText("Failed to prepare APK: " + e.getMessage());
+            statusText.setText(getString(R.string.apk_error, e.getMessage()));
         }
     }
 
@@ -113,17 +113,17 @@ public class InstallerActivity extends AppCompatActivity {
             }
 
             // Display it
-            statusText.setText("Policy from " + packageName + ":\n\n" + builder.toString());
+            statusText.setText(getString(R.string.policy_origin_content, packageName, builder.toString()));
 
             reader.close();
             inputStream.close();
 
         } catch (PackageManager.NameNotFoundException e) {
-            statusText.setText("App not found: " + packageName);
+            statusText.setText(getString(R.string.app_not_found, packageName));
         } catch (FileNotFoundException e) {
-            statusText.setText("policy.xml not found in assets of: " + packageName);
+            statusText.setText(getString(R.string.policy_not_found, packageName));
         } catch (IOException e) {
-            statusText.setText("Error reading policy from: " + packageName + "\n" + e.getMessage());
+            statusText.setText(getString(R.string.policy_reading_error, packageName, e.getMessage()));
         }
     }
 }
