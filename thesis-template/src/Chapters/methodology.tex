@@ -33,9 +33,10 @@ This policy -- declared by the app developer in the manifest and config file -- 
   \item \textbf{Wildcard Capabilities:} Allow a webserver to define arbitrary cookie names and values by leaving these fields unspecified in the capability, which are later filled by the browser when it receives a cookie from the webserver.
     This mechanism effectively transforms regular cookies into structured capabilities wrapping the cookie.
     Hence, the app receives such a capability for each domain registered in the policy.
-    However, for first-party domains, wildcard capabilities are unnecessary, as the developer can define explicit cookie names in advance using predefined capabilities.
-  \item \textbf{Predefined Capabilities:} Specify fixed cookie names as declared in the policy and may either be stored in the app-specific cookie jar or the browser's shared cookie jar, depending on the configured global jar flag.
-    This allows for fine-grained control over cookie scope and enables stricter isolation when needed.
+    % However, for first-party domains, wildcard capabilities are unnecessary, as the developer can define explicit cookie names in advance using predefined capabilities.
+  \item \textbf{Predefined Capabilities:} Define fixed cookie names as specified in the policy and can be stored either in the app-specific cookie jar or the browser's shared cookie jar, depending on the configuration of the global jar flag.
+    % Shared jar can here be useful for apps developed by same entity for shared login state etc.
+    This provided fine-grained control over cookie scoping and allows the developers to isolate their app from the browser's state when desired, while still enabling seamless web-app integration.
   \item \textbf{Ambient Capabilities:} Instruct the browser to revert to default behavior by storing all received cookies in the global cookie jar and including them in subsequent requests to the corresponding web server.
     These are created by setting the global jar flag and extending a wildcard capability to include the domain name, cookie name, and value.
 

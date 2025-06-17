@@ -23,14 +23,14 @@ To validate these hypotheses, we will build on the open-sourced measurement tool
 Specifically, we plan to:
 \begin{itemize}
   \item Replicate the original HyTrack experiments under controlled conditions using two unrelated Android apps that embed the tracking library (similar to the HyTrack demo).
-  \item Instrument network traffic (e.g., using mitmproxy or Frida) to observe the in capabilities wrapped cookies and their interactions with the browser. \change{check annotation again}
+%  \item Instrument network traffic (e.g., using mitmproxy or Frida) to observe the in capabilities wrapped cookies and their interactions with the browser. \change{check annotation again}
   \item Apply the mitigation framework and compare observed behavior against the baseline.
 \end{itemize}
 
-We will collect and analyze the following metrics:
+We sill collect and analyze the following metric:
 \begin{itemize}
   \item Number of Capabilities created and used by the browser.
-  \item The latency of framework operations, such as creating and validating Capabilities, in comparison with the baseline. \change{check annotation again}
+%  \item The latency of framework operations, such as creating and validating Capabilities, in comparison with the baseline. \change{check annotation again}
 \end{itemize}
 
 In doing so, we aim to demonstrate that the proposed solution effectively blocks HyTrack's cross-app tracking channel while preserving compatibility with existing web features and maintaining seamless user experience.
