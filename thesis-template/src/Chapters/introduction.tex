@@ -12,18 +12,18 @@ This approach allows web-based functionality like Single Sign-On (SSO), for exam
 
 % Outline Issue
 However, these benefits come at a cost.
-CTs and TWAs share the browser’s cookie storage across all apps, enabling continuity of web sessions—but also opening serious privacy vulnerabilities.
+CTs and TWAs share the browser’s cookie storage across all apps, enabling continuity of web sessions -- but also opening serious privacy vulnerabilities.
 Recent research by Wessels et al. introduced HyTrack \cite{USENIX:Wessels:2025}, a novel tracking technique that exploits this shared browser state to persistently track users across different applications and the web, even surviving device changes, cookie clearing, or browser switching.
 HyTrack works by embedding a third-party library into multiple unrelated apps.
-Each app, unaware of the library’s true purpose, opens a CT or TWA to the same tracking domain.
+Each app, unaware of the library's true purpose, opens a CT or TWA to the same tracking domain.
 This domain sets a unique identifier in a cookie, stored in the browser’s shared cookie jar.
-When another app using the same library loads content from the same domain, the cookie is sent, enabling the tracker to correlate activity across apps—and even into regular browser use.
-Due to Android’s backup mechanisms, the tracking ID can be restored even after a factory reset, rendering it more persistent than the evercookie~\cite{evercookie}.
+When another app using the same library loads content from the same domain, the cookie is sent, enabling the tracker to correlate activity across apps and even into regular browser use.
+Due to Android's backup mechanisms, the tracking ID can be restored even after a factory reset, rendering it more persistent than the evercookie~\cite{evercookie}.
 
 % Proposed Solution
 This thesis explores whether capabilities, a fine-grained access control model, can be used to limit or prevent these privacy issues without breaking legitimate use cases of CTs and TWAs.
-Specifically, we aim to design and evaluate a framework that allows developers to retain the benefits of third-party libraries -- such as SSO or monetization -- without exposing users to invisible, cross-app tracking.
-The framework should be simple to integrate, practical in real-world deployments, and minimize interference with established app workflows.
+Specifically, we aim to design and evaluate a framework that allows developers to retain the benefits of third-party libraries (e.g., SSO or monetization) without exposing users to invisible, cross-app tracking.
+The framework should be simple to integrate, practical in real-world deployments, and minimize interference with already established app workflows.
 
 % -----------------------------------------------------------
 

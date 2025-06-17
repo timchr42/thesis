@@ -15,7 +15,7 @@ However, as shown by HyTrack, this integration also introduces severe privacy ri
 
 % How it has been handled/solved/measured?
 In this work, we propose a novel mitigation framework that applies capability-based access control to browser cookie handling.
-Cookie access is encapsulated in fine-grained, identity-bound capabilities, ensuring that only trusted first-party or explicitly authorized third-party web servers-defined by a developer-controlled policy-can access the shared browser state.
+Cookie access is encapsulated in fine-grained, identity-bound capabilities, ensuring that only trusted first-party or explicitly authorized third-party web servers -- defined by a developer-controlled policy -- can access the shared browser state.
 All other untrusted third-party servers are confined to isolated, in-app cookie jars.
 This empowers well-meaning developers to continue leveraging third-party libraries while preventing them from performing unauthorized cross-app tracking.
 At the same time, essential features such as Single Sign-On and personalized content delivery remain fully functional.
