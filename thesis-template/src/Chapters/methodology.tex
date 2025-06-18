@@ -28,7 +28,7 @@ This policy -- declared by the app developer in the manifest and config file -- 
  Consequently, these capabilities act as \textbf{authorization tokens} for cookie access and fall into one of the following categories:
 
 \begin{itemize}
-  \item \textbf{Wildcard Capabilities:} Allow a webserver to define arbitrary cookie names and values by leaving these fields unspecified in the capability, which are later filled by the browser when it receives a cookie from the webserver.
+  \item \textbf{Wildcard Capabilities:} Allow a web server to define arbitrary cookie names and values by leaving these fields unspecified in the capability, which are later filled by the browser when it receives a cookie from the web server.
     This mechanism effectively transforms regular cookies into structured capabilities wrapping the cookie.
     Hence, the app receives such a capability for each domain registered in the policy.
     % However, for first-party domains, wildcard capabilities are unnecessary, as the developer can define explicit cookie names in advance using predefined capabilities.
@@ -56,14 +56,14 @@ The browser parses and verifies each capability by checking the following fields
   \item \textbf{Global Jar Flag:} Determines whether the shared cookie jar or an app-specific cookie jar should be used.
 \end{itemize}
 
-The communication between Browser and Webserver remains unchanged, i.e. the browser sends Request and Set-Cookie headers as usual and the webserver responds with an (customized) Response and possibly new Cookies.
+The communication between browser and web server remains unchanged, i.e. the browser sends Request and Set-Cookie headers as usual and the web server responds with a (customized) Response and possibly new Cookies.
 
 The browser then matches received cookies to capabilities:
 \begin{itemize}
   \item If the cookie name is predefined, only the value is updated in the capability.
   \item If it is new and a wildcard capability exists, the browser creates a new capability by copying the wildcard capability, setting the name and value accordingly and storing it in the browser's cookie jar.
-    The initial wildcard capability is then sent back to the app.
-  \item If it is new and no wildcard capability exists, the browser creates a new capability with the name and value, domain and app ID, restricted rights and version number, and hands it back to the app to store it in its app-specific cookie jar.
+    The initial wildcard capability is then returned to the app.
+  \item If it is new and no wildcard capability exists, the browser creates a new capability with the name and value, domain and app ID, restricted rights and version number, and returns it to the app for storage in its app-specific cookie jar.
 \end{itemize}
 
 \section{Benefits} 
@@ -71,7 +71,7 @@ Beyond eliminating cross-app tracking through HyTrack and its postulated goals, 
 \begin{enumerate}[label=B\arabic*)]
   \item \textbf{Fine-Grained Control}: Developers can specify which cookies are shared and which are isolated, allowing for a more tailored approach to privacy.
   \item \textbf{No Browser State for Apps}: The browser does not need to remember app capabilities -- the app holds and re-sends them with each intent.
-  \item \textbf{No Third-Party Code Changes}: The webserver does not need to be aware of the capabilities or make any changes to its code, as the browser handles the capability management.
+  \item \textbf{No Third-Party Code Changes}: The web server does not need to be aware of the capabilities or make any changes to its code, as the browser handles the capability management.
   \item \textbf{Backwards Compatibility}: In case the developer does not implement its own policy, it will default to allowing any domain using the shared browser state, consequently behaving like the state-of-the art cookie management. 
 \end{enumerate}
 
@@ -88,7 +88,7 @@ The evaluation is based on the following hypotheses:
   \item The mechanism significantly mitigates cross-app tracking by isolating browser state based on trusted policy definitions.
   \item Backwards compatibility with existing systems can be ensured through the use of \textit{Ambient Capabilities}.
   \item In the case of invalid or missing capabilities, a default-deny policy can be enforced via empty requests, preventing fallback to shared state.
-  \item The proposed approach requires no modifications to existing third-party webserver code.
+  \item The proposed approach requires no modifications to existing third-party web server code.
 \end{enumerate}
 
 % -----------------------------------------------------------------
