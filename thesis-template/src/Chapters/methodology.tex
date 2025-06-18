@@ -24,7 +24,7 @@ This policy -- declared by the app developer in the manifest and config file -- 
    \item A set of predefined cookie names expected to be used by those servers.
  \end{itemize}
 
- According to this policy, the browser creates capabilities for the app wrapping important cookie meta data (e.g., global jar flag, domain, name and value) into a secure structure, encoded and signed by the browser similar to JSON Web Tokens (JWT)~\cite{rfc7519}.
+ According to this policy, the browser creates capabilities for the app wrapping important cookie meta data (e.g., global jar flag, domain, name and value) into a secure structure, encoded and signed by the browser, similar to JSON Web Tokens (JWT)~\cite{rfc7519}.
  Consequently, these capabilities act as \textbf{authorization tokens} for cookie access and fall into one of the following categories:
 
 \begin{itemize}
@@ -34,7 +34,7 @@ This policy -- declared by the app developer in the manifest and config file -- 
     % However, for first-party domains, wildcard capabilities are unnecessary, as the developer can define explicit cookie names in advance using predefined capabilities.
   \item \textbf{Predefined Capabilities:} Define fixed cookie names as specified in the policy and can be stored either in the app-specific cookie jar or the browser's shared cookie jar, depending on the configuration of the global jar flag.
     % Shared jar can here be useful for apps developed by same entity for shared login state etc.
-    This provided fine-grained control over cookie scoping and allows the developers to isolate their app from the browser's state when desired, while still enabling seamless web-app integration.
+    This provides fine-grained control over cookie scoping and allows developers to isolate their app from the browser's state when desired, while still enabling seamless web-app integration.
   \item \textbf{Ambient Capabilities:} Instruct the browser to revert to default behavior by storing all received cookies in the global cookie jar and including them in subsequent requests to the corresponding web server.
     These are created by setting the global jar flag and extending a wildcard capability to include the domain name, cookie name, and value.
 
@@ -50,6 +50,7 @@ The browser parses and verifies each capability by checking the following fields
   \item \textbf{App ID:} Identifies the origin of the request, ensuring that only authorized apps can hold a given capability. This field is essential to prevent implicit delegation -- without it, a receiving app could exploit the capabilities granted to the sending app and potentially gain unauthorized access.
   \item \textbf{Domain:} Specifies the intended destination web server for the capability, ensuring it is sent to the correct endpoint.
   \item \textbf{App Version Number}: Indicates the version of the app to detect potential policy changes and ensure consistency between app and policy.
+    In case of a version mismatch, the browser rejects these capabilities.
   \item \textbf{Rights:} Define the scope of access granted to the app -- for example, whether it may request the browser to read cookies.
     This restriction is essential to prevent libraries from exploiting browser access to extract capability values, which could otherwise be used for tracking.
   \item \textbf{Global Jar Flag:} Determines whether the shared cookie jar or an app-specific cookie jar should be used.
@@ -57,16 +58,16 @@ The browser parses and verifies each capability by checking the following fields
 
 The communication between Browser and Webserver remains unchanged, i.e. the browser sends Request and Set-Cookie headers as usual and the webserver responds with an (customized) Response and possibly new Cookies.
 
-The browser them matches received cookies to capabilities:
+The browser then matches received cookies to capabilities:
 \begin{itemize}
   \item If the cookie name is predefined, only the value is updated in the capability.
-  \item If it's new and a wildcard capability exists, the browser creates a new capability by copying the wildcard capability, setting the name and value accordingly and storing it in the browser's cookie jar.
+  \item If it is new and a wildcard capability exists, the browser creates a new capability by copying the wildcard capability, setting the name and value accordingly and storing it in the browser's cookie jar.
     The initial wildcard capability is then sent back to the app.
-  \item If it's new and no wildcard capability exists, the browser creates a new capability with the name and value, domain and app ID, restricted rights and version number, and hands it back to the app to store it in its app-specific cookie jar.
+  \item If it is new and no wildcard capability exists, the browser creates a new capability with the name and value, domain and app ID, restricted rights and version number, and hands it back to the app to store it in its app-specific cookie jar.
 \end{itemize}
 
 \section{Benefits} 
-Beyond eliminating cross-app tracking through HyTrack and their postulated goals, we identify the following additional benefits offered by this approach:
+Beyond eliminating cross-app tracking through HyTrack and its postulated goals, we identify the following additional benefits offered by this approach:
 \begin{enumerate}[label=B\arabic*)]
   \item \textbf{Fine-Grained Control}: Developers can specify which cookies are shared and which are isolated, allowing for a more tailored approach to privacy.
   \item \textbf{No Browser State for Apps}: The browser does not need to remember app capabilities -- the app holds and re-sends them with each intent.
@@ -98,11 +99,12 @@ In summary, the proposed solution requires the following components to be modifi
 \begin{itemize}
 \item \textbf{Manifest} and \textbf{config file} for the developers to define which origins should retain shared browser state.
   \item \textbf{Custom Installer} to extract, error check, encrypt and send the developer-defined policy to the browser upon app installation.
-  \item \textbf{Browser} to function as Policy Enforcement Point.
+  \item \textbf{Browser} to function as the Policy Enforcement Point.
     For this, new functionality for creating capabilities according to the policy and validating them is necessary.
     In addition, it needs to be capable of storing a secret key for signing capabilities and verifying the signature.
-    Ofcourse, decision making according to the capabilities context is unavoidable, i.e. where to store the capability, or the pair of name and value, either in the app-specific or the global cookie jar.
-  \item \textbf{App} to send capabilities with each intent and to store the capabilities returned by the browser. It must also support functionality to send specific capabilities to the browser.
+    Of course, decision making according to the capabilities context is unavoidable, i.e. where to store the capability, or the pair of name and value, either in the app-specific or the global cookie jar.
+  \item \textbf{App} to send capabilities with each intent as an additional parameter and to store the capabilities returned by the browser.
+    It must also support functionality to send specific capabilities to the browser.
   \item \textbf{Capabilities} to wrap the regular cookie data, app ID, domain, global Jar flag and rights.
 \end{itemize}
 
