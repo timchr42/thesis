@@ -9,7 +9,7 @@
 
 Custom Tabs (CTs) and Trusted Web Activities (TWAs) enable a seamless integration between apps and the web by sharing browser state -- most notably, session cookies.
 While this enhances user experience, it also introduces a significant privacy risk: third-party libraries can exploit the shared browser state to track users across multiple apps in which they are embedded.
-For instance, HyTrack demonstrated that a single shared third-party library used across multiple apps is sufficient to persistently identify and track users, bypassing conventional browser and OS sandboxing mechanism.
+For instance, HyTrack demonstrates that a single shared third-party library used across multiple apps is sufficient to persistently identify and track users, bypassing conventional browser and OS sandboxing mechanisms.
 
 This solution seeks to preserve the seamless user experience of CTs/TWAs while enforcing cookie isolation across apps to prevent unauthorized cross-app tracking -- particularly from embedded third-party libraries.
 
@@ -60,7 +60,7 @@ When the app opens a URL via CT or TWA, it includes a list of capabilities along
 The browser parses each capability and verifies its authenticity by validating its signature and associated fields.
 
 The communication between browser and web server remains unchanged, i.e. the browser sends Request and Set-Cookie headers as usual and the web server responds with a (customized) Response and possibly new Cookies.
-Upon receiving cookies, the browser matches them against the capabilities provided by the app.
+Upon receiving cookies, the browser matches them against the capabilities provided by the app:
 \begin{enumerate}[label=\arabic*.]
   \item If the cookie name is predefined, only the value is updated in the capability.
   \item If it is new and a matching wildcard capability exists, the browser creates a new capability by duplicating the wildcard, setting the name and value accordingly and storing it in the corresponding cookie jar.
@@ -95,7 +95,7 @@ The evaluation is based on the following hypotheses:
   \item The proposed mechanism is compatible with the original three goals of HyTrack as outlined in Section~\ref{chap:eval}.
   \item The mechanism significantly mitigates cross-app tracking by isolating browser state based on trusted policy definitions.
   \item The use of \textit{Ambient Capabilities} ensures backwards compatibility with existing systems.
-  \item In the case of invalid or missing capabilities, a default-deny policy can be enforced via empty requests, preventing fallback to shared state.
+  \item In the case of invalid or missing capabilities, the browser by default discards the received Cookie, preventing fallback to shared state.
   \item The proposed approach requires no modifications to existing third-party web server code.
 \end{enumerate}
 
@@ -106,12 +106,12 @@ The evaluation is based on the following hypotheses:
 In summary, implementing the proposed solution requires a combination of new components and modifications to existing ones:
 \begin{itemize}
 \item \textbf{Manifest} and \textbf{config file} for the developers to define which origins should retain shared browser state.
-  \item A \textbf{Custom Installer} to extract, validate, encrypt and send the developer-defined policy to the browser upon app installation.
-  \item The \textbf{Browser} to function as the Policy Enforcement Point.
+  \item A \textbf{custom installer} to extract, validate, encrypt and send the developer-defined policy to the browser upon app installation.
+  \item The \textbf{browser} to function as the Policy Enforcement Point.
     For this, new functionality for creating capabilities according to the policy and validating them is necessary.
-    In addition, it needs to be capable of storing a secret key for signing capabilities and verifying the signature.
-    Of course, decision making according to the capabilities context is unavoidable, i.e. where to store the capability, or the pair of name and value, either in the app-specific or the global cookie jar.
-  \item The \textbf{App} must send capabilities as an additional parameter with each intent and store the capabilities returned by the browser for future use.
+    In addition, the browser needs to be capable of storing a secret key for signing capabilities and verifying the signature.
+    Of course, functionality for decision making according to the capabilities context is unavoidable, i.e. where and how to store the capability.
+  \item The \textbf{app} must send capabilities as an additional parameter with each intent and store the capabilities returned by the browser for future use.
     It must also support functionality to send specific capabilities to the browser.
   \item \textbf{Capabilities} to serve as secure wrappers for cookie data, including the app ID, target domain, global jar flag, and associated access rights.
 \end{itemize}
