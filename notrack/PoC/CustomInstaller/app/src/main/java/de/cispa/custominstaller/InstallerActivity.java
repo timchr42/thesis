@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.TextView;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import android.content.pm.ApplicationInfo;
 
 public class InstallerActivity extends AppCompatActivity {
 
@@ -31,7 +33,7 @@ public class InstallerActivity extends AppCompatActivity {
     // private static final String Filename1 = "app1";
     // private static final String Filename2 = "app2";
 
-    @SuppressLint("SetTextI18n")
+    //=@SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -95,35 +97,41 @@ public class InstallerActivity extends AppCompatActivity {
         return outFile;
     }
 
+    // extracts and shows policy from manifest
     private void extractAndShowPolicy(String packageName) {
         try {
-            // Create a context for the installed app
-            Context targetContext = createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY);
+            PackageManager pm = getPackageManager();
 
-            // Access its assets
-            AssetManager assetManager = targetContext.getAssets();
-            InputStream inputStream = assetManager.open("policy.xml");
+            // Get application info including meta-data
+            ApplicationInfo appInfo = pm.getApplicationInfo(packageName, PackageManager.GET_META_DATA);
+            Bundle metaData = appInfo.metaData;
 
-            // Read file to String
+            if (metaData == null || !metaData.containsKey("policy")) {
+                statusText.setText(getString(R.string.metadata_not_found, packageName));
+                return;
+                // Ambient Capability Case here (no policy existent) -> for Backwards Compatibility!
+            }
+
+            int resId = metaData.getInt("policy");
+            Resources res = pm.getResourcesForApplication(appInfo);
+
+            InputStream inputStream = res.openRawResource(resId);
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
             StringBuilder builder = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
                 builder.append(line).append("\n");
             }
 
-            // Display it
-            statusText.setText(getString(R.string.policy_origin_content, packageName, builder.toString()));
+            // Display actual policy
+            statusText.setText(getString(R.string.policy_display, packageName, builder.toString()));
 
             reader.close();
             inputStream.close();
 
-        } catch (PackageManager.NameNotFoundException e) {
-            statusText.setText(getString(R.string.app_not_found, packageName));
-        } catch (FileNotFoundException e) {
-            statusText.setText(getString(R.string.policy_not_found, packageName));
-        } catch (IOException e) {
-            statusText.setText(getString(R.string.policy_reading_error, packageName, e.getMessage()));
+        } catch (Exception e) {
+            statusText.setText(getString(R.string.policy_not_found, packageName, e.getMessage()));
         }
     }
 }
