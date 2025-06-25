@@ -17,7 +17,7 @@ This solution seeks to preserve the seamless user experience of CTs/TWAs while e
 To mitigate the issue, we propose a developer-defined policy mechanism, combined with cryptographically enforced capabilities, to control how cookies are managed and isolated on a per-app basis.
 
 % Developer Policy Declaration
-During app installation, the installer extracts, validates, encrypts and transmits the policy to the browser.
+During app installation, the installer extracts and transmits the policy to the browser.
 This policy -- declared by the app developer in the manifest and config file -- defines the following:
  \begin{itemize}
    \item A list of trusted domains (e.g., the developer’s own domains or explicitly permitted third parties).
@@ -106,9 +106,9 @@ The evaluation is based on the following hypotheses:
 In summary, implementing the proposed solution requires a combination of new components and modifications to existing ones:
 \begin{itemize}
 \item \textbf{Manifest} and \textbf{config file} for the developers to define which origins should retain shared browser state.
-  \item A \textbf{custom installer} to extract, validate, encrypt and send the developer-defined policy to the browser upon app installation.
+  \item A \textbf{custom installer} to extract and send the developer-defined policy to the browser upon app installation.
   \item The \textbf{browser} to function as the Policy Enforcement Point.
-    For this, new functionality for creating capabilities according to the policy and validating them is necessary.
+    For this, new functionality for validating the received policy, creating capabilities accordingly and validating them is necessary.
     In addition, the browser needs to be capable of storing a secret key for signing capabilities and verifying the signature.
     Of course, functionality for decision making according to the capabilities context is unavoidable, i.e. where and how to store the capability.
   \item The \textbf{app} must send capabilities as an additional parameter with each intent and store the capabilities returned by the browser for future use.

@@ -46,10 +46,10 @@ public class InstallerActivity extends AppCompatActivity {
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK) {
-                        statusText.setText("Installed: " + currentInstallingPackage);
+                        statusText.setText(getString(R.string.install_success, currentInstallingPackage));
                         extractAndShowPolicy(currentInstallingPackage);
                     } else {
-                        statusText.setText("Install canceled or failed for " + currentInstallingPackage);
+                        statusText.setText(getString(R.string.install_fail, currentInstallingPackage));
                     }
                 }
         );
