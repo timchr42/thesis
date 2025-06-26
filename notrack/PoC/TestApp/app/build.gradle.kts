@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "de.cispa.testapp"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "de.cispa.testapp"
