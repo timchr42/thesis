@@ -8,6 +8,8 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -41,22 +43,25 @@ public class InstallerActivity extends AppCompatActivity {
 
         statusText = findViewById(R.id.statusText);
 
-        // You can do the assignment inside onAttach or onCreate, i.e, before the activity is displayed
         apkInstallLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == RESULT_OK) {
-                        statusText.setText(getString(R.string.install_success, currentInstallingPackage));
-                        extractAndShowPolicy(currentInstallingPackage);
-                    } else {
-                        statusText.setText(getString(R.string.install_fail, currentInstallingPackage));
-                    }
+                    // if (result.getResultCode() == RESULT_OK) {
+                    //     statusText.setText(getString(R.string.install_success, currentInstallingPackage));
+                    //     extractAndShowPolicy(currentInstallingPackage);
+                    // } else {
+                    //     statusText.setText(getString(R.string.install_fail, currentInstallingPackage));
+                    // }
+
+                    // TODO: Try Polling here!!!
+                    statusText.setText(getString(R.string.install_success, currentInstallingPackage));
+                    extractAndShowPolicy(currentInstallingPackage);
                 }
         );
 
         // Handle button clicks
         findViewById(R.id.installApp1Button).setOnClickListener(v ->
-                installApk("app1.apk", "com.example.app1")
+                installApk("testapp.apk", "de.cispa.testapp")
         );
 
         findViewById(R.id.installApp2Button).setOnClickListener(v ->
