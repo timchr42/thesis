@@ -1,15 +1,14 @@
 package de.cispa.custominstaller;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -19,7 +18,6 @@ import androidx.core.content.FileProvider;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,10 +30,9 @@ public class InstallerActivity extends AppCompatActivity {
     private ActivityResultLauncher<Intent> apkInstallLauncher;
     private String currentInstallingPackage;
     private TextView statusText;
-    // private static final String Filename1 = "app1";
-    // private static final String Filename2 = "app2";
+    private final Handler handler = new Handler(Looper.getMainLooper());
 
-    //=@SuppressLint("SetTextI18n")
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,16 +43,9 @@ public class InstallerActivity extends AppCompatActivity {
         apkInstallLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    // if (result.getResultCode() == RESULT_OK) {
-                    //     statusText.setText(getString(R.string.install_success, currentInstallingPackage));
-                    //     extractAndShowPolicy(currentInstallingPackage);
-                    // } else {
-                    //     statusText.setText(getString(R.string.install_fail, currentInstallingPackage));
-                    // }
-
-                    // TODO: Try Polling here!!!
-                    statusText.setText(getString(R.string.install_success, currentInstallingPackage));
-                    extractAndShowPolicy(currentInstallingPackage);
+                    // The package installer returns before the actual installation
+                    // finishes. Poll until the package appears on the device.
+                    waitForPackageInstall(currentInstallingPackage, 0);
                 }
         );
 
@@ -67,7 +57,17 @@ public class InstallerActivity extends AppCompatActivity {
         findViewById(R.id.installApp2Button).setOnClickListener(v ->
                 installApk("app2.apk", "com.example.app2")
         );
+
+        findViewById(R.id.debugButton).setOnClickListener(v -> {
+            if (isPackageInstalled("de.cispa.testapp")) {
+                statusText.setText("✅ Detected installed app");
+                extractAndShowPolicy("de.cispa.testapp");
+            } else {
+                statusText.setText("❌ App not installed");
+            }
+        });
     }
+
 
     private void installApk(String assetName, String packageName) {
         try {
@@ -88,6 +88,44 @@ public class InstallerActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Polls the PackageManager until the given package is installed or a timeout is reached.
+     * @param packageName the package to check
+     * @param attempt current polling attempt
+     */
+    private void waitForPackageInstall(String packageName, int attempt) {
+        if (isPackageInstalled(packageName)) {
+            statusText.setText(getString(R.string.install_success, packageName));
+            extractAndShowPolicy(packageName);
+            return;
+        }
+
+        if (attempt >= 10) {
+            statusText.setText(getString(R.string.install_fail, packageName));
+            return;
+        }
+
+        handler.postDelayed(() -> waitForPackageInstall(packageName, attempt + 1), 500);
+    }
+
+    /**
+     * Helper to check if a package is currently installed on the device.
+     */
+    private boolean isPackageInstalled(String packageName) {
+        try {
+            getPackageManager().getPackageInfo(packageName, 0);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Copies Asset (.sdk's in src/main/assets folder to internal storage)
+     * @param assetName .skd to install
+     * @return apk File used by install logic
+     * @throws IOException if error occurred
+     */
     private File copyAssetToInternalStorage(String assetName) throws IOException {
         File outFile = new File(getFilesDir(), assetName);
         try (InputStream is = getAssets().open(assetName);

@@ -23,4 +23,10 @@
         android:layout_height="wrap_content"
         android:paddingTop="16dp"
         android:text="Ready to install..." />
+
+    <Button
+        android:id="@+id/debugButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Debug" />
 </LinearLayout>
