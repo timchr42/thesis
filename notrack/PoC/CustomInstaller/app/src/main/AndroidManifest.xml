@@ -37,4 +37,10 @@
         </provider>
     </application>
 
+    <queries>
+        <package android:name="de.cispa.testapp" />
+        <package android:name="placeholderApp1" />
+        <package android:name="placeholderApp2" />
+    </queries>
+
 </manifest>

@@ -2,6 +2,7 @@ package de.cispa.custominstaller;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.Uri;
@@ -23,6 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.List;
+
 import android.content.pm.ApplicationInfo;
 
 public class InstallerActivity extends AppCompatActivity {
@@ -100,7 +103,7 @@ public class InstallerActivity extends AppCompatActivity {
             return;
         }
 
-        if (attempt >= 10) {
+        if (attempt >= 40) {
             statusText.setText(getString(R.string.install_fail, packageName));
             return;
         }
@@ -112,12 +115,13 @@ public class InstallerActivity extends AppCompatActivity {
      * Helper to check if a package is currently installed on the device.
      */
     private boolean isPackageInstalled(String packageName) {
+        PackageManager pm=getPackageManager();
         try {
-            getPackageManager().getPackageInfo(packageName, 0);
-            return true;
+            PackageInfo info=pm.getPackageInfo(packageName,PackageManager.GET_META_DATA);
         } catch (PackageManager.NameNotFoundException e) {
             return false;
         }
+        return true;
     }
 
     /**
