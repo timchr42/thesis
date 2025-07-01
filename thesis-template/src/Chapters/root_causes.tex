@@ -1,0 +1,29 @@
+\label{chap:root_causes}
+%\chapter{Root Causes of Cross-App Tracking in HyTrack and Mitigation} % or: Strategy
+%
+%HyTrack demonstrates that third-party libraries embedded in multiple apps can exploit shared browser state -- particularly cookies -- to identify and track users across different apps.
+%This attack is possible due to implicit assumptions in current browser-embedding APIs, which fail to account for cross-app boundaries or developer intent.
+
+\section{Root Causes of Cross-App Tracking and Our Mitigation Strategy}
+
+The authors of HyTrack identified the following root causes that make such tracking possible:
+
+\begin{itemize}
+  \item \textbf{Implicit Cookie Sharing}: All apps using CTs or TWAs access a single, global browser cookie jar, regardless of whether such sharing is intended by the developer.
+  \item \textbf{Lack of App Context in Browser}: The browser is unaware of which app initiated a given request, and therefore cannot enforce app-specific isolation or developer-defined policies.
+  \item \textbf{Unrestricted Third-Party Inclusion}: Third-party libraries included in multiple apps gain access to shared cookies and can use this state to persistently identify users.
+\end{itemize}
+
+Our approach addresses these issues by introducing explicit, developer-defined policies and browser-enforced \textbf{capability tokens}:
+
+\begin{itemize}
+  \item \textbf{Explicit Cookie Isolation}: Cookies are stored only if the domain is explicitly declared as trusted or untrusted in the app's policy, i.e. a capability for the domain exists. 
+    Depending on the token, the browser either stores the wrapped cookie in the browser's cookie jar or returns it to the app for local storage.
+  This reverses the implicit sharing assumption.
+  \item \textbf{App-Aware Browser Context}: Each capability includes an \textit{App ID}, allowing the browser to enforce per-app cookie policies and prevent unintended delegation across apps.
+  Furthermore, the browser can detect app updates via an \textit{App Version Number} embedded in the capability, allowing it to reject outdated or invalid capabilities that no longer match the current policy.
+  \item \textbf{Capability-Scoped Access Control}: Malicious third-party domains are restricted to app-local storage and cannot access the shared cookie jar, thereby preventing cross-app tracking via embedded libraries. 
+  Legitimate use cases, such as Single Sign-On (SSO), remain supported by granting trusted domains the necessary capabilities to access the shared cookie jar.
+\end{itemize}
+
+By making browser state access explicit, scoped, and app-aware, our solution neutralizes HyTrack's core tracking mechanisms while maintaining compatibility with legitimate app-web integrations.

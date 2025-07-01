@@ -38,6 +38,22 @@ By wrapping Cookies into fine-grained capability tokens created by the browser a
 This ensures that there is no cross-app tracking possible for untrusted third-party libraries, as each app stores its own  tracking cookie.
 As the shared cookie storage still exists for domains declared as first-party or trusted by the app developer, legitimate uses of the shared browser state (e.g. SSO) are preserved.
 Seamless integration of web content remains also untouched, as there is no need for user interaction or changes to the UI.
-Thus, in contrast to prior discussed mitigation strategies, this approach provides developers with a practical and enforceable way to render cross-app tracking infeasible.
+Thus, in contrast to prior discussed mitigation strategies by the authors of HyTrack, this approach provides developers with a practical and enforceable way to render cross-app tracking infeasible.
 
-% ----------------------------------------------------------
+% --------------------------Suggestions-Input--------------------------------
+
+Beyond HyTrack, other works have explored the security and privacy implications of combining native apps with embedded web content.
+Georgiev et al.~\cite{georgiev2014breaking} showed how origin-based access control breaks down in hybrid frameworks and proposed techniques to enforce stricter origin policies.
+Our work builds on this idea by introducing capabilities to encode both origin and app context explicitly, thereby avoiding delegation vulnerabilities.
+
+Recent browser-level defenses like Firefox's Total Cookie Protection and Safari's Intelligent Tracking Prevention (ITP)~\cite{mozillacookies, safariitp} apply state partitioning to limit third-party tracking.
+While effective in browsers, such strategies are not currently enforced in embedded contexts like CTs or TWAs.
+Our solution can be seen as extending this paradigm to the app level.
+
+Real-world abuse further illustrates the severity of cross-context tracking.
+The Facebook localhost leak~\cite{localleaks} exploited Android’s intent system and redirect behavior to persistently deanonymize users across apps and browsers.
+Safari's ITP also faced similar issues, where information such as the user's browsing habits could be leaked~\cite{janc2020informationleakssafarisintelligent}
+These attacks reinforce the need for systematic, enforceable boundaries -- which our capability framework provides by design.
+
+% Finally, prior work on securing Android WebViews and embedded browsers~\cite{other_android_tracking} has shown that implicit trust and shared state are common weak points in mobile security models.
+% Our work contributes a practical, developer-driven mechanism to reintroduce scoping and isolation into these environments.
