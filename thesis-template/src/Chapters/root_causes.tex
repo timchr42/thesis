@@ -18,7 +18,7 @@ Our approach addresses these issues by introducing explicit, developer-defined p
 
 \begin{itemize}
   \item \textbf{Explicit Cookie Isolation}: Cookies are stored only if the domain is explicitly declared as trusted or untrusted in the app's policy, i.e. a capability for the domain exists. 
-    Depending on the token, the browser either stores the wrapped cookie in the browser's cookie jar or returns it to the app for local storage.
+    Depending on the token(s) received by the app, the browser either stores the wrapped cookie in the browser's cookie jar or returns it to the app for local storage.
   This reverses the implicit sharing assumption.
   \item \textbf{App-Aware Browser Context}: Each capability includes an \textit{App ID}, allowing the browser to enforce per-app cookie policies and prevent unintended delegation across apps.
   Furthermore, the browser can detect app updates via an \textit{App Version Number} embedded in the capability, allowing it to reject outdated or invalid capabilities that no longer match the current policy.
@@ -26,4 +26,4 @@ Our approach addresses these issues by introducing explicit, developer-defined p
   Legitimate use cases, such as Single Sign-On (SSO), remain supported by granting trusted domains the necessary capabilities to access the shared cookie jar.
 \end{itemize}
 
-By making browser state access explicit, scoped, and app-aware, our solution neutralizes HyTrack's core tracking mechanisms while maintaining compatibility with legitimate app-web integrations.
+By making browser state access explicit, scoped, and app-aware, our solution enforces cookie isolation across apps -- particularly against embedded third-party libraries -- thereby neutralizing HyTrack's core tracking mechanisms while preserving the seamless user experience of CTs and TWAs and supporting legitimate app-web integrations.

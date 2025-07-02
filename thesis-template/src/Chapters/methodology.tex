@@ -11,12 +11,11 @@ Custom Tabs (CTs) and Trusted Web Activities (TWAs) enable a seamless integratio
 While this enhances user experience, it also introduces a significant privacy risk: third-party libraries can exploit the shared browser state to track users across multiple apps in which they are embedded.
 For instance, HyTrack demonstrates that a single shared third-party library used across multiple apps is sufficient to persistently identify and track users, bypassing conventional browser and OS sandboxing mechanisms.
 
-This solution seeks to preserve the seamless user experience of CTs/TWAs while enforcing cookie isolation across apps to prevent unauthorized cross-app tracking -- particularly from embedded third-party libraries.
-
+% New Sections about root causes for HyTrack and how to mitigate them
 \input{src/Chapters/root_causes.tex}
 
 \section{Proposed Solution: Capability-Based Cookie Isolation}
-To mitigate the issue, we propose a developer-defined policy mechanism, combined with cryptographically enforced capabilities, to control how cookies are managed and isolated on a per-app basis.
+To mitigate cross-app tracking caused by shared browser state, we propose a developer-defined policy mechanism, combined with cryptographically enforced capabilities, to control how cookies are managed and isolated on a per-app basis.
 
 % Developer Policy Declaration
 During app installation, the installer extracts and transmits the policy to the browser.
