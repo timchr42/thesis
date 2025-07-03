@@ -53,7 +53,7 @@ The capability structure includes the following fields:
   \item \textbf{Ambient Capabilities:} Instruct the browser to revert to default behavior by storing all received cookies in the global cookie jar and including them in subsequent requests to the corresponding web server.
     These have the global jar flag set by default and augment a wildcard capability with the domain name, cookie name, and corresponding value.
 
-\textit{Ambient capabilities provide no security guarantees and serve solely as a fallback mechanism to maintain functional behavior in the absence of an explicit developer-defined policy.}
+\textit{Ambient capabilities provide no security guarantees and serve solely as a fallback mechanism to maintain functionality in the absence of an explicit developer-defined policy.}
 \end{itemize}
 
 % App-to-Browser Communication via Capabilities
@@ -111,7 +111,7 @@ In summary, implementing the proposed solution requires a combination of new com
   \item The \textbf{browser} to function as the Policy Enforcement Point.
     For this, new functionality for validating the received policy, creating capabilities accordingly and validating them is necessary.
     In addition, the browser needs to be capable of storing a secret key for signing capabilities and verifying the signature.
-    Of course, functionality for making decisions bases on the capability's context is essential, i.e. where and how to store the capability.
+    Of course, functionality for making decisions based on the capability's context is essential, i.e. where and how to store the capability.
   \item The \textbf{app} must send capabilities as an additional parameter with each intent and store the capabilities returned by the browser for future use.
     It must also support functionality to send specific capabilities to the browser.
   \item \textbf{Capabilities} to serve as secure wrappers for cookie data, including the app ID, target domain, global jar flag, and associated access rights.

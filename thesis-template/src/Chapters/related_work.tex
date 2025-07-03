@@ -20,18 +20,23 @@ While straightforward and highly effective, stateful tracking has become increas
 
 % --------------------Other tracking attacks (Facebook localhost leak)--------------------------
 This problem not only affects the web, but also extends into the mobile ecosystem, as recently demonstrated by the Facebook Localhost Scandal~\cite{localleaks} that exposed a covert tracking method used by Meta and Yandex on Android.
-In this case, their apps (e.g., Instagram) opened localhost ports to receive browser tracking data -- such as mobile browsing sessions and web cookies -- sent from websites embedding Meta Pixel or Yandex scripts.
+In this case, their apps (e.g., Instagram) silently listened on localhost ports to receive browser tracking data -- such as mobile browsing sessions and web cookies -- sent from websites embedding Meta Pixel or Yandex scripts.
 This allowed the apps to link web activity to logged-in users, bypassing the browser's and Android's privacy protections.
 Although the practice was discontinued shortly after public disclosure, it highlighted a critical privacy gap between web content and native apps on mobile platforms.
 
-HyTrack \cite{USENIX:Wessels:2025} demonstrates a novel cross-app and cross-web tracking technique in the Android ecosystem by exploiting the shared cookie storage between Custom Tabs and Trusted Web Activities (TWAs).
+HyTrack \cite{USENIX:Wessels:2025} demonstrates a novel cross-app and cross-web tracking technique in the Android ecosystem by exploiting the shared cookie storage between Custom Tabs (CTs) and Trusted Web Activities (TWAs).
 This allows persistent tracking of users across multiple applications and the browser, even surviving user efforts to reset or sanitize their environments.
-
 While HyTrack highlights a serious privacy vulnerability, no concrete mitigation has been proposed that balances privacy with the legitimate need for seamless web integration -- such as Single Sign-On or ad delivery -- within mobile apps.
-This can be seen by taking a closer look at the two mitigation strategies discussed by the authors of HyTrack, namely Browser State Partitioning and Forced User Interaction. 
+
+% --------------------Tabbed-Out-Custom-Tabs-as-evidence------------------------
+The need to address HyTrack becomes even more critical in light of additional research on Custom Tabs.
+Beer et al.~\cite{10646644} conducted a comprehensive security analysis of CTs and revealed that they can be exploited for state inference, SameSite cookie bypass, and UI-based phishing attacks.
+Their work further shows that Custom Tabs are widely adopted, with over 83\% of top Android apps using them, often via embedded libraries.
+These findings reinforce that CTs are a high-value attack surface and that the shared browser state -- central to HyTrack -- has broader security implications.
+As TWAs are a specialized form of CTs, they are similarly affected, further enabling HyTrack's tracking to be fully disguised.
 
 % ---- discuss works that use Browser State Partitioning and Forced User Interaction ----
-In practice, modern browsers have increasingly adoppted state partitioning to combat third-party tracking.
+Modern browsers prominently adopt state partitioning to combat third-party tracking.
 Firefox's Total Cookie Protection (TCP)~\cite{mozillacookies} and Safari's Intelligent Tracking Prevention (ITP)~\cite{safariitp} both enforce per-site cookie jars, thereby limiting cookie-based cross-site tracking.
 % --- Einschub Ende ---
 
@@ -39,38 +44,38 @@ However, both approaches introduce significant drawbacks.
 Browser state partitioning would allow each app to use its own cookie storage and hence prevent cross-app tracking.
 The seamless integration of web content remains intact, as no changes to the UI are necessary, but by completely removing the browser's shared state, benign uses like Single Sign-On (SSO) or ad personalization would be broken. 
 % --Start--
-Google is actively working on a similar mechanism under the name CHIPS (Cookies fhaving Independent Partitioned State)~\cite{googlechips}.
+Google is actively working on a similar mechanism under the name CHIPS (Cookies Having Independent Partitioned State)~\cite{googlechips}.
 CHIPS allows third-party cookies to be partitioned by the top-level site with an optional \textit{Partitioned} flag, enabling legitimate services like SSO to maintain function while avoiding broad tracking vectors.
-However, CHIPS is not applicable to Android's embedded web contets like CTs or TWAs, as the top-level site is the tracker itself.
+However, CHIPS is not applicable to Android's embedded web contents like CTs or TWAs, as the top-level site is the tracker itself.
 Our solution can be seen as extending this paradigm to the app level.
 % --End--
 
 In contrast, Forced User Interaction avoids these problems by allowing the browser to use its shared cookie storage.
 But this introduces a significant usability issue, as the user is forced to interact with the browser every time a web content is loaded, which not only degrades user experience but also breaks seamless integration of web content into the app.
 Furthermore, this approach hands control and responsibility to the user, which is not ideal from a security perspective, as the user might be unaware of the consequences of their actions and may inadvertently enable tracking by failing to interact with the browser as required.
-Other strategies, such as Limiting CTs and TWAs to First-Party Domains or introducing browser options to disable CTs and TWAs for certain domains ultimately reflect the strategies mentioned above by varying browser state partitioning and and forced user interaction, respectively.
+Other strategies, such as limiting CTs and TWAs to First-Party Domains or disabling them for specific domains via browser options ultimately reflect the aforementioned strategies, relying on either browser state partitioning or forced user interaction.
 Therefore, these are not effective countermeasures against HyTrack.
 
 % How it advances the state of the art
 This work addresses this gap by proposing a capability-based access control framework for Android applications using CTs and TWAs.
-By wrapping Cookies into fine-grained capability tokens created by the browser according to the app developers policy, the browser decides which cookies are allowed to be stored in the browser's (by default shared) cookie jar and which are stored in the app-specific storage, and thus not accessible to third-party libraries -- depending on a flag contained in the capability, similar to CHIPS' additional cookie attribute.
-This ensures that there is no cross-app tracking possible for untrusted third-party libraries, as each app stores its own  tracking cookie.
+By wrapping Cookies into fine-grained capability tokens -- created by the browser according to the app developer's policy --, the browser decides which cookies are stored in the shared cookie jar and which are stored in the app-specific storage, depending on a flag analogous to CHIPS' \textit{Partitioned} attribute.
+This ensures that there is no cross-app tracking possible for untrusted third-party libraries, as each app stores its own tracking cookie.
 As the shared cookie storage still exists for domains declared as first-party or trusted by the app developer, legitimate uses of the shared browser state (e.g. SSO) are preserved.
-Seamless integration of web content remains also untouched, as there is no need for user interaction or changes to the UI.
+Seamless integration of web content is also preserved, as there is no need for user interaction or changes to the UI.
 Thus, in contrast to prior discussed mitigation strategies, this approach provides developers with a practical and enforceable way to render cross-app tracking infeasible.
 
 % --------------------------JWT-Tokens-Relation--------------------------------
 
-Wrapping the Cookies information into capability tokens is inspired by JSON Web Tokens (JWTs)~\cite{jwt}, which are widely used in web authentication to encode claims about a user or a session in a secure, verifiable manner.
-Instead of storing user information directly on the server upon receiving a POST Request, JWTs allow the server to issue a signed token that contains the necessary claims, which the client can then present in subsequent requests.
-This frees the server from having to maintain session state, as the token itself carries all the information needed andcan verify via the signature that the token has not been tampered with.
-For this purpose, JWTs consist of three parts separated by dots: a header that specifies the token type and algorithm for encoding and decoding it, a payload for the actual data, and a signature of the first two parts after base64 encoding that ensures the integrity of the token.
-Our approach extends this idea with communication between the browser and the app, where the browser issues capability tokens according to the app's policy and the app presenting these tokens in subsequent requests to access the browser's shared cookie jar, or to store cookies in its own app-local storage.
+Wrapping the cookie information into capability tokens is inspired by JSON Web Tokens (JWTs)~\cite{rfc7519}, which are widely used in web authentication to encode claims about a user or a session in a secure, verifiable manner.
+Instead of storing user information directly on the server upon receiving a POST request, JWTs allow the server to issue a signed token that contains the necessary claims, which the client can then present in subsequent requests.
+As a result, the server does not need to maintain session state, as the token itself carries all the information needed and can verify via the signature that the token has not been tampered with.
+For this purpose, JWTs consist of three components separated by dots: a header that specifies the token type and algorithm for encoding and decoding it, a payload for the actual data, and a signature of the first two parts after base64 encoding that ensures the integrity of the token.
+Our approach extends this idea with communication between the browser and the app, where the browser issues capability tokens according to the app's policy and the app presents these tokens in subsequent requests to access the browser's shared cookie jar, or store cookies in its own app-local storage.
 
 % --------------Security-of-Hybrid-Web/Mobile-Apps----------------------------
 
 The work of Georgiev et al. titled "Breaking and Fixing Origin-Based Access Control in Hybrid Web Applications"~\cite{georgiev2014breaking} highlights critical failures in how hybrid apps enforce origin boundaries.
-Specifically, they show that WebViews and hybrid frameworks often bypass or misapply the Same-Origin Policy (SOP), enabling attackers to inject or reuse authentication tkens across apps and domains.
+Specifically, they show that WebViews and hybrid frameworks often bypass or misapply the Same-Origin Policy (SOP), enabling attackers to inject or reuse authentication tokens across apps and domains.
 Their proposed mitigation involves reintroducing stricter origin enforcement tied to app identities.
 Our approach builds on this idea by using capability tokens to encode both the origin and the app context explicitly, thereby preventing unauthorized reuse or delegation.
 
