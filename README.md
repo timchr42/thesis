@@ -1,18 +1,8 @@
 # Thesis
 
-## HyTrack Overview
+## Overview
+
+![Intro Poster](BScIntro/BSc_Poster.png)
 
 > [!NOTE]
-> not considering spanning into cross-web tracking.
-
-![HyTrack Overwiew](imgs/HyTrack_Overwiew.jpg)
-
-## HyTrack cross-app methodology (Draft)
-![Ansatz (Draft)](imgs/Ansatz_Draft.jpg)
-
-## Another Example of Mitigation
-
-> [!NOTE]
-> Showcases how behavior of the Browser differs regarding capabilities for policy & non-policy domains.
-
-![Example (trusted/untrusted)](imgs/Example.jpg)
+> For more details, please refer to the [Thesis Proposal](BSc_Intro/BSc_Proposal_Tim_Christmann.pdf).
