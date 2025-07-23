@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<policy>
+
+    <predefined global="true">
+        <domain name="myapp.com">
+            <cookie name="auth_cookie" />
+            <cookie name="another_cookie" />
+        </domain>
+        <domain name="anotherapp.com">
+            <cookie name="login_token" />
+        </domain>
+    </predefined>
+
+    <predefined global="false">
+        <domain name="schnellnochraviolimachen.de">
+            <cookie name="named_cookie" />
+        </domain>
+    </predefined>
+
+    <wildcard global="true">
+        <domain name="example.com" />
+        <domain name="*.trustedpartner.com" />
+    </wildcard>
+
+    <wildcard global="false">
+        <domain name="ad.com" />
+        <domain name="tracker.de" />
+    </wildcard>
+
+</policy>

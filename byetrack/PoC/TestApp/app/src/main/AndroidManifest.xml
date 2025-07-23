@@ -13,11 +13,6 @@
         android:theme="@style/Theme.TestApp"
         tools:targetApi="31">
 
-        <!--Put policy in application tag so accessible by whole app-->
-        <meta-data
-            android:name="policy"
-            android:resource="@xml/policy" />
-
         <activity
             android:name=".MainActivity"
             android:exported="true">
