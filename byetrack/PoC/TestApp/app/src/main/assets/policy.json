@@ -1,0 +1,21 @@
+{
+  "predefined": {
+    "global": {
+      "myapp.com": ["auth_cookie", "another_cookie"],
+      "anotherapp.com": ["login_token"]
+    },
+    "private": {
+      "schnellnochraviolimachen.de": ["named_cookie"]
+    }
+  },
+  "wildcard": {
+    "global": [
+      "example.com",
+      "*.trustedpartner.com"
+    ],
+    "private": [
+      "ad.com",
+      "tracker.de"
+    ]
+  }
+}

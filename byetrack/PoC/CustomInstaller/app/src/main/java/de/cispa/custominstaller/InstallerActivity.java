@@ -16,22 +16,30 @@ import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Element;
@@ -158,60 +166,26 @@ public class InstallerActivity extends AppCompatActivity {
     @SuppressLint("SetTextI18n")
     private void extractAndShowPolicy(String packageName) {
         try {
-            Context target = createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY);
-            AssetManager am = target.getAssets();
-            InputStream input = am.open("policy.xml");
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(input);
-            doc.getDocumentElement().normalize();
+            Context targetContext = createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY);
+            JSONObject policy = getJsonObject(targetContext);
+            // sendPolicyToBrowser(PACKAGENAME1, policy); // uncomment to send policy to browser
 
-            Map<String, List<String>> predefinedGlobal = new LinkedHashMap<>();
-            Map<String, List<String>> predefinedPrivate = new LinkedHashMap<>();
-            List<String> wildcardGlobal = new ArrayList<>();
-            List<String> wildcardPrivate = new ArrayList<>();
+            StringBuilder output = new StringBuilder();
 
-            // Parse <predefined>
-            NodeList predefinedNodes = doc.getElementsByTagName("predefined");
-            for (int i = 0; i < predefinedNodes.getLength(); i++) {
-                Element predefined = (Element) predefinedNodes.item(i);
-                boolean isGlobal = Boolean.parseBoolean(predefined.getAttribute("global"));
+            // Predefined Capabilities
+            JSONObject predefined = policy.getJSONObject("predefined");
+            output.append("Predefined Domains:\n");
 
-                NodeList domainNodes = predefined.getElementsByTagName("domain");
-                for (int j = 0; j < domainNodes.getLength(); j++) {
-                    Element domain = (Element) domainNodes.item(j);
-                    String domainName = domain.getAttribute("name");
+            formatPredefined(output, "Global Jar", predefined.getJSONObject("global"));
+            formatPredefined(output, "Private Jar", predefined.getJSONObject("private"));
 
-                    NodeList cookieNodes = domain.getElementsByTagName("cookie");
-                    List<String> cookieList = new ArrayList<>();
-                    for (int k = 0; k < cookieNodes.getLength(); k++) {
-                        Element cookie = (Element) cookieNodes.item(k);
-                        cookieList.add(cookie.getAttribute("name"));
-                    }
+            // Wildcard Capabilities
+            JSONObject wildcard = policy.getJSONObject("wildcard");
+            output.append("\nWildcard Capabilities:\n");
+            formatWildcard(output, "Global Jar", wildcard.getJSONArray("global"));
+            formatWildcard(output, "Private Jar", wildcard.getJSONArray("private"));
 
-                    Map<String, List<String>> targetMap = isGlobal ? predefinedGlobal : predefinedPrivate;
-                    targetMap.put(domainName, cookieList);
-                }
-            }
-
-            // Parse <wildcard>
-            NodeList wildcardNodes = doc.getElementsByTagName("wildcard");
-            for (int i = 0; i < wildcardNodes.getLength(); i++) {
-                Element wildcard = (Element) wildcardNodes.item(i);
-                boolean isGlobal = Boolean.parseBoolean(wildcard.getAttribute("global"));
-
-                NodeList domainNodes = wildcard.getElementsByTagName("domain");
-                for (int j = 0; j < domainNodes.getLength(); j++) {
-                    Element domain = (Element) domainNodes.item(j);
-                    String domainName = domain.getAttribute("name");
-                    if (isGlobal) wildcardGlobal.add(domainName);
-                    else wildcardPrivate.add(domainName);
-                }
-            }
-
-            StringBuilder out = new StringBuilder();
-            formatOut(out, predefinedGlobal, predefinedPrivate, wildcardGlobal, wildcardPrivate);
-            statusText.setText(out.toString());
+            statusText.setText(output.toString());
 
         } catch (PackageManager.NameNotFoundException e) {
             statusText.setText("Target app not installed.");
@@ -222,45 +196,64 @@ public class InstallerActivity extends AppCompatActivity {
         }
     }
 
-    private void formatOut(StringBuilder builder, Map<String, List<String>> predefinedGlobal, Map<String, List<String>> predefinedLocal, List<String> wildcardGlobal, List<String> wildcardLocal) {
-        builder.append("Developer-defined Policy:\n");
+    private void sendPolicyToBrowser(String packageName, JSONObject policyJson) {
+        Intent intent = new Intent("com.mybrowser.POLICY_RECEIVED");
 
-        // Predefined
-        builder.append("\nPredefined Capabilities:\n")
-                        .append("\n- Global:\n");
-        appendMapBlock(builder, predefinedGlobal);
-        builder.append("\n-Local:\n");
-        appendMapBlock(builder, predefinedLocal);
+        intent.setPackage("com.mybrowser"); // figure out package of modified chrome browser
+        intent.putExtra("package_name", packageName);
+        intent.putExtra("policy_json", policyJson.toString());
 
-        //Wildcard
-        builder.append("\nWildcard Capabilities:\n")
-                .append("\n- Global:\n");
-        appendListBlock(builder, wildcardGlobal);
-        builder.append("\n- Local:\n");
-        appendListBlock(builder, wildcardLocal);
+        sendBroadcast(intent);
+    }
+    @NonNull
+    private static JSONObject getJsonObject(Context targetContext) throws IOException, JSONException {
+        AssetManager assetManager = targetContext.getAssets();
+        InputStream input = assetManager.open("policy.json");
+
+        // Read the JSON file into a String
+        BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+        StringBuilder jsonBuilder = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            jsonBuilder.append(line);
+        }
+        reader.close();
+
+        return new JSONObject(jsonBuilder.toString());
     }
 
-    private void appendMapBlock(StringBuilder builder, Map<String, List<String>> map) {
-        if (map.isEmpty()) {
+    private void formatPredefined(StringBuilder builder, String label, JSONObject domainMap) throws JSONException {
+        builder.append("- ").append(label).append(":\n");
+        if (domainMap.length() == 0) {
             builder.append("  (none)\n");
             return;
         }
-        for (Map.Entry<String, List<String>> entry : map.entrySet()) {
-            builder.append("\t- ").append(entry.getKey());
-            if (!entry.getValue().isEmpty()) {
-                builder.append(" [").append(String.join(", ", entry.getValue())).append("]");
+
+        for (Iterator<String> it = domainMap.keys(); it.hasNext(); ) {
+            String domain = it.next();
+            JSONArray cookies = domainMap.optJSONArray(domain);
+            builder.append("  • ").append(domain);
+            if (cookies != null && cookies.length() > 0) {
+                builder.append(" [");
+                for (int i = 0; i < cookies.length(); i++) {
+                    builder.append(cookies.getString(i));
+                    if (i < cookies.length() - 1) builder.append(", ");
+                }
+                builder.append("]");
             }
             builder.append("\n");
         }
     }
 
-    private void appendListBlock(StringBuilder builder, List<String> list) {
-        if (list.isEmpty()) {
+    private void formatWildcard(StringBuilder builder, String label, JSONArray domains) throws JSONException {
+        builder.append("- ").append(label).append(":\n");
+        if (domains.length() == 0) {
             builder.append("  (none)\n");
             return;
         }
-        for (String item : list) {
-            builder.append("\t- ").append(item).append("\n");
+
+        for (int i = 0; i < domains.length(); i++) {
+            builder.append("  • ").append(domains.getString(i)).append("\n");
         }
     }
 
