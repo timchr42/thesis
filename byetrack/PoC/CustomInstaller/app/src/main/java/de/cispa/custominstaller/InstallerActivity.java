@@ -72,8 +72,12 @@ public class InstallerActivity extends AppCompatActivity {
         );
 
         // Handle button clicks
-        findViewById(R.id.installApp1Button).setOnClickListener(v ->
+        findViewById(R.id.installTestAppButton).setOnClickListener(v ->
                 installApk("testapp.apk", "de.cispa.testapp")
+        );
+
+        findViewById(R.id.installApp1Button).setOnClickListener(v ->
+                installApk("app1.apk", "com.example.app1")
         );
 
         findViewById(R.id.installApp2Button).setOnClickListener(v ->
@@ -82,10 +86,10 @@ public class InstallerActivity extends AppCompatActivity {
 
         findViewById(R.id.debugButton).setOnClickListener(v -> {
             if (isPackageInstalled("de.cispa.testapp")) {
-                statusText.setText("✅ Detected installed app");
+                statusText.setText("Detected installed app");
                 extractAndShowPolicy("de.cispa.testapp");
             } else {
-                statusText.setText("❌ App not installed");
+                statusText.setText("App not installed");
             }
         });
     }

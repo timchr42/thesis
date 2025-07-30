@@ -1,32 +1,44 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
 
     <Button
+        android:id="@+id/installTestAppButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Install Test App"
+        tools:ignore="HardcodedText" />
+
+    <Button
         android:id="@+id/installApp1Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Install App 1" />
+        android:text="Install App 1"
+        tools:ignore="HardcodedText" />
 
     <Button
         android:id="@+id/installApp2Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Install App 2" />
+        android:text="Install App 2"
+        tools:ignore="HardcodedText" />
+
+    <Button
+        android:id="@+id/debugButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Debug"
+        tools:ignore="HardcodedText" />
 
     <TextView
         android:id="@+id/statusText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="16dp"
-        android:text="Ready to install..." />
+        android:text="Ready to install..."
+        tools:ignore="HardcodedText" />
 
-    <Button
-        android:id="@+id/debugButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Debug" />
 </LinearLayout>
