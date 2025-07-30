@@ -1,7 +1,6 @@
 package de.cispa.testapp;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
@@ -20,14 +19,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import java.net.URISyntaxException;
 import java.util.Map;
-
-import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.net.InternetDomainName;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "TEST-App";
     private TextView statusText;
+    private TextView capStorage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,15 +41,19 @@ public class MainActivity extends AppCompatActivity {
         Button launchTrustedUrl = findViewById(R.id.btnLaunchTrusted);
         Button launchUntrustedUrl = findViewById(R.id.btnLaunchUntrusted);
         statusText = findViewById(R.id.debugOutput);
+        capStorage = findViewById(R.id.capStorage);
 
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(new View.OnClickListener() {
             @SuppressLint("SetTextI18n")
             @Override
             public void onClick(View v) {
-                String domain = "example.com";
-                String opaqueCapability = "eyJhbGciOi..."; // placeholder: simulated signed token
-                saveCapability(MainActivity.this, domain, opaqueCapability);
+                String domain1 = "example.com";
+                String opaqueCap1 = "eyJhbGciOi..."; // placeholder: simulated signed token
+                saveCapability(MainActivity.this, domain1, opaqueCap1);
+                String domain2 = "10.0.2.2";
+                String opaqueCap2 = "abcde42...";
+                saveCapability(MainActivity.this, domain2, opaqueCap2);
                 displayCapabilities();
             }
         });
@@ -62,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String url = "http://10.0.2.2/"; // examplecorp.de -> 10.0.2.2 on emulator
-                launchUrlMod(v.getContext(), Uri.parse(url));
+                launchUrlMod(MainActivity.this, Uri.parse(url));
                 //Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                 //i.setPackage("org.mozilla.geckoview_example");
                 //startActivity(i);
@@ -73,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String url = "https://royaleapi.com";
-                launchUrlMod(v.getContext(), Uri.parse(url));
+                launchUrlMod(MainActivity.this, Uri.parse(url));
             }
         });
     }
@@ -103,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        statusText.append(builder.toString());
+        capStorage.append(builder.toString());
     }
 
     /**
@@ -116,8 +117,7 @@ public class MainActivity extends AppCompatActivity {
         CustomTabsIntent customTabsIntent = builder.build();
         // customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); -> Make Firefox (GeckoView Example) default browser
 
-        // attachCapsToIntent(customTabsIntent, uri); // getDomainName broken for name like 10.0.2.2
-
+        attachCapsToIntent(customTabsIntent, uri); // getDomainName broken for name like 10.0.2.2
         customTabsIntent.launchUrl(context, uri);
     }
 
@@ -128,23 +128,21 @@ public class MainActivity extends AppCompatActivity {
      */
     private void attachCapsToIntent(CustomTabsIntent customTabsIntent, Uri uri) {
         SharedPreferences prefs = getSharedPreferences("cap_storage", MODE_PRIVATE);
-        String domainName = null;
-        try {
-            domainName = getDomainName(uri);
-        } catch (URISyntaxException e) {
-            Log.d(TAG, "Failed to parse Domain");
-        }
+        String domainName = getDomainName(uri);
         String caps = prefs.getString(domainName, null);
         if (caps != null && !caps.isEmpty()) {
             customTabsIntent.intent.putExtra("browser_capability", caps);
+            Log.v(TAG, "Capability found for " + domainName);
+        } else {
+            Log.v(TAG, "No capability found for " + domainName);
         }
-        Log.e(TAG, "No capability found for " + domainName);
     }
-    private String getDomainName(Uri uri) throws URISyntaxException {
+    @SuppressLint("SetTextI18n")
+    private String getDomainName(Uri uri) {
         String host = uri.getHost();
         assert host != null;
-        InternetDomainName internetDomainName = InternetDomainName.from(host).topPrivateDomain();
-        return internetDomainName.toString();
+        statusText.setText("Domain: " + host);
+        return host;
     }
 
 }
