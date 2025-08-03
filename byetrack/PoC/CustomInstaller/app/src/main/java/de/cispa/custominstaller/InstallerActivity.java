@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -28,26 +27,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.DocumentBuilder;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Element;
-
-import android.content.pm.ApplicationInfo;
 
 public class InstallerActivity extends AppCompatActivity {
 
+    private static final String LOGTAG = "CustomInstaller";
     private ActivityResultLauncher<Intent> apkInstallLauncher;
     private String currentInstallingPackage;
     private TextView statusText;
@@ -172,7 +160,7 @@ public class InstallerActivity extends AppCompatActivity {
         try {
             Context targetContext = createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY);
             JSONObject policy = getJsonObject(targetContext);
-            // sendPolicyToBrowser(PACKAGENAME1, policy); // uncomment to send policy to browser
+            sendPolicyToBrowser(PACKAGENAME1, policy); // uncomment to send policy to browser
 
             StringBuilder output = new StringBuilder();
 
@@ -201,13 +189,14 @@ public class InstallerActivity extends AppCompatActivity {
     }
 
     private void sendPolicyToBrowser(String packageName, JSONObject policyJson) {
-        Intent intent = new Intent("com.mybrowser.POLICY_RECEIVED");
+        Intent intent = new Intent("org.mozilla.geckoview.POLICY_TRANSMISSION");
 
-        intent.setPackage("com.mybrowser"); // figure out package of modified chrome browser
+        intent.setPackage("org.mozilla.geckoview_example"); // Package name of modified Firefox browser
         intent.putExtra("package_name", packageName);
         intent.putExtra("policy_json", policyJson.toString());
 
         sendBroadcast(intent);
+        Log.d(LOGTAG, "Policy sent to Browser");
     }
     @NonNull
     private static JSONObject getJsonObject(Context targetContext) throws IOException, JSONException {

@@ -22,7 +22,7 @@ import android.widget.TextView;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String TAG = "TEST-App";
+    private static final String TAG = "TestApp";
     private TextView statusText;
     private TextView capStorage;
 
