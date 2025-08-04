@@ -40,7 +40,6 @@ public class InstallerActivity extends AppCompatActivity {
     private String currentInstallingPackage;
     private TextView statusText;
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private final String PACKAGENAME1 = "de.cispa.testapp";
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -75,7 +74,7 @@ public class InstallerActivity extends AppCompatActivity {
         findViewById(R.id.debugButton).setOnClickListener(v -> {
             if (isPackageInstalled("de.cispa.testapp")) {
                 statusText.setText("Detected installed app");
-                extractAndShowPolicy("de.cispa.testapp");
+                // extractAndSendPolicy("de.cispa.testapp");
             } else {
                 statusText.setText("App not installed");
             }
@@ -110,7 +109,8 @@ public class InstallerActivity extends AppCompatActivity {
     private void waitForPackageInstall(String packageName, int attempt) {
         if (isPackageInstalled(packageName)) {
             statusText.setText(getString(R.string.install_success, packageName));
-            extractAndShowPolicy(packageName);
+            extractAndSendPolicy(packageName);
+
             return;
         }
 
@@ -156,28 +156,22 @@ public class InstallerActivity extends AppCompatActivity {
     }
 
     @SuppressLint("SetTextI18n")
-    private void extractAndShowPolicy(String packageName) {
+    private void extractAndSendPolicy(String packageName) {
         try {
             Context targetContext = createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY);
             JSONObject policy = getJsonObject(targetContext);
-            sendPolicyToBrowser(PACKAGENAME1, policy); // uncomment to send policy to browser
+            displayPolicy(policy);
 
-            StringBuilder output = new StringBuilder();
+            Intent intent = new Intent("org.mozilla.geckoview.POLICY_TRANSMISSION");
 
-            // Predefined Capabilities
-            JSONObject predefined = policy.getJSONObject("predefined");
-            output.append("Predefined Domains:\n");
+            intent.setPackage("org.mozilla.geckoview_example"); // Package name of modified general Firefox browser
+            // Information necessary for generating CapTokens
+            intent.putExtra("package_name", packageName);
+            intent.putExtra("version_number", getAppVersionName(packageName));
+            intent.putExtra("policy_json", policy.toString());
 
-            formatPredefined(output, "Global Jar", predefined.getJSONObject("global"));
-            formatPredefined(output, "Private Jar", predefined.getJSONObject("private"));
-
-            // Wildcard Capabilities
-            JSONObject wildcard = policy.getJSONObject("wildcard");
-            output.append("\nWildcard Capabilities:\n");
-            formatWildcard(output, "Global Jar", wildcard.getJSONArray("global"));
-            formatWildcard(output, "Private Jar", wildcard.getJSONArray("private"));
-
-            statusText.setText(output.toString());
+            sendBroadcast(intent);
+            Log.d(LOGTAG, "Policy sent to Browser");
 
         } catch (PackageManager.NameNotFoundException e) {
             statusText.setText("Target app not installed.");
@@ -188,15 +182,14 @@ public class InstallerActivity extends AppCompatActivity {
         }
     }
 
-    private void sendPolicyToBrowser(String packageName, JSONObject policyJson) {
-        Intent intent = new Intent("org.mozilla.geckoview.POLICY_TRANSMISSION");
-
-        intent.setPackage("org.mozilla.geckoview_example"); // Package name of modified Firefox browser
-        intent.putExtra("package_name", packageName);
-        intent.putExtra("policy_json", policyJson.toString());
-
-        sendBroadcast(intent);
-        Log.d(LOGTAG, "Policy sent to Browser");
+    private String getAppVersionName(String packageName) {
+        try {
+            PackageManager pm = getPackageManager();
+            PackageInfo info = pm.getPackageInfo(packageName, 0);
+            return info.versionName;  // e.g., "1.0.3"
+        } catch (PackageManager.NameNotFoundException e) {
+            return "Not installed";
+        }
     }
     @NonNull
     private static JSONObject getJsonObject(Context targetContext) throws IOException, JSONException {
@@ -213,6 +206,30 @@ public class InstallerActivity extends AppCompatActivity {
         reader.close();
 
         return new JSONObject(jsonBuilder.toString());
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void displayPolicy(JSONObject policy) {
+        try {
+            StringBuilder output = new StringBuilder();
+
+            // Predefined Capabilities
+            JSONObject predefined = policy.getJSONObject("predefined");
+            output.append("Predefined Domains:\n");
+
+            formatPredefined(output, "Global Jar", predefined.getJSONObject("global"));
+            formatPredefined(output, "Private Jar", predefined.getJSONObject("private"));
+
+            // Wildcard Capabilities
+            JSONObject wildcard = policy.getJSONObject("wildcard");
+            output.append("\nWildcard Capabilities:\n");
+            formatWildcard(output, "Global Jar", wildcard.getJSONArray("global"));
+            formatWildcard(output, "Private Jar", wildcard.getJSONArray("private"));
+
+            statusText.setText(output.toString());
+        } catch (Exception e) {
+            statusText.setText("Displaying Policy failed");
+        }
     }
 
     private void formatPredefined(StringBuilder builder, String label, JSONObject domainMap) throws JSONException {
