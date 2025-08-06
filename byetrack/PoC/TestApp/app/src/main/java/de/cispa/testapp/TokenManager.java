@@ -27,9 +27,11 @@ public class TokenManager {
     private static final String ACTION = "org.mozilla.geckoview.CAPABILITY_TOKENS";
     private final Context mContext;
     private boolean mReceiverRegistered = false;
+    MyCallback myCallback;
 
-    public TokenManager(Context mContext) {
+    public TokenManager(Context mContext, MyCallback myCallback) {
         this.mContext = mContext;
+        this.myCallback = myCallback;
         registerReceiver();
     }
 
@@ -54,6 +56,9 @@ public class TokenManager {
                 String tokenJson = intent.getStringExtra("capability_tokens");
                 // String timestamp = intent.getStringExtra("timestamp");
                 storeTokens(tokenJson);
+
+                // Display Tokens in Activity (Debug purposes)
+                myCallback.updateMyText("Current Capabilities:\n\n" + displayCapabilities());
 
             } else {
                 String error = intent.getStringExtra("error_message");

@@ -11,7 +11,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MyCallback {
     private static final String LOGTAG = "TestApp";
     private TextView statusText;
     public TextView capStorage;
@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
         statusText = findViewById(R.id.debugOutput);
         capStorage = findViewById(R.id.capStorage);
 
-        mTokenManager = new TokenManager(mContext);
+        mTokenManager = new TokenManager(mContext, this);
 
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(new View.OnClickListener() {
@@ -62,4 +62,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    public void updateMyText(String myString) {
+        capStorage.setText(myString);
+    }
 }
