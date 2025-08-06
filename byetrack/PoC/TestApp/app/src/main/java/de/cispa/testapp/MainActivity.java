@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
 import android.net.Uri;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -33,12 +34,13 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
 
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(new View.OnClickListener() {
-            @SuppressLint("SetTextI18n")
-            @Override
-            public void onClick(View v) {
-                String currentTokens = mTokenManager.displayCapabilities();
-                capStorage.setText("Current Capabilities:\n\n" + currentTokens);
-            }
+           @SuppressLint("SetTextI18n")
+           @Override
+           public void onClick(View v) {
+                String tokensJson = mTokenManager.getSampleTokenJson();
+                mTokenManager.storeTokens(tokensJson);
+                capStorage.setText("Current Capabilities: (storage test)\n\n" + mTokenManager.displayCapabilities());
+           }
         });
 
         // Simulate launching CT with capability (Note: Firefox does not support TWA)
@@ -47,9 +49,8 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
             public void onClick(View v) {
                 String url = "http://10.0.2.2/"; // examplecorp.de -> 10.0.2.2 on emulator
                 mTokenManager.launchUrlMod(mContext, Uri.parse(url));
-                //Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                //i.setPackage("org.mozilla.geckoview_example");
-                //startActivity(i);
+
+                Log.d(LOGTAG, "CT to untrusted domain launched");
             }
         });
 
@@ -58,6 +59,9 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
             public void onClick(View v) {
                 String url = "https://royaleapi.com";
                 mTokenManager.launchUrlMod(mContext, Uri.parse(url));
+
+
+                Log.d(LOGTAG, "CT to trusted domain launched");
             }
         });
     }
@@ -66,4 +70,5 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
     public void updateMyText(String myString) {
         capStorage.setText(myString);
     }
+
 }

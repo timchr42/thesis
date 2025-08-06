@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class TokenManager {
-    private static final String LOGTAG = "TestApp-TokenManager";
+    private static final String LOGTAG = "TokenManager";
     private static final String ACTION = "org.mozilla.geckoview.CAPABILITY_TOKENS";
     private final Context mContext;
     private boolean mReceiverRegistered = false;
@@ -67,7 +67,7 @@ public class TokenManager {
         }
     };
 
-    private void storeTokens(String tokenJson) {
+    public void storeTokens(String tokenJson) {
         SharedPreferences prefs = mContext.getSharedPreferences("cap_storage", MODE_PRIVATE);
         prefs.edit().clear().apply(); // Wipe data => no "old" tokens remain after update
 
@@ -76,38 +76,19 @@ public class TokenManager {
 
             // Process tokens by domain
             Iterator<String> domains = tokens.keys();
+
             while (domains.hasNext()) {
                 String domain = domains.next();
                 JSONArray domainTokens = tokens.getJSONArray(domain);
-                storeTokensForDomain(domain, domainTokens, prefs);
+                prefs.edit().putString(domain, domainTokens.toString()).apply(); // Store tokens per domain
+                Log.d(LOGTAG, "Stored " + tokens + " for " + domain);
             }
             Log.d(LOGTAG, "Tokens successfully stored for all domains");
+
         } catch (Exception e) {
             Log.d(LOGTAG, "Failed to parse tokens", e);
         }
     }
-
-    /**
-     * Stores the tokens associated to their domain in the apps shared preferences
-     *
-     * @param tokens The token to be stored for domain
-     * @param domain The domain tokens are associated to
-     */
-    private void storeTokensForDomain(String domain, JSONArray tokens, SharedPreferences prefs) throws JSONException {
-        // Get existing tokens for this domain (if any)
-        Set<String> tokenSet = new HashSet<>(prefs.getStringSet(domain, new HashSet<>()));
-        // Set<String> tokenSet = new HashSet<>();
-
-        // Add all new tokens from the JSONArray
-        for (int i = 0; i < tokens.length(); i++) {
-            tokenSet.add(tokens.getString(i));
-        }
-
-        // Store the updated set back into SharedPreferences
-        prefs.edit().putStringSet(domain, tokenSet).apply();
-        Log.d(LOGTAG, "Stored " + tokenSet + " for " + domain);
-    }
-
 
     /**
      * Launches a regular CustomTab if no Capabilities exist for domain, else attaches them to to the intent
@@ -117,28 +98,31 @@ public class TokenManager {
         // Build CustomTabsIntent
         CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
         CustomTabsIntent customTabsIntent = builder.build();
-        // customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); -> Make Firefox (GeckoView Example) default browser
+        // customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); -> Use if Firefox (Geckoview_Example) not default browser
 
-        attachCapsToIntent(customTabsIntent, uri); // getDomainName broken for name like 10.0.2.2
+        String caps = getTokensForDomain(uri); // getDomainName broken for name like 10.0.2.2
+        customTabsIntent.intent.putExtra("capability_tokens", caps);
         customTabsIntent.launchUrl(context, uri);
     }
 
     /**
      * Attaches Capabilities to Intent if available
-     * @param customTabsIntent Intent to include Capabilities to
      * @param uri to launch CustomTab for
      */
-    private void attachCapsToIntent(CustomTabsIntent customTabsIntent, Uri uri) {
+    private String getTokensForDomain(Uri uri) {
         SharedPreferences prefs = mContext.getSharedPreferences("cap_storage", MODE_PRIVATE);
         String domainName = getDomainName(uri);
         String caps = prefs.getString(domainName, null);
-        if (caps != null && !caps.isEmpty()) {
-            customTabsIntent.intent.putExtra("browser_capability", caps);
-            Log.v(LOGTAG, "Capability found for " + domainName);
-        } else {
+
+        if (caps == null || caps.isEmpty()) {
             Log.v(LOGTAG, "No capability found for " + domainName);
+            return "NO_CAPS";
         }
+
+        Log.v(LOGTAG, "Capability found for " + domainName);
+        return caps;
     }
+
     @SuppressLint("SetTextI18n")
     private String getDomainName(Uri uri) {
         String host = uri.getHost();
@@ -157,19 +141,54 @@ public class TokenManager {
             return builder.toString();
         }
 
-        for (Map.Entry<String, ?> entry : allCaps.entrySet()) {
-            builder.append("Domain: ").append(entry.getKey()).append("\n");
-            //noinspection unchecked
-            Set<String> tokens = (Set<String>) entry.getValue();
-            int count = 1;
-            for (String token : tokens) {
-                String compressedToken = token.substring(0, Math.min(40, token.length()));
-                builder.append("  Token ").append(count++).append(": ").append(compressedToken).append("...\n");
+        try {
+
+            for (Map.Entry<String, ?> entry : allCaps.entrySet()) {
+                builder.append("Domain: ").append(entry.getKey()).append("\n");
+                String tokensJson = (String) entry.getValue();
+                JSONArray tokens = new JSONArray(tokensJson);
+
+                for (int i = 0; i < tokens.length(); i++) {
+                    String token = tokens.getString(i);
+                    String compressedToken = token.substring(0, Math.min(30, token.length()));
+                    builder.append("\tToken ").append(i + 1).append(": ").append(compressedToken).append("...\n");
+                }
+
+                builder.append("\n");
             }
 
-            builder.append("\n");
+        } catch (Exception e) {
+            return "Parsing Error occured";
         }
 
         return builder.toString();
+    }
+
+    public String getSampleTokenJson(){
+        JSONObject tokensJsonObject = new JSONObject();
+
+        try {
+            // example.com tokens
+            JSONArray exampleTokens = new JSONArray();
+            exampleTokens.put("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example1.signature");
+            exampleTokens.put("eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImNhcCIsImlhdCI6MTUxNjIzOTAyMn0.example2.signature");
+            tokensJsonObject.put("example.com", exampleTokens);
+
+            // trusted.app.com tokens
+            JSONArray trustedTokens = new JSONArray();
+            trustedTokens.put("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.trusted1.signature");
+            trustedTokens.put("eyJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUxNjI0MDAyMn0.trusted2.signature");
+            tokensJsonObject.put("trusted.app.com", trustedTokens);
+
+            // analytics.thirdparty.net tokens
+            JSONArray analyticsTokens = new JSONArray();
+            analyticsTokens.put("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.analytics1.signature");
+            tokensJsonObject.put("analytics.thirdparty.net", analyticsTokens);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return tokensJsonObject.toString();
     }
 }
