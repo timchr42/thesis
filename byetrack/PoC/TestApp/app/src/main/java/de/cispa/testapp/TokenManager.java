@@ -17,10 +17,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 public class TokenManager {
     private static final String LOGTAG = "TokenManager";
@@ -68,6 +66,7 @@ public class TokenManager {
     };
 
     public void storeTokens(String tokenJson) {
+        mContext.getSharedPreferences("filled_cap_storage", MODE_PRIVATE); // create storage where filled in capabilities life
         SharedPreferences prefs = mContext.getSharedPreferences("cap_storage", MODE_PRIVATE);
         prefs.edit().clear().apply(); // Wipe data => no "old" tokens remain after update
 
@@ -100,26 +99,40 @@ public class TokenManager {
         CustomTabsIntent customTabsIntent = builder.build();
         // customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); -> Use if Firefox (Geckoview_Example) not default browser
 
-        String caps = getTokensForDomain(uri); // getDomainName broken for name like 10.0.2.2
-        customTabsIntent.intent.putExtra("capability_tokens", caps);
-        customTabsIntent.launchUrl(context, uri);
+        try {
+            String versionName = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
+            String domainName = getDomainName(uri);
+            String builder_caps = getTokensForDomain(domainName, "cap_storage");
+            String final_caps = getTokensForDomain(domainName, "final_caps");
+
+            customTabsIntent.intent.putExtra("capability_tokens", builder_caps);
+            customTabsIntent.intent.putExtra("final_caps", final_caps);
+            customTabsIntent.intent.putExtra("domain_name", domainName);
+            customTabsIntent.intent.putExtra("version_number", versionName);
+
+            customTabsIntent.launchUrl(context, uri);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
-     * Attaches Capabilities to Intent if available
-     * @param uri to launch CustomTab for
+     * Get Tokens for domain from different storage
+     *  cap_storage  -> "builder/fresh" tokens
+     *  final_caps   -> filled in tokens ready to be sent to webserver
+     *
+     * @param domainName to get tokens for
      */
-    private String getTokensForDomain(Uri uri) {
-        SharedPreferences prefs = mContext.getSharedPreferences("cap_storage", MODE_PRIVATE);
-        String domainName = getDomainName(uri);
+    private String getTokensForDomain(String domainName, String name) {
+        SharedPreferences prefs = mContext.getSharedPreferences(name, MODE_PRIVATE);
         String caps = prefs.getString(domainName, null);
 
         if (caps == null || caps.isEmpty()) {
-            Log.v(LOGTAG, "No capability found for " + domainName);
-            return "NO_CAPS";
+            Log.d(LOGTAG, "No capability found for " + domainName + " in " + name);
+            return ""; // Check if .isEmpty() if caps exist or not
         }
 
-        Log.v(LOGTAG, "Capability found for " + domainName);
+        Log.d(LOGTAG, "Capability found for " + domainName + " in " + name);
         return caps;
     }
 
