@@ -22,6 +22,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".TokenReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="org.mozilla.geckoview.CAPABILITY_TOKENS" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>

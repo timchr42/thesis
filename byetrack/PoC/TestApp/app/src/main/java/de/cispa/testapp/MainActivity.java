@@ -1,6 +1,9 @@
 package de.cispa.testapp;
 
+import static de.cispa.testapp.TokenManager.storeTokens;
+
 import android.annotation.SuppressLint;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,8 +19,10 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
     private static final String LOGTAG = "TestApp";
     private TextView statusText;
     public TextView capStorage;
-    private final Context mContext = MainActivity.this;
+    private Context mContext;
     private TokenManager mTokenManager;
+    private SharedPreferences prefs;
+    private SharedPreferences.OnSharedPreferenceChangeListener prefListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,7 +35,16 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         statusText = findViewById(R.id.debugOutput);
         capStorage = findViewById(R.id.capStorage);
 
+        mContext = getApplicationContext();
         mTokenManager = new TokenManager(mContext, this);
+
+        prefs = getSharedPreferences("cap_storage", MODE_PRIVATE);
+
+        prefListener = (sharedPrefs, key) -> {
+            // key = domain that changed
+            String allCaps = mTokenManager.displayCapabilities(sharedPrefs);
+            runOnUiThread(() -> capStorage.setText("Current Capabilities:\n\n" + allCaps));
+        };
 
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(new View.OnClickListener() {
@@ -38,8 +52,7 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
            @Override
            public void onClick(View v) {
                 String tokensJson = mTokenManager.getSampleTokenJson();
-                mTokenManager.storeTokens(tokensJson);
-                capStorage.setText("Current Capabilities: (storage test)\n\n" + mTokenManager.displayCapabilities());
+                storeTokens(v.getContext(), tokensJson);
            }
         });
 
@@ -64,6 +77,18 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
                 Log.d(LOGTAG, "CT to trusted domain launched");
             }
         });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        prefs.registerOnSharedPreferenceChangeListener(prefListener);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        prefs.unregisterOnSharedPreferenceChangeListener(prefListener);
     }
 
     @Override

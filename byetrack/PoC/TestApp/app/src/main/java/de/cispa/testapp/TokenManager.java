@@ -3,10 +3,7 @@ package de.cispa.testapp;
 import static android.content.Context.MODE_PRIVATE;
 
 import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
@@ -22,54 +19,21 @@ import java.util.Map;
 
 public class TokenManager {
     private static final String LOGTAG = "TokenManager";
-    private static final String ACTION = "org.mozilla.geckoview.CAPABILITY_TOKENS";
     private final Context mContext;
-    private boolean mReceiverRegistered = false;
     MyCallback myCallback;
 
     public TokenManager(Context mContext, MyCallback myCallback) {
         this.mContext = mContext;
         this.myCallback = myCallback;
-        registerReceiver();
     }
 
-    private void registerReceiver() {
-        if (!mReceiverRegistered) {
-            IntentFilter filter = new IntentFilter(ACTION);
-            mContext.registerReceiver(TokenReceiver, filter, Context.RECEIVER_EXPORTED);
-
-            mReceiverRegistered = true;
-            Log.d(LOGTAG, "TokenReceiver registered for action: " + ACTION);
-        }
-    }
-
-    private final BroadcastReceiver TokenReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String status = intent.getStringExtra("status");
-
-            if ("success".equals(status)) {
-                Log.d(LOGTAG, "Tokens received from Browser");
-
-                String tokenJson = intent.getStringExtra("capability_tokens");
-                // String timestamp = intent.getStringExtra("timestamp");
-                storeTokens(tokenJson);
-
-                // Display Tokens in Activity (Debug purposes)
-                myCallback.updateMyText("Current Capabilities:\n\n" + displayCapabilities());
-
-            } else {
-                String error = intent.getStringExtra("error_message");
-                Log.e(LOGTAG, "Token generation failed: " + error);
-            }
-        }
-    };
-
-    public void storeTokens(String tokenJson) {
-        mContext.getSharedPreferences("filled_cap_storage", MODE_PRIVATE); // create storage where filled in capabilities life
-        SharedPreferences prefs = mContext.getSharedPreferences("cap_storage", MODE_PRIVATE);
+    public static void storeTokens(Context context, String tokenJson) {
+        Context appContext = context.getApplicationContext();
+        appContext.getSharedPreferences("filled_cap_storage", MODE_PRIVATE); // create storage where filled in capabilities life
+        SharedPreferences prefs = appContext.getSharedPreferences("cap_storage", MODE_PRIVATE);
         prefs.edit().clear().apply(); // Wipe data => no "old" tokens remain after update
 
+        Log.d(LOGTAG, "Context in which tokens stored in: " + appContext);
         try {
             JSONObject tokens = new JSONObject(tokenJson);
 
@@ -80,7 +44,7 @@ public class TokenManager {
                 String domain = domains.next();
                 JSONArray domainTokens = tokens.getJSONArray(domain);
                 prefs.edit().putString(domain, domainTokens.toString()).apply(); // Store tokens per domain
-                Log.d(LOGTAG, "Stored " + tokens + " for " + domain);
+                Log.d(LOGTAG, "Stored for " + domain + ": " + domainTokens);
             }
             Log.d(LOGTAG, "Tokens successfully stored for all domains");
 
@@ -143,9 +107,8 @@ public class TokenManager {
         return host;
     }
 
-    public String displayCapabilities() {
-        SharedPreferences prefs = mContext.getSharedPreferences("cap_storage", MODE_PRIVATE);
-        Map<String, ?> allCaps = prefs.getAll();
+    public String displayCapabilities(SharedPreferences sharedPrefs) {
+        Map<String, ?> allCaps = sharedPrefs.getAll();
 
         StringBuilder builder = new StringBuilder();
 
