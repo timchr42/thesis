@@ -24,6 +24,7 @@
         </activity>
 
         <receiver
+            android:enabled="true"
             android:name=".TokenReceiver"
             android:exported="true">
             <intent-filter>

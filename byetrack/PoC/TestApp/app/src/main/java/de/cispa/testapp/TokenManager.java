@@ -19,34 +19,36 @@ import java.util.Map;
 
 public class TokenManager {
     private static final String LOGTAG = "TokenManager";
+    public static final String CAPSTORAGE = "cap_storage";
     private final Context mContext;
-    MyCallback myCallback;
+    static MyCallback myCallback;
 
     public TokenManager(Context mContext, MyCallback myCallback) {
         this.mContext = mContext;
-        this.myCallback = myCallback;
+        TokenManager.myCallback = myCallback;
     }
 
     public static void storeTokens(Context context, String tokenJson) {
         Context appContext = context.getApplicationContext();
-        appContext.getSharedPreferences("filled_cap_storage", MODE_PRIVATE); // create storage where filled in capabilities life
-        SharedPreferences prefs = appContext.getSharedPreferences("cap_storage", MODE_PRIVATE);
-        prefs.edit().clear().apply(); // Wipe data => no "old" tokens remain after update
+        SharedPreferences prefs = appContext.getSharedPreferences(CAPSTORAGE, MODE_PRIVATE);
 
-        Log.d(LOGTAG, "Context in which tokens stored in: " + appContext);
         try {
             JSONObject tokens = new JSONObject(tokenJson);
 
-            // Process tokens by domain
-            Iterator<String> domains = tokens.keys();
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.clear(); // wipe old set
 
+            Iterator<String> domains = tokens.keys();
             while (domains.hasNext()) {
                 String domain = domains.next();
                 JSONArray domainTokens = tokens.getJSONArray(domain);
-                prefs.edit().putString(domain, domainTokens.toString()).apply(); // Store tokens per domain
-                Log.d(LOGTAG, "Stored for " + domain + ": " + domainTokens);
+                editor.putString(domain, domainTokens.toString());
+                Log.d(LOGTAG, "Queued for " + domain + ": " + domainTokens);
             }
-            Log.d(LOGTAG, "Tokens successfully stored for all domains");
+
+            // IMPORTANT in BroadcastReceiver: block until written
+            boolean ok = editor.commit();
+            Log.d(LOGTAG, "Tokens stored commit=" + ok);
 
         } catch (Exception e) {
             Log.d(LOGTAG, "Failed to parse tokens", e);
@@ -107,14 +109,17 @@ public class TokenManager {
         return host;
     }
 
-    public String displayCapabilities(SharedPreferences sharedPrefs) {
+    public static void displayCapabilities(Context context) {
+        Context appContext = context.getApplicationContext();
+        SharedPreferences sharedPrefs = appContext.getSharedPreferences(CAPSTORAGE, MODE_PRIVATE);
         Map<String, ?> allCaps = sharedPrefs.getAll();
+
+        Log.d(LOGTAG, "App Context reading Tokens from: " + appContext);
 
         StringBuilder builder = new StringBuilder();
 
         if (allCaps.isEmpty()) {
             builder.append("(none stored)");
-            return builder.toString();
         }
 
         try {
@@ -134,10 +139,10 @@ public class TokenManager {
             }
 
         } catch (Exception e) {
-            return "Parsing Error occured";
+            myCallback.updateMyText("(Parsing Error occured)");
         }
 
-        return builder.toString();
+        myCallback.updateMyText("Current Capabilities:\n\n" + builder);
     }
 
     public String getSampleTokenJson(){

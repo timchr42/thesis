@@ -1,6 +1,7 @@
 package de.cispa.testapp;
 
-import static de.cispa.testapp.TokenManager.storeTokens;
+import static de.cispa.testapp.TokenManager.CAPSTORAGE;
+import static de.cispa.testapp.TokenManager.displayCapabilities;
 
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
@@ -21,8 +22,8 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
     public TextView capStorage;
     private Context mContext;
     private TokenManager mTokenManager;
-    private SharedPreferences prefs;
-    private SharedPreferences.OnSharedPreferenceChangeListener prefListener;
+    private SharedPreferences sharedPrefs;
+    private SharedPreferences.OnSharedPreferenceChangeListener sharedPrefsListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,21 +39,20 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         mContext = getApplicationContext();
         mTokenManager = new TokenManager(mContext, this);
 
-        prefs = getSharedPreferences("cap_storage", MODE_PRIVATE);
+        mContext.getSharedPreferences("filled_cap_storage", MODE_PRIVATE); // init storage where filled in capabilities life
 
-        prefListener = (sharedPrefs, key) -> {
-            // key = domain that changed
-            String allCaps = mTokenManager.displayCapabilities(sharedPrefs);
-            runOnUiThread(() -> capStorage.setText("Current Capabilities:\n\n" + allCaps));
-        };
+        sharedPrefs = getSharedPreferences(CAPSTORAGE, MODE_PRIVATE);
+        sharedPrefsListener = (sharedPrefs, key) -> displayCapabilities(this);
 
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(new View.OnClickListener() {
            @SuppressLint("SetTextI18n")
            @Override
            public void onClick(View v) {
-                String tokensJson = mTokenManager.getSampleTokenJson();
-                storeTokens(v.getContext(), tokensJson);
+               //String tokensJson = mTokenManager.getSampleTokenJson();
+               //storeTokens(v.getContext(), tokensJson);
+               // capStorage.setText("Current Capabilities:\n\n:" + displayCapabilities(v.getContext()));
+               displayCapabilities(v.getContext());
            }
         });
 
@@ -80,20 +80,21 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
     }
 
     @Override
+    public void updateMyText(String myString) {
+        capStorage.setText(myString);
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
-        prefs.registerOnSharedPreferenceChangeListener(prefListener);
+        sharedPrefs.registerOnSharedPreferenceChangeListener(sharedPrefsListener);
+        displayCapabilities(this);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        prefs.unregisterOnSharedPreferenceChangeListener(prefListener);
-    }
-
-    @Override
-    public void updateMyText(String myString) {
-        capStorage.setText(myString);
+        sharedPrefs.unregisterOnSharedPreferenceChangeListener(sharedPrefsListener);
     }
 
 }
