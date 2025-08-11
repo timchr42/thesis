@@ -1,6 +1,7 @@
 package de.cispa.testapp;
 
 import static android.content.Context.MODE_PRIVATE;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -76,9 +77,27 @@ public class TokenManager {
             customTabsIntent.intent.putExtra("domain_name", domainName);
             customTabsIntent.intent.putExtra("version_number", versionName);
 
+            customTabsIntent.intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
             customTabsIntent.launchUrl(context, uri);
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void modifyIntent(CustomTabsIntent customTabsIntent, Context context, Uri uri) {
+
+        try {
+            String versionName = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
+            String domainName = getDomainName(uri);
+            String builder_caps = getTokensForDomain(domainName, "cap_storage");
+            String final_caps = getTokensForDomain(domainName, "final_caps");
+
+            customTabsIntent.intent.putExtra("capability_tokens", builder_caps);
+            customTabsIntent.intent.putExtra("final_caps", final_caps);
+            customTabsIntent.intent.putExtra("domain_name", domainName);
+            customTabsIntent.intent.putExtra("version_number", versionName);
+        } catch (Exception e) {
+            Log.e(LOGTAG, "Error modifying CT Intent", e);
         }
     }
 
