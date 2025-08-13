@@ -2,6 +2,7 @@ package de.cispa.testapp;
 
 import static de.cispa.testapp.TokenManager.CAPSTORAGE;
 import static de.cispa.testapp.TokenManager.displayCapabilities;
+import static de.cispa.testapp.TokenManager.storeTokens;
 
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
@@ -42,17 +43,16 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         mContext.getSharedPreferences("filled_cap_storage", MODE_PRIVATE); // init storage where filled in capabilities life
 
         sharedPrefs = getSharedPreferences(CAPSTORAGE, MODE_PRIVATE);
-        sharedPrefsListener = (sharedPrefs, key) -> displayCapabilities(this);
+        sharedPrefsListener = (sharedPrefs, key) -> displayCapabilities();
 
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(new View.OnClickListener() {
            @SuppressLint("SetTextI18n")
            @Override
            public void onClick(View v) {
-               //String tokensJson = mTokenManager.getSampleTokenJson();
-               //storeTokens(v.getContext(), tokensJson);
-               // capStorage.setText("Current Capabilities:\n\n:" + displayCapabilities(v.getContext()));
-               displayCapabilities(v.getContext());
+               String tokensJson = mTokenManager.getSampleTokenJson();
+               storeTokens(tokensJson);
+               displayCapabilities();
            }
         });
 
@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
     protected void onStart() {
         super.onStart();
         sharedPrefs.registerOnSharedPreferenceChangeListener(sharedPrefsListener);
-        displayCapabilities(this);
+        displayCapabilities();
     }
 
     @Override

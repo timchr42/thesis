@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import static de.cispa.testapp.TokenManager.displayCapabilities;
 import static de.cispa.testapp.TokenManager.storeTokens;
 
 public class TokenReceiver extends BroadcastReceiver {
@@ -21,7 +20,7 @@ public class TokenReceiver extends BroadcastReceiver {
 
             String tokenJson = intent.getStringExtra("capability_tokens");
             // String timestamp = intent.getStringExtra("timestamp");
-            storeTokens(context, tokenJson);
+            storeTokens(tokenJson);
 
         } else {
             String error = intent.getStringExtra("error_message");

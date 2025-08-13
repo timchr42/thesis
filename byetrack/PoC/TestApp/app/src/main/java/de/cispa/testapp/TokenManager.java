@@ -21,16 +21,15 @@ import java.util.Map;
 public class TokenManager {
     private static final String LOGTAG = "TokenManager";
     public static final String CAPSTORAGE = "cap_storage";
-    private final Context mContext;
+    private static Context appContext;
     static MyCallback myCallback;
 
-    public TokenManager(Context mContext, MyCallback myCallback) {
-        this.mContext = mContext;
+    public TokenManager(Context appContext, MyCallback myCallback) {
+        TokenManager.appContext = appContext;
         TokenManager.myCallback = myCallback;
     }
 
-    public static void storeTokens(Context context, String tokenJson) {
-        Context appContext = context.getApplicationContext();
+    public static void storeTokens(String tokenJson) {
         SharedPreferences prefs = appContext.getSharedPreferences(CAPSTORAGE, MODE_PRIVATE);
 
         try {
@@ -69,35 +68,18 @@ public class TokenManager {
         try {
             String versionName = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
             String domainName = getDomainName(uri);
-            String builder_caps = getTokensForDomain(domainName, "cap_storage");
+            String builder_caps = getTokensForDomain(domainName, CAPSTORAGE);
             String final_caps = getTokensForDomain(domainName, "final_caps");
 
             customTabsIntent.intent.putExtra("capability_tokens", builder_caps);
             customTabsIntent.intent.putExtra("final_caps", final_caps);
             customTabsIntent.intent.putExtra("domain_name", domainName);
-            customTabsIntent.intent.putExtra("version_number", versionName);
+            customTabsIntent.intent.putExtra("version_name", versionName);
 
             customTabsIntent.intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
             customTabsIntent.launchUrl(context, uri);
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    public void modifyIntent(CustomTabsIntent customTabsIntent, Context context, Uri uri) {
-
-        try {
-            String versionName = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
-            String domainName = getDomainName(uri);
-            String builder_caps = getTokensForDomain(domainName, "cap_storage");
-            String final_caps = getTokensForDomain(domainName, "final_caps");
-
-            customTabsIntent.intent.putExtra("capability_tokens", builder_caps);
-            customTabsIntent.intent.putExtra("final_caps", final_caps);
-            customTabsIntent.intent.putExtra("domain_name", domainName);
-            customTabsIntent.intent.putExtra("version_number", versionName);
-        } catch (Exception e) {
-            Log.e(LOGTAG, "Error modifying CT Intent", e);
         }
     }
 
@@ -109,15 +91,16 @@ public class TokenManager {
      * @param domainName to get tokens for
      */
     private String getTokensForDomain(String domainName, String name) {
-        SharedPreferences prefs = mContext.getSharedPreferences(name, MODE_PRIVATE);
+        SharedPreferences prefs = appContext.getSharedPreferences(name, MODE_PRIVATE);
         String caps = prefs.getString(domainName, null);
 
         if (caps == null || caps.isEmpty()) {
             Log.d(LOGTAG, "No capability found for " + domainName + " in " + name);
             return ""; // Check if .isEmpty() if caps exist or not
+        } else {
+            Log.d(LOGTAG, "Capability found for " + domainName + " in " + name);
         }
 
-        Log.d(LOGTAG, "Capability found for " + domainName + " in " + name);
         return caps;
     }
 
@@ -128,8 +111,7 @@ public class TokenManager {
         return host;
     }
 
-    public static void displayCapabilities(Context context) {
-        Context appContext = context.getApplicationContext();
+    public static void displayCapabilities() {
         SharedPreferences sharedPrefs = appContext.getSharedPreferences(CAPSTORAGE, MODE_PRIVATE);
         Map<String, ?> allCaps = sharedPrefs.getAll();
 
@@ -172,7 +154,7 @@ public class TokenManager {
             JSONArray exampleTokens = new JSONArray();
             exampleTokens.put("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example1.signature");
             exampleTokens.put("eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImNhcCIsImlhdCI6MTUxNjIzOTAyMn0.example2.signature");
-            tokensJsonObject.put("example.com", exampleTokens);
+            tokensJsonObject.put("royaleapi.com", exampleTokens);
 
             // trusted.app.com tokens
             JSONArray trustedTokens = new JSONArray();
