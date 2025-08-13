@@ -29,4 +29,45 @@
       => Also interesting for optimitzaation of the capability system later on.
     }
 
+    \info{Major Problem: Android's Custom Tabs don’t preserve or expose the caller identity reliably => No way of retrieving the caller identity in the browser}
+
+    % Tried the following approaches:
+
+    % String callingPackage = null;
+
+    % // Method 1: getReferrer() - most reliable for modern Android (API 22+)
+    % if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+    %   Uri referrer = getReferrer();
+    %   if (referrer != null) {
+    %     if ("android-app".equals(referrer.getScheme())) {
+    %       callingPackage = referrer.getHost(); // Package name from android-app://packagename
+    %     } else {
+    %       callingPackage = referrer.toString(); // Full referrer URI
+    %     }
+    %   }
+    % }
+
+    % // Method 2: getCallingPackage() - fallback (often null for external intents)
+    % if (callingPackage == null) {
+    %   callingPackage = getCallingPackage();
+    % }
+
+    % // Method 3: Intent referrer extra (fallback)
+    % if (callingPackage == null && intent.hasExtra(Intent.EXTRA_REFERRER)) {
+    %   Uri referrerExtra = intent.getParcelableExtra(Intent.EXTRA_REFERRER);
+    %   if (referrerExtra != null && "android-app".equals(referrerExtra.getScheme())) {
+    %     callingPackage = referrerExtra.getHost();
+    %   }
+    % }
+
+    % // Method 4: Intent referrer name extra (another fallback)
+    % if (callingPackage == null && intent.hasExtra(Intent.EXTRA_REFERRER_NAME)) {
+    %   String referrerName = intent.getStringExtra(Intent.EXTRA_REFERRER_NAME);
+    %   if (referrerName != null && referrerName.startsWith("android-app://")) {
+    %     callingPackage = referrerName.substring("android-app://".length());
+    %   }
+    % }
+
+
+
 % ------------------------------------------------------------------
