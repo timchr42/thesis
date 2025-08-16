@@ -1,7 +1,7 @@
 package de.cispa.testapp;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static de.cispa.testapp.TokenManager.CAPSTORAGE;
-import static de.cispa.testapp.TokenManager.displayCapabilities;
 import static de.cispa.testapp.TokenManager.storeTokens;
 
 import android.annotation.SuppressLint;
@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.browser.customtabs.CustomTabsIntent;
 
 import android.content.Context;
 import android.net.Uri;
@@ -16,6 +17,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements MyCallback {
     private static final String LOGTAG = "TestApp";
@@ -50,9 +57,17 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
            @SuppressLint("SetTextI18n")
            @Override
            public void onClick(View v) {
-               String tokensJson = mTokenManager.getSampleTokenJson();
+               String tokensJson = createSampleTokenJson();
                storeTokens(tokensJson);
                displayCapabilities();
+
+               // Test lauching regular CT
+               String url = "https://royaleapi.com";
+               CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+               CustomTabsIntent customTabsIntent = builder.build();
+               customTabsIntent.intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+               customTabsIntent.intent.setPackage("com.android.chrome");
+               customTabsIntent.launchUrl(mContext, Uri.parse(url));
            }
         });
 
@@ -97,4 +112,68 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         sharedPrefs.unregisterOnSharedPreferenceChangeListener(sharedPrefsListener);
     }
 
+
+    public void displayCapabilities() {
+        SharedPreferences sharedPrefs = mContext.getSharedPreferences(CAPSTORAGE, MODE_PRIVATE);
+        Map<String, ?> allCaps = sharedPrefs.getAll();
+
+        Log.d(LOGTAG, "App Context reading Tokens from: " + mContext);
+
+        StringBuilder builder = new StringBuilder();
+
+        if (allCaps.isEmpty()) {
+            builder.append("(none stored)");
+        }
+
+        try {
+
+            for (Map.Entry<String, ?> entry : allCaps.entrySet()) {
+                builder.append("Domain: ").append(entry.getKey()).append("\n");
+                String tokensJson = (String) entry.getValue();
+                JSONArray tokens = new JSONArray(tokensJson);
+
+                for (int i = 0; i < tokens.length(); i++) {
+                    String token = tokens.getString(i);
+                    String compressedToken = token.substring(0, Math.min(30, token.length()));
+                    builder.append("\tToken ").append(i + 1).append(": ").append(compressedToken).append("...\n");
+                }
+
+                builder.append("\n");
+            }
+
+        } catch (Exception e) {
+            updateMyText("(Parsing Error occured)");
+        }
+
+        updateMyText("Current Capabilities:\n\n" + builder);
+    }
+
+
+    public String createSampleTokenJson(){
+        JSONObject tokensJsonObject = new JSONObject();
+
+        try {
+            // example.com tokens
+            JSONArray exampleTokens = new JSONArray();
+            exampleTokens.put("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example1.signature");
+            exampleTokens.put("eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImNhcCIsImlhdCI6MTUxNjIzOTAyMn0.example2.signature");
+            tokensJsonObject.put("royaleapi.com", exampleTokens);
+
+            // trusted.app.com tokens
+            JSONArray trustedTokens = new JSONArray();
+            trustedTokens.put("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.trusted1.signature");
+            trustedTokens.put("eyJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUxNjI0MDAyMn0.trusted2.signature");
+            tokensJsonObject.put("trusted.app.com", trustedTokens);
+
+            // analytics.thirdparty.net tokens
+            JSONArray analyticsTokens = new JSONArray();
+            analyticsTokens.put("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.analytics1.signature");
+            tokensJsonObject.put("analytics.thirdparty.net", analyticsTokens);
+
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+        return tokensJsonObject.toString();
+    }
 }

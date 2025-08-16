@@ -34,4 +34,8 @@
 
     </application>
 
+    <queries>
+        <provider android:authorities="org.mozilla.geckoview_example.callerid" />
+    </queries>
+
 </manifest>

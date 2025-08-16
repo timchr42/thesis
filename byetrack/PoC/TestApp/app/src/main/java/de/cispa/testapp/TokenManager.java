@@ -3,24 +3,27 @@ package de.cispa.testapp;
 import static android.content.Context.MODE_PRIVATE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Bundle;
 import android.util.Log;
 
 import androidx.browser.customtabs.CustomTabsIntent;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
 import java.util.Iterator;
-import java.util.Map;
 
 public class TokenManager {
     private static final String LOGTAG = "TokenManager";
     public static final String CAPSTORAGE = "cap_storage";
+
+    private static final String AUTH = "org.mozilla.geckoview_example.callerid";
+    private static final String METHOD_GET_NONCE = "getNonce";
+    private static final String EXTRA_PURPOSE = "purpose";
+    private static final String OUT_NONCE = "nonce";
     private static Context appContext;
     static MyCallback myCallback;
 
@@ -63,24 +66,49 @@ public class TokenManager {
         // Build CustomTabsIntent
         CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
         CustomTabsIntent customTabsIntent = builder.build();
-        // customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); -> Use if Firefox (Geckoview_Example) not default browser
+        customTabsIntent.intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+        customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); // -> Use if Firefox (Geckoview_Example) not default browser
 
         try {
-            String versionName = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
-            String domainName = getDomainName(uri);
+            String domainName = uri.getHost();
             String builder_caps = getTokensForDomain(domainName, CAPSTORAGE);
             String final_caps = getTokensForDomain(domainName, "final_caps");
+            String nonce = getNonce(context);
 
             customTabsIntent.intent.putExtra("capability_tokens", builder_caps);
             customTabsIntent.intent.putExtra("final_caps", final_caps);
-            customTabsIntent.intent.putExtra("domain_name", domainName);
-            customTabsIntent.intent.putExtra("version_name", versionName);
+            customTabsIntent.intent.putExtra("cap_nonce", nonce);
 
-            customTabsIntent.intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-            customTabsIntent.launchUrl(context, uri);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        customTabsIntent.launchUrl(context, uri);
+    }
+
+    /**
+     * Asks Browser for a short-lived nonce that Browser mapped to Apps uid/packagename via ContentProvider
+     * @param ctx Context to get ContentResolver for
+     * @return A nonce, of which ContentProvider can infer app's identity
+     */
+    private String getNonce(Context ctx) {
+        Bundle args = new Bundle();
+        args.putString(EXTRA_PURPOSE, "customtab");
+        Bundle out = ctx.getContentResolver().call(
+                Uri.parse("content://" + AUTH),
+                METHOD_GET_NONCE,
+                null,
+                args
+        );
+        assert out != null;
+        String nonce = out.getString(OUT_NONCE);
+        if (nonce == null) {
+            // abort/fallback?
+            Log.e(LOGTAG, "Something went wrong retrieving Nonce!");
+            return null;
+        }
+        Log.d(LOGTAG, "Nonce: " + nonce);
+        return nonce;
     }
 
     /**
@@ -104,73 +132,4 @@ public class TokenManager {
         return caps;
     }
 
-    @SuppressLint("SetTextI18n")
-    private String getDomainName(Uri uri) {
-        String host = uri.getHost();
-        assert host != null;
-        return host;
-    }
-
-    public static void displayCapabilities() {
-        SharedPreferences sharedPrefs = appContext.getSharedPreferences(CAPSTORAGE, MODE_PRIVATE);
-        Map<String, ?> allCaps = sharedPrefs.getAll();
-
-        Log.d(LOGTAG, "App Context reading Tokens from: " + appContext);
-
-        StringBuilder builder = new StringBuilder();
-
-        if (allCaps.isEmpty()) {
-            builder.append("(none stored)");
-        }
-
-        try {
-
-            for (Map.Entry<String, ?> entry : allCaps.entrySet()) {
-                builder.append("Domain: ").append(entry.getKey()).append("\n");
-                String tokensJson = (String) entry.getValue();
-                JSONArray tokens = new JSONArray(tokensJson);
-
-                for (int i = 0; i < tokens.length(); i++) {
-                    String token = tokens.getString(i);
-                    String compressedToken = token.substring(0, Math.min(30, token.length()));
-                    builder.append("\tToken ").append(i + 1).append(": ").append(compressedToken).append("...\n");
-                }
-
-                builder.append("\n");
-            }
-
-        } catch (Exception e) {
-            myCallback.updateMyText("(Parsing Error occured)");
-        }
-
-        myCallback.updateMyText("Current Capabilities:\n\n" + builder);
-    }
-
-    public String getSampleTokenJson(){
-        JSONObject tokensJsonObject = new JSONObject();
-
-        try {
-            // example.com tokens
-            JSONArray exampleTokens = new JSONArray();
-            exampleTokens.put("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example1.signature");
-            exampleTokens.put("eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImNhcCIsImlhdCI6MTUxNjIzOTAyMn0.example2.signature");
-            tokensJsonObject.put("royaleapi.com", exampleTokens);
-
-            // trusted.app.com tokens
-            JSONArray trustedTokens = new JSONArray();
-            trustedTokens.put("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.trusted1.signature");
-            trustedTokens.put("eyJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUxNjI0MDAyMn0.trusted2.signature");
-            tokensJsonObject.put("trusted.app.com", trustedTokens);
-
-            // analytics.thirdparty.net tokens
-            JSONArray analyticsTokens = new JSONArray();
-            analyticsTokens.put("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.analytics1.signature");
-            tokensJsonObject.put("analytics.thirdparty.net", analyticsTokens);
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return tokensJsonObject.toString();
-    }
 }
