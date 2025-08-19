@@ -6,9 +6,6 @@ import static de.cispa.testapp.DebugHelp.displayWildcardTokens;
 import static de.cispa.testapp.DebugHelp.generateExampleToken;
 import static de.cispa.testapp.TokenManager.storeTokens;
 
-import static de.cispa.testapp.TokenManager.storage_final_tokens;
-import static de.cispa.testapp.TokenManager.storage_wildcard_tokens;
-
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
@@ -27,6 +24,8 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
     public TextView finalTokensStored;
     private Context mContext;
     private TokenManager mTokenManager;
+    public static SharedPreferences wildcardPrefs;
+    public static SharedPreferences finalPrefs;
     private SharedPreferences.OnSharedPreferenceChangeListener wildcard_sharedPrefsListener;
     private SharedPreferences.OnSharedPreferenceChangeListener final_sharedPrefsListener;
 
@@ -42,7 +41,10 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         finalTokensStored = findViewById(R.id.finalTokensStored);
 
         mContext = getApplicationContext();
-        mTokenManager = new TokenManager(mContext);
+        mTokenManager = new TokenManager();
+
+        wildcardPrefs = mContext.getSharedPreferences(TokenManager.CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
+        finalPrefs = mContext.getSharedPreferences(TokenManager.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
 
         wildcard_sharedPrefsListener = (sharedPrefs, key) -> displayWildcardTokens(this);
         final_sharedPrefsListener = (sharedPrefs, key) -> displayFinalTokens(this);
@@ -50,10 +52,10 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(v -> {
             String tokensJson = createSampleTokenJson();
-            storeTokens(tokensJson, storage_wildcard_tokens);
+            storeTokens(tokensJson, wildcardPrefs);
 
             String example_final_in_app_token = generateExampleToken().toString();
-            storeTokens(example_final_in_app_token, storage_final_tokens);
+            storeTokens(example_final_in_app_token, finalPrefs);
 
             displayWildcardTokens(this);
             displayFinalTokens(this);
@@ -97,8 +99,8 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
     @Override
     protected void onStart() {
         super.onStart();
-        storage_wildcard_tokens.registerOnSharedPreferenceChangeListener(wildcard_sharedPrefsListener);
-        storage_final_tokens.registerOnSharedPreferenceChangeListener(final_sharedPrefsListener);
+        wildcardPrefs.registerOnSharedPreferenceChangeListener(wildcard_sharedPrefsListener);
+        finalPrefs.registerOnSharedPreferenceChangeListener(final_sharedPrefsListener);
         displayWildcardTokens(this);
         displayFinalTokens(this);
     }
@@ -106,8 +108,8 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
     @Override
     protected void onStop() {
         super.onStop();
-        storage_wildcard_tokens.unregisterOnSharedPreferenceChangeListener(wildcard_sharedPrefsListener);
-        storage_final_tokens.unregisterOnSharedPreferenceChangeListener(final_sharedPrefsListener);
+        wildcardPrefs.unregisterOnSharedPreferenceChangeListener(wildcard_sharedPrefsListener);
+        finalPrefs.unregisterOnSharedPreferenceChangeListener(final_sharedPrefsListener);
     }
 
 }

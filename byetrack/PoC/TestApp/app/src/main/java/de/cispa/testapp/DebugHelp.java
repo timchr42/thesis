@@ -1,7 +1,7 @@
 package de.cispa.testapp;
 
-import static de.cispa.testapp.TokenManager.storage_final_tokens;
-import static de.cispa.testapp.TokenManager.storage_wildcard_tokens;
+import static de.cispa.testapp.MainActivity.finalPrefs;
+import static de.cispa.testapp.MainActivity.wildcardPrefs;
 
 import android.content.SharedPreferences;
 import android.util.Log;
@@ -25,13 +25,13 @@ public final class DebugHelp {
     private static final String SECRET_KEY = "super-secret-key";
 
     public static void displayFinalTokens(MyCallback myCallback) {
-        String out = displayCapabilities(storage_final_tokens);
+        String out = displayCapabilities(finalPrefs);
         myCallback.updateFinalTokens("Current Final Tokens:\n\n" + out);
     }
 
 
     public static void displayWildcardTokens(MyCallback myCallback) {
-        String out = displayCapabilities(storage_wildcard_tokens);
+        String out = displayCapabilities(wildcardPrefs);
         myCallback.updateWildcardTokens("Current Wildcard Tokens:\n\n" + out);
     }
     private static String displayCapabilities(SharedPreferences sharedPrefs) {

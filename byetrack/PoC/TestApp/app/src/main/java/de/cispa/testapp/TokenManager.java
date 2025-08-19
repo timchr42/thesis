@@ -1,6 +1,5 @@
 package de.cispa.testapp;
 
-import static android.content.Context.MODE_PRIVATE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import android.content.Context;
@@ -25,13 +24,7 @@ public class TokenManager {
     private static final String METHOD_GET_NONCE = "getNonce";
     private static final String EXTRA_PURPOSE = "purpose";
     private static final String OUT_NONCE = "nonce";
-    public static SharedPreferences storage_wildcard_tokens;
-    public static SharedPreferences storage_final_tokens;
 
-    public TokenManager(Context appContext) {
-        storage_wildcard_tokens = appContext.getSharedPreferences(CAPSTORAGE_BUILDER, MODE_PRIVATE);
-        storage_final_tokens = appContext.getSharedPreferences(CAPSTORAGE_FINAL, MODE_PRIVATE);
-    }
 
     public static void storeTokens(String tokenJson, SharedPreferences prefs) {
 
@@ -71,8 +64,14 @@ public class TokenManager {
 
         try {
             String domainName = uri.getHost();
-            String wildcardTokens = storage_wildcard_tokens.getString(domainName, "");
-            String finalTokens = storage_final_tokens.getString(domainName, "");
+            Context appCtx = context.getApplicationContext();
+            // Get prefs on demand (no statics)
+            SharedPreferences wildcardPrefs =
+                    appCtx.getSharedPreferences(TokenManager.CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
+            SharedPreferences finalPrefs =
+                    appCtx.getSharedPreferences(TokenManager.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
+            String wildcardTokens = wildcardPrefs.getString(domainName, "");
+            String finalTokens = finalPrefs.getString(domainName, "");
             String nonce = getNonce(context);
 
             customTabsIntent.intent.putExtra("capability_tokens", wildcardTokens);
