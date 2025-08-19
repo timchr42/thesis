@@ -18,22 +18,22 @@ import java.util.Iterator;
 
 public class TokenManager {
     private static final String LOGTAG = "TokenManager";
-    public static final String CAPSTORAGE = "cap_storage";
+    public static final String CAPSTORAGE_BUILDER = "wildcard_token";
+    public static final String CAPSTORAGE_FINAL = "final_token";
 
     private static final String AUTH = "org.mozilla.geckoview_example.callerid";
     private static final String METHOD_GET_NONCE = "getNonce";
     private static final String EXTRA_PURPOSE = "purpose";
     private static final String OUT_NONCE = "nonce";
-    private static Context appContext;
-    static MyCallback myCallback;
+    public static SharedPreferences storage_wildcard_tokens;
+    public static SharedPreferences storage_final_tokens;
 
-    public TokenManager(Context appContext, MyCallback myCallback) {
-        TokenManager.appContext = appContext;
-        TokenManager.myCallback = myCallback;
+    public TokenManager(Context appContext) {
+        storage_wildcard_tokens = appContext.getSharedPreferences(CAPSTORAGE_BUILDER, MODE_PRIVATE);
+        storage_final_tokens = appContext.getSharedPreferences(CAPSTORAGE_FINAL, MODE_PRIVATE);
     }
 
-    public static void storeTokens(String tokenJson) {
-        SharedPreferences prefs = appContext.getSharedPreferences(CAPSTORAGE, MODE_PRIVATE);
+    public static void storeTokens(String tokenJson, SharedPreferences prefs) {
 
         try {
             JSONObject tokens = new JSONObject(tokenJson);
@@ -71,13 +71,16 @@ public class TokenManager {
 
         try {
             String domainName = uri.getHost();
-            String builder_caps = getTokensForDomain(domainName, CAPSTORAGE);
-            String final_caps = getTokensForDomain(domainName, "final_caps");
+            String wildcardTokens = storage_wildcard_tokens.getString(domainName, "");
+            String finalTokens = storage_final_tokens.getString(domainName, "");
             String nonce = getNonce(context);
 
-            customTabsIntent.intent.putExtra("capability_tokens", builder_caps);
-            customTabsIntent.intent.putExtra("final_caps", final_caps);
+            customTabsIntent.intent.putExtra("capability_tokens", wildcardTokens);
+            customTabsIntent.intent.putExtra("final_caps", finalTokens);
             customTabsIntent.intent.putExtra("cap_nonce", nonce);
+
+            Log.d(LOGTAG, "wildcard Tokens: " + wildcardTokens);
+            Log.d(LOGTAG, "final Tokens: " + finalTokens);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -109,27 +112,6 @@ public class TokenManager {
         }
         Log.d(LOGTAG, "Nonce: " + nonce);
         return nonce;
-    }
-
-    /**
-     * Get Tokens for domain from different storage
-     *  cap_storage  -> "builder/fresh" tokens
-     *  final_caps   -> filled in tokens ready to be sent to webserver
-     *
-     * @param domainName to get tokens for
-     */
-    private String getTokensForDomain(String domainName, String name) {
-        SharedPreferences prefs = appContext.getSharedPreferences(name, MODE_PRIVATE);
-        String caps = prefs.getString(domainName, null);
-
-        if (caps == null || caps.isEmpty()) {
-            Log.d(LOGTAG, "No capability found for " + domainName + " in " + name);
-            return ""; // Check if .isEmpty() if caps exist or not
-        } else {
-            Log.d(LOGTAG, "Capability found for " + domainName + " in " + name);
-        }
-
-        return caps;
     }
 
 }

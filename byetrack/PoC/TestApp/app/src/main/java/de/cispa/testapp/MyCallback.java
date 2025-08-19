@@ -1,5 +1,7 @@
 package de.cispa.testapp;
 
 public interface MyCallback {
-    public void updateMyText(String myString);
+    void updateWildcardTokens(String myString);
+
+    void updateFinalTokens(String myString);
 }
