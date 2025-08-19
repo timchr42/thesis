@@ -74,8 +74,8 @@ public class TokenManager {
             String finalTokens = finalPrefs.getString(domainName, "");
             String nonce = getNonce(context);
 
-            customTabsIntent.intent.putExtra("capability_tokens", wildcardTokens);
-            customTabsIntent.intent.putExtra("final_caps", finalTokens);
+            customTabsIntent.intent.putExtra("wildcard_tokens", wildcardTokens);
+            customTabsIntent.intent.putExtra("final_tokens", finalTokens);
             customTabsIntent.intent.putExtra("cap_nonce", nonce);
 
             Log.d(LOGTAG, "wildcard Tokens: " + wildcardTokens);
