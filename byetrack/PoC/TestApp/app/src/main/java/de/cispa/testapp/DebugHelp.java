@@ -167,19 +167,18 @@ public final class DebugHelp {
         return json;
     }
 
-    public static JSONObject generateExampleToken() {
+    public static JSONObject generateExampleToken(String domainName) {
         try {
-            String domain = "royaleapi.com";
             String cname = "login";
             String cval = "abctest123";
             String jarType = "private";
             String packageName = "de.cispa.testapp";
             String versionName = "1.0";
             String rights = "R";
-            String token = generateSingleToken(domain, cname, cval, jarType, packageName, versionName, rights);
+            String token = generateSingleToken(domainName, cname, cval, jarType, packageName, versionName, rights);
             Map<String, List<String>> tokensByDomain = new HashMap<>();
-            tokensByDomain.putIfAbsent(domain, new ArrayList<>());
-            Objects.requireNonNull(tokensByDomain.get(domain)).add(token);
+            tokensByDomain.putIfAbsent(domainName, new ArrayList<>());
+            Objects.requireNonNull(tokensByDomain.get(domainName)).add(token);
             return tokensMapToJson(tokensByDomain);
         } catch (Exception e) {
             throw new RuntimeException(e);

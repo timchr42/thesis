@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
             String tokensJson = createSampleTokenJson();
             storeTokens(tokensJson, wildcardPrefs);
 
-            String example_final_in_app_token = generateExampleToken().toString();
+            String example_final_in_app_token = generateExampleToken("10.0.2.2").toString();
             storeTokens(example_final_in_app_token, finalPrefs);
 
             displayWildcardTokens(this);
@@ -71,7 +71,8 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
 
         // Simulate launching CT with capability (Note: Firefox does not support TWA)
         launchUntrustedUrl.setOnClickListener(v -> {
-            String url = "http://10.0.2.2/"; // examplecorp.de -> 10.0.2.2 on emulator
+            // String url = "http://10.0.2.2/"; // examplecorp.de -> 10.0.2.2 on emulator
+            String url = "http://10.0.2.2:8082/"; // mitmproxy url
             mTokenManager.launchUrlMod(mContext, Uri.parse(url));
 
             Log.d(LOGTAG, "CT to untrusted domain launched");
