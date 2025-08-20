@@ -66,6 +66,28 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/app_name" />
 
+    <Button
+        android:id="@+id/button_first"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="View Ad (TWA)"
+        app:layout_constraintTop_toBottomOf="@id/tracking_website"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/button_second"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <Button
+        android:id="@+id/button_second"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="View Ad (CT)"
+        app:layout_constraintTop_toBottomOf="@id/tracking_website"
+        app:layout_constraintStart_toEndOf="@id/button_first"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
     <EditText
         android:id="@+id/tracking_website"
         android:layout_height="wrap_content"
@@ -78,13 +100,4 @@
         app:layout_constraintTop_toBottomOf="@id/textview_second"
         android:inputType="text" />
 
-    <Button
-        android:id="@+id/button_first"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="View Ad"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tracking_website" />
 </androidx.constraintlayout.widget.ConstraintLayout>

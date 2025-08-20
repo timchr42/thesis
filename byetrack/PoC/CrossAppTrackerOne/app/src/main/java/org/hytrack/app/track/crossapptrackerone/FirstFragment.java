@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.browser.trusted.TrustedWebActivityIntentBuilder;
 import androidx.fragment.app.Fragment;
 
@@ -90,6 +91,27 @@ public class FirstFragment extends Fragment {
                 //intent.setPackage("org.hytrack.app.track.crossapptrackerone");
                 new TwaLauncher(getContext()).launch(builder, null, null, null);
 
+            }
+        });
+
+        binding.buttonSecond.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Use same data as for TWA
+                String user_url = binding.trackingWebsite.getText().toString();
+                String appName = binding.appName.getText().toString();
+                String storedCookie = sharedPref.getString("c", "");
+                String url = user_url + "?hide=1&demo=1&app=" + appName + "&s=trackmeplsone";
+                if(binding.toggle.isChecked()) url += "&c=" + storedCookie;
+                Log.w("CTT", url);
+                Uri LAUNCH_URI = Uri.parse(url);
+
+                // Instead of launching TWA, launch CT (as TWA not supported by Firefox (Gecko)
+                CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+                CustomTabsIntent customTabsIntent = builder.build();
+                customTabsIntent.intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); // simple version of modified firefox browser
+                customTabsIntent.launchUrl(getContext(), LAUNCH_URI);
             }
         });
     }
