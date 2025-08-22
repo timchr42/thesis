@@ -10,11 +10,11 @@
   },
   "wildcard": {
     "global": [
-      "example.com",
+      "royaleapi.com",
       "*.trustedpartner.com"
     ],
     "private": [
-      "ad.com",
+      "10.0.2.2",
       "tracker.de"
     ]
   }
