@@ -1,0 +1,3 @@
+[submodule "byetrack/PoC/FirefoxCapabilityMod/firefox-src"]
+	path = byetrack/PoC/FirefoxCapabilityMod/firefox-src
+	url = https://github.com/timchr42/firefox
