@@ -164,14 +164,15 @@ public class InstallerActivity extends AppCompatActivity {
 
             Intent intent = new Intent("org.mozilla.geckoview.POLICY_TRANSMISSION");
 
-            intent.setPackage("org.mozilla.geckoview_example"); // Package name of modified general Firefox browser
+            intent.setPackage("org.mozilla.geckoview_example") // Package name of modified general Firefox browser
+                .addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
             // Information necessary for generating CapTokens
             intent.putExtra("package_name", packageName);
             intent.putExtra("version_number", getAppVersionName(packageName));
             intent.putExtra("policy_json", policy.toString());
 
             sendBroadcast(intent);
-            Log.d(LOGTAG, "Policy sent to Browser");
+            Log.d(LOGTAG, "Policy sent to Browser: " + policy);
 
         } catch (PackageManager.NameNotFoundException e) {
             statusText.setText("Target app not installed.");

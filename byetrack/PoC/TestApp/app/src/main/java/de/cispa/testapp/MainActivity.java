@@ -1,10 +1,8 @@
 package de.cispa.testapp;
 
-import static de.cispa.testapp.DebugHelp.createSampleTokenJson;
+import static de.cispa.testapp.DebugHelp.clearTokenStorage;
 import static de.cispa.testapp.DebugHelp.displayFinalTokens;
 import static de.cispa.testapp.DebugHelp.displayWildcardTokens;
-import static de.cispa.testapp.DebugHelp.generateExampleToken;
-import static de.cispa.testapp.TokenManager.storeTokens;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -51,12 +49,7 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
 
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(v -> {
-            String tokensJson = createSampleTokenJson();
-            storeTokens(tokensJson, wildcardPrefs);
-
-            String example_final_in_app_token = generateExampleToken("10.0.2.2").toString();
-            storeTokens(example_final_in_app_token, finalPrefs);
-
+            clearTokenStorage(finalPrefs);
             displayWildcardTokens(this);
             displayFinalTokens(this);
 

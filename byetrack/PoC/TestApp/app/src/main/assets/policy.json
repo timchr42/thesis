@@ -1,8 +1,7 @@
 {
   "predefined": {
     "global": {
-      "myapp.com": ["auth_cookie", "another_cookie"],
-      "anotherapp.com": ["login_token"]
+      "royaleapi.com": ["__royaleapi_session_v2", "another_cookie"]
     },
     "private": {
       "schnellnochraviolimachen.de": ["named_cookie"]
@@ -10,12 +9,10 @@
   },
   "wildcard": {
     "global": [
-      "royaleapi.com",
-      "*.trustedpartner.com"
+      "royaleapi.com"
     ],
     "private": [
-      "10.0.2.2",
-      "tracker.de"
+      "10.0.2.2"
     ]
   }
 }

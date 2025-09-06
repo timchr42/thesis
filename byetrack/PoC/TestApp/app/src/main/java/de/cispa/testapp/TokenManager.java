@@ -26,13 +26,10 @@ public class TokenManager {
     private static final String OUT_NONCE = "nonce";
 
 
-    public static void storeTokens(String tokenJson, SharedPreferences prefs) {
+    private static boolean storeTokens(String tokenJson, SharedPreferences.Editor editor) {
 
         try {
             JSONObject tokens = new JSONObject(tokenJson);
-
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.clear(); // wipe old set
 
             Iterator<String> domains = tokens.keys();
             while (domains.hasNext()) {
@@ -42,12 +39,83 @@ public class TokenManager {
                 Log.d(LOGTAG, "Queued for " + domain + ": " + domainTokens);
             }
 
-            // IMPORTANT in BroadcastReceiver: block until written
-            boolean ok = editor.commit();
-            Log.d(LOGTAG, "Tokens stored commit=" + ok);
+            return editor.commit();
 
         } catch (Exception e) {
             Log.d(LOGTAG, "Failed to parse tokens", e);
+            return false;
+        }
+    }
+
+    public static void storeWildcardTokens(String tokenJson, Context context) {
+        SharedPreferences storage_wildcard =
+                context.getSharedPreferences(CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor_wildcard = storage_wildcard.edit();
+        editor_wildcard.clear().apply(); // clear tokens, so in case of policy change, only new tokens will  be stored!
+        context.getSharedPreferences(CAPSTORAGE_FINAL, Context.MODE_PRIVATE).edit().clear().apply(); // also clear finals
+
+        boolean success = storeTokens(tokenJson, editor_wildcard);
+        Log.i(LOGTAG, "Wildcard Tokens stored commit=" + success);
+    }
+
+    public static void storeFinalTokens(String tokenJson, Context context) {
+        SharedPreferences storage_final =
+                context.getSharedPreferences(TokenManager.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = storage_final.edit();
+
+        final JSONObject tokens;
+        try {
+            tokens = new JSONObject(tokenJson);
+        } catch (Exception e) {
+            Log.e(LOGTAG, "Failed to parse tokenJson as JSONObject", e);
+            return;
+        }
+
+        try {
+            Iterator<String> domains = tokens.keys();
+            while (domains.hasNext()) {
+                String domain = domains.next();
+
+                // incoming list for this domain
+                JSONArray incomingTokens = tokens.optJSONArray(domain);
+                if (incomingTokens == null) {
+                    Log.w(LOGTAG, "Value for domain '" + domain + "' is not a JSON array; skipping");
+                    continue;
+                }
+
+                String existingStr = storage_final.getString(domain, "[]");
+                if (existingStr.trim().isEmpty()) existingStr = "[]";
+
+                JSONArray existingTokens;
+                try {
+                    existingTokens = new JSONArray(existingStr);
+                } catch (Exception ex) {
+                    Log.w(LOGTAG, "Corrupt stored tokens for " + domain + " -> resetting to empty array", ex);
+                    existingTokens = new JSONArray();
+                }
+
+                // Optional: avoid duplicates by value (stringified)
+                java.util.LinkedHashSet<String> seen = new java.util.LinkedHashSet<>();
+                for (int i = 0; i < existingTokens.length(); i++) {
+                    seen.add(String.valueOf(existingTokens.get(i)));
+                }
+                for (int i = 0; i < incomingTokens.length(); i++) {
+                    Object v = incomingTokens.get(i);
+                    String key = String.valueOf(v);
+                    if (seen.add(key)) {
+                        existingTokens.put(v);
+                    }
+                }
+
+                // Persist merged array
+                editor.putString(domain, existingTokens.toString());
+                Log.d(LOGTAG, "Queued for " + domain + ": " + existingTokens);
+            }
+
+            boolean success = editor.commit(); // or editor.apply();
+            Log.i(LOGTAG, "Final Tokens stored commit=" + success);
+        } catch (Exception e) {
+            Log.e(LOGTAG, "Failed to merge/store tokens", e);
         }
     }
 
