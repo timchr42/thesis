@@ -94,17 +94,9 @@ public class TokenManager {
                     existingTokens = new JSONArray();
                 }
 
-                // Optional: avoid duplicates by value (stringified)
-                java.util.LinkedHashSet<String> seen = new java.util.LinkedHashSet<>();
-                for (int i = 0; i < existingTokens.length(); i++) {
-                    seen.add(String.valueOf(existingTokens.get(i)));
-                }
                 for (int i = 0; i < incomingTokens.length(); i++) {
                     Object v = incomingTokens.get(i);
-                    String key = String.valueOf(v);
-                    if (seen.add(key)) {
-                        existingTokens.put(v);
-                    }
+                    existingTokens.put(v);
                 }
 
                 // Persist merged array
