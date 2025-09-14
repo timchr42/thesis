@@ -44,14 +44,14 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         wildcardPrefs = mContext.getSharedPreferences(TokenManager.CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
         finalPrefs = mContext.getSharedPreferences(TokenManager.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
 
-        wildcard_sharedPrefsListener = (sharedPrefs, key) -> displayWildcardTokens(this);
-        final_sharedPrefsListener = (sharedPrefs, key) -> displayFinalTokens(this);
+        wildcard_sharedPrefsListener = (sharedPrefs, key) -> wildcardTokensStored.setText(displayWildcardTokens());
+        final_sharedPrefsListener = (sharedPrefs, key) -> finalTokensStored.setText(displayFinalTokens());
 
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(v -> {
             clearTokenStorage(finalPrefs);
-            displayWildcardTokens(this);
-            displayFinalTokens(this);
+            wildcardTokensStored.setText(displayWildcardTokens());
+            finalTokensStored.setText(displayFinalTokens());
 
             // Test lauching regular CT
             //String url = "https://royaleapi.com";
@@ -95,8 +95,8 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         super.onStart();
         wildcardPrefs.registerOnSharedPreferenceChangeListener(wildcard_sharedPrefsListener);
         finalPrefs.registerOnSharedPreferenceChangeListener(final_sharedPrefsListener);
-        displayWildcardTokens(this);
-        displayFinalTokens(this);
+        wildcardTokensStored.setText(displayWildcardTokens());
+        finalTokensStored.setText(displayFinalTokens());
     }
 
     @Override

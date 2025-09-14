@@ -9,15 +9,15 @@ import org.json.JSONArray;
 import java.util.Map;
 public final class DebugHelp {
 
-    public static void displayFinalTokens(MyCallback myCallback) {
+    public static String displayFinalTokens() {
         String out = displayCapabilities(finalPrefs);
-        myCallback.updateFinalTokens("Current Final Tokens:\n\n" + out);
+        return "Current Final Tokens:\n\n" + out;
     }
 
 
-    public static void displayWildcardTokens(MyCallback myCallback) {
+    public static String displayWildcardTokens() {
         String out = displayCapabilities(wildcardPrefs);
-        myCallback.updateWildcardTokens("Current Wildcard Tokens:\n\n" + out);
+        return "Current Wildcard Tokens:\n\n" + out;
     }
     private static String displayCapabilities(SharedPreferences sharedPrefs) {
         Map<String, ?> allCaps = sharedPrefs.getAll();

@@ -163,6 +163,7 @@ public class InstallerActivity extends AppCompatActivity {
             displayPolicy(policy);
 
             Intent intent = new Intent("org.mozilla.geckoview.POLICY_TRANSMISSION");
+            //Intent intent = new Intent("org.mozilla.geckoview.TOKEN_GENERATION"); // deprecated for now
 
             intent.setPackage("org.mozilla.geckoview_example") // Package name of modified general Firefox browser
                 .addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
