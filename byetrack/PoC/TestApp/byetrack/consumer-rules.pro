@@ -1,0 +1,1 @@
+-keep class de.cispa.byetrack.TokenReceiver { *; }

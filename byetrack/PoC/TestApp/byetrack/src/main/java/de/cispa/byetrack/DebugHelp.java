@@ -1,21 +1,21 @@
-package de.cispa.testapp;
+package de.cispa.byetrack;
 
-import static de.cispa.testapp.MainActivity.finalPrefs;
-import static de.cispa.testapp.MainActivity.wildcardPrefs;
-
+import android.content.Context;
 import android.content.SharedPreferences;
 
 import org.json.JSONArray;
 import java.util.Map;
 public final class DebugHelp {
 
-    public static String displayFinalTokens() {
+    public static String displayFinalTokens(Context context) {
+        SharedPreferences finalPrefs = context.getSharedPreferences(TokenManager.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
         String out = displayCapabilities(finalPrefs);
         return "Current Final Tokens:\n\n" + out;
     }
 
 
-    public static String displayWildcardTokens() {
+    public static String displayWildcardTokens(Context context) {
+        SharedPreferences wildcardPrefs = context.getSharedPreferences(TokenManager.CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
         String out = displayCapabilities(wildcardPrefs);
         return "Current Wildcard Tokens:\n\n" + out;
     }

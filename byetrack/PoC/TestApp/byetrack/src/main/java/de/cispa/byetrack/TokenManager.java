@@ -1,4 +1,4 @@
-package de.cispa.testapp;
+package de.cispa.byetrack;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
@@ -115,7 +115,7 @@ public class TokenManager {
      * Launches a regular CustomTab if no Capabilities exist for domain, else attaches them to to the intent
      * @param uri to launch CustomTab for
      */
-    public void launchUrlMod(Context context, Uri uri) {
+    public static void launchUrlMod(Context context, Uri uri) {
         // Build CustomTabsIntent
         CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
         CustomTabsIntent customTabsIntent = builder.build();
@@ -153,7 +153,7 @@ public class TokenManager {
      * @param ctx Context to get ContentResolver for
      * @return A nonce, of which ContentProvider can infer app's identity
      */
-    private String getNonce(Context ctx) {
+    private static String getNonce(Context ctx) {
         Bundle args = new Bundle();
         args.putString(EXTRA_PURPOSE, "customtab");
         Bundle out = ctx.getContentResolver().call(

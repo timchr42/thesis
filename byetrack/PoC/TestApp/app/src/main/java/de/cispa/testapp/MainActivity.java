@@ -1,8 +1,8 @@
 package de.cispa.testapp;
 
-import static de.cispa.testapp.DebugHelp.clearTokenStorage;
-import static de.cispa.testapp.DebugHelp.displayFinalTokens;
-import static de.cispa.testapp.DebugHelp.displayWildcardTokens;
+import de.cispa.byetrack.DebugHelp;
+import de.cispa.byetrack.TokenManager;
+
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -21,7 +21,6 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
     public TextView wildcardTokensStored;
     public TextView finalTokensStored;
     private Context mContext;
-    private TokenManager mTokenManager;
     public static SharedPreferences wildcardPrefs;
     public static SharedPreferences finalPrefs;
     private SharedPreferences.OnSharedPreferenceChangeListener wildcard_sharedPrefsListener;
@@ -39,19 +38,18 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         finalTokensStored = findViewById(R.id.finalTokensStored);
 
         mContext = getApplicationContext();
-        mTokenManager = new TokenManager();
 
         wildcardPrefs = mContext.getSharedPreferences(TokenManager.CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
         finalPrefs = mContext.getSharedPreferences(TokenManager.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
 
-        wildcard_sharedPrefsListener = (sharedPrefs, key) -> wildcardTokensStored.setText(displayWildcardTokens());
-        final_sharedPrefsListener = (sharedPrefs, key) -> finalTokensStored.setText(displayFinalTokens());
+        wildcard_sharedPrefsListener = (sharedPrefs, key) -> wildcardTokensStored.setText(DebugHelp.displayWildcardTokens(mContext));
+        final_sharedPrefsListener = (sharedPrefs, key) -> finalTokensStored.setText(DebugHelp.displayFinalTokens(mContext));
 
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(v -> {
-            clearTokenStorage(finalPrefs);
-            wildcardTokensStored.setText(displayWildcardTokens());
-            finalTokensStored.setText(displayFinalTokens());
+            DebugHelp.clearTokenStorage(finalPrefs);
+            wildcardTokensStored.setText(DebugHelp.displayWildcardTokens(mContext));
+            finalTokensStored.setText(DebugHelp.displayFinalTokens(mContext));
 
             // Test lauching regular CT
             //String url = "https://royaleapi.com";
@@ -66,14 +64,14 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         launchUntrustedUrl.setOnClickListener(v -> {
             String url = "http://10.0.2.2/"; // examplecorp.de -> 10.0.2.2 on emulator
             //String url = "http://10.0.2.2:8082/"; // mitmproxy url
-            mTokenManager.launchUrlMod(mContext, Uri.parse(url));
+            TokenManager.launchUrlMod(mContext, Uri.parse(url));
 
             Log.d(LOGTAG, "CT to untrusted domain launched");
         });
 
         launchTrustedUrl.setOnClickListener(v -> {
             String url = "https://royaleapi.com";
-            mTokenManager.launchUrlMod(mContext, Uri.parse(url));
+            TokenManager.launchUrlMod(mContext, Uri.parse(url));
 
 
             Log.d(LOGTAG, "CT to trusted domain launched");
@@ -95,8 +93,8 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         super.onStart();
         wildcardPrefs.registerOnSharedPreferenceChangeListener(wildcard_sharedPrefsListener);
         finalPrefs.registerOnSharedPreferenceChangeListener(final_sharedPrefsListener);
-        wildcardTokensStored.setText(displayWildcardTokens());
-        finalTokensStored.setText(displayFinalTokens());
+        wildcardTokensStored.setText(DebugHelp.displayWildcardTokens(mContext));
+        finalTokensStored.setText(DebugHelp.displayFinalTokens(mContext));
     }
 
     @Override

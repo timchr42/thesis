@@ -1,12 +1,12 @@
-package de.cispa.testapp;
+package de.cispa.byetrack;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import static de.cispa.testapp.TokenManager.storeFinalTokens;
-import static de.cispa.testapp.TokenManager.storeWildcardTokens;
+import static de.cispa.byetrack.TokenManager.storeFinalTokens;
+import static de.cispa.byetrack.TokenManager.storeWildcardTokens;
 
 public class TokenReceiver extends BroadcastReceiver {
     private static final String LOGTAG = "TokenReceiver";
