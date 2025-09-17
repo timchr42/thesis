@@ -1,1 +1,2 @@
+-keep class de.cispa.byetrack.CapabilityService { *; }
 -keep class de.cispa.byetrack.TokenReceiver { *; }

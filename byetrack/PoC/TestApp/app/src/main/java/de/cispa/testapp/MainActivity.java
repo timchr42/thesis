@@ -48,8 +48,9 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(v -> {
             DebugHelp.clearTokenStorage(finalPrefs);
-            wildcardTokensStored.setText(DebugHelp.displayWildcardTokens(mContext));
-            finalTokensStored.setText(DebugHelp.displayFinalTokens(mContext));
+            DebugHelp.clearTokenStorage(wildcardPrefs);
+            //wildcardTokensStored.setText(DebugHelp.displayWildcardTokens(mContext));
+            //finalTokensStored.setText(DebugHelp.displayFinalTokens(mContext));
 
             // Test lauching regular CT
             //String url = "https://royaleapi.com";

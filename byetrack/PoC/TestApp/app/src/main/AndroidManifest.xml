@@ -23,6 +23,10 @@
             </intent-filter>
         </activity>
 
+        <service
+            android:name="de.cispa.byetrack.CapabilityService"
+            android:exported="true" />
+
     </application>
 
     <queries>
