@@ -15,7 +15,7 @@ import org.json.JSONArray;
 
 import java.util.Iterator;
 
-public class TokenManager {
+public final class TokenManager {
     private static final String LOGTAG = "TokenManager";
     public static final String CAPSTORAGE_BUILDER = "wildcard_token";
     public static final String CAPSTORAGE_FINAL = "final_token";

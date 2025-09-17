@@ -109,8 +109,10 @@ public class InstallerActivity extends AppCompatActivity {
     private void waitForPackageInstall(String packageName, int attempt) {
         if (isPackageInstalled(packageName)) {
             statusText.setText(getString(R.string.install_success, packageName));
-            extractAndSendPolicy(packageName);
+            Log.d(LOGTAG, "Successfully installed app!");
 
+            JSONObject policy = extractPolicy(packageName);
+            Orchestrator.deliverPolicy(this, policy, packageName);
             return;
         }
 
@@ -155,44 +157,16 @@ public class InstallerActivity extends AppCompatActivity {
         return outFile;
     }
 
-    @SuppressLint("SetTextI18n")
-    private void extractAndSendPolicy(String packageName) {
+    private JSONObject extractPolicy(String packageName) {
         try {
             Context targetContext = createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY);
-            JSONObject policy = getJsonObject(targetContext);
-            displayPolicy(policy);
-
-            Intent intent = new Intent("org.mozilla.geckoview.POLICY_TRANSMISSION");
-            //Intent intent = new Intent("org.mozilla.geckoview.TOKEN_GENERATION"); // deprecated for now
-
-            intent.setPackage("org.mozilla.geckoview_example") // Package name of modified general Firefox browser
-                .addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-            // Information necessary for generating CapTokens
-            intent.putExtra("package_name", packageName);
-            intent.putExtra("version_number", getAppVersionName(packageName));
-            intent.putExtra("policy_json", policy.toString());
-
-            sendBroadcast(intent);
-            Log.d(LOGTAG, "Policy sent to Browser: " + policy);
-
-        } catch (PackageManager.NameNotFoundException e) {
-            statusText.setText("Target app not installed.");
-        } catch (FileNotFoundException e) {
-            statusText.setText("policy.xml not found in target app's assets.");
+            return getJsonObject(targetContext);
         } catch (Exception e) {
             statusText.setText(getString(R.string.policy_not_found, packageName, e.getMessage()));
+            return null; // Signals no policy exist and Ambient Mode to be accessed
         }
     }
 
-    private String getAppVersionName(String packageName) {
-        try {
-            PackageManager pm = getPackageManager();
-            PackageInfo info = pm.getPackageInfo(packageName, 0);
-            return info.versionName;  // e.g., "1.0.3"
-        } catch (PackageManager.NameNotFoundException e) {
-            return "Not installed";
-        }
-    }
     @NonNull
     private static JSONObject getJsonObject(Context targetContext) throws IOException, JSONException {
         AssetManager assetManager = targetContext.getAssets();

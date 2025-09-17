@@ -23,14 +23,6 @@
             </intent-filter>
         </activity>
 
-        <service
-            android:name="de.cispa.byetrack.CapabilityService"
-            android:exported="true" />
-
     </application>
-
-    <queries>
-        <provider android:authorities="org.mozilla.geckoview_example.callerid" />
-    </queries>
 
 </manifest>

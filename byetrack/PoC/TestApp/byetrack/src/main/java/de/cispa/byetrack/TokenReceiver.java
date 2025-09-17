@@ -19,9 +19,7 @@ public class TokenReceiver extends BroadcastReceiver {
 
         String wildcard_tokens_str = intent.getStringExtra(EXTRA_WILDCARD);
         String final_tokens_str = intent.getStringExtra(EXTRA_FINAL);
-        if (wildcard_tokens_str != null)
-            storeWildcardTokens(wildcard_tokens_str, context);
-        else
-            storeFinalTokens(final_tokens_str, context);
+        if (wildcard_tokens_str != null) storeWildcardTokens(wildcard_tokens_str, context);
+        if (final_tokens_str != null) storeFinalTokens(final_tokens_str, context);
     }
 }

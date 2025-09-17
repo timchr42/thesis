@@ -41,6 +41,9 @@
         <package android:name="de.cispa.testapp" />
         <package android:name="placeholderApp1" />
         <package android:name="placeholderApp2" />
+
+        <provider android:authorities="org.mozilla.geckoview_example.pipe" />
+        <provider android:authorities="de.cispa.byetrack.pipe" />
     </queries>
 
 </manifest>
