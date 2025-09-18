@@ -26,15 +26,15 @@ public final class Orchestrator {
     public static void deliverPolicy(Context ctx, JSONObject policy, String packageName) {
         try {
             // Ask App for its channel to deliver final tokens "later"
-            PendingIntent appChannel = getChannelFromProvider(ctx);
+            PendingIntent appChannel = getPI(ctx, AUTH_APP, METHOD_GET_CHANNEL);
             if (appChannel == null) { Log.e(LOGTAG, "App channel is null"); return; }
 
             // Ask App for its pipe to deliver init tokens "now"
-            PendingIntent appPipe = getPipeFromProvider(ctx, AUTH_APP);
+            PendingIntent appPipe = getPI(ctx, AUTH_APP, METHOD_GET_PIPE);
             if (appPipe == null) { Log.e(LOGTAG, "App pipe is null"); return; }
 
             // Ask Browser for its pipe (to deliver policy now)
-            PendingIntent browserPipe = getPipeFromProvider(ctx, AUTH_BROWSER);
+            PendingIntent browserPipe = getPI(ctx, AUTH_BROWSER, METHOD_GET_PIPE);
             if (browserPipe == null) { Log.e(LOGTAG, "Browser pipe is null"); return; }
 
             // Send policy to Browser via its private receiver; include the app’s pipe
@@ -55,21 +55,12 @@ public final class Orchestrator {
         }
     }
 
-    private static PendingIntent getPipeFromProvider(Context ctx, String AUTH) {
+    private static PendingIntent getPI(Context ctx, String AUTH, String METHOD) {
         Uri uri = Uri.parse("content://" + AUTH);
-        Bundle b = ctx.getContentResolver().call(uri, METHOD_GET_PIPE, null, null);
+        Bundle b = ctx.getContentResolver().call(uri, METHOD, null, null);
         if (b == null) return null;
-        return b.getParcelable(EXTRA_PIPE, PendingIntent.class);
-    }
-
-    private static PendingIntent getChannelFromProvider(Context ctx) {
-        Uri uri = Uri.parse("content://" + AUTH_APP);
-        Bundle b = ctx.getContentResolver().call(uri, METHOD_GET_CHANNEL, null, null);
-        if (b == null) {
-            Log.e(LOGTAG, "called bundle containing channel is null");
-            return null;
-        }
-        return b.getParcelable(EXTRA_CHANNEL, PendingIntent.class);
+        String EXTRA = (METHOD.equals(METHOD_GET_CHANNEL)) ? EXTRA_CHANNEL : EXTRA_PIPE;
+        return b.getParcelable(EXTRA, PendingIntent.class);
     }
 
     private static String getAppVersionName(String packageName, Context context) {
