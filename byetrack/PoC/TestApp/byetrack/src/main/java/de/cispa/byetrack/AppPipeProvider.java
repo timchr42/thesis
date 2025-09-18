@@ -17,15 +17,17 @@ import java.util.Objects;
 public class AppPipeProvider extends ContentProvider {
     private static final String LOGTAG = "AppPipeProvider";
     public static final String METHOD_GET_PIPE = "GET_PIPE";
+
+    public static final String METHOD_GET_CHANNEL = "GET_CHANNEL";
     public static final String EXTRA_PIPE = "de.cispa.byetrack.EXTRA_PIPE";
-    public static final int PI_FLAGS = android.app.PendingIntent.FLAG_ONE_SHOT | android.app.PendingIntent.FLAG_MUTABLE;
+    public static final String EXTRA_CHANNEL = "de.cispa.byetrack.EXTRA_CHANNEL";
+    public static final int PI_FLAGS_ONESHOT = android.app.PendingIntent.FLAG_ONE_SHOT | android.app.PendingIntent.FLAG_MUTABLE;
+    public static final int PI_FLAGS_CHANNEL = android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_MUTABLE;
 
     @Override
     public Bundle call(@NonNull String method, String arg, Bundle extras) {
         final Context ctx = getContext();
         if (ctx == null) return null;
-
-        if (!METHOD_GET_PIPE.equals(method)) return null;
 
         // Verify the caller is the trusted INSTALLER
         int callingUid = Binder.getCallingUid();
@@ -34,15 +36,23 @@ public class AppPipeProvider extends ContentProvider {
             return null;
         }
 
-        // Create one-shot PI to the private receiver
-        Intent base = new Intent().setComponent(new ComponentName(
-                ctx.getPackageName(), "de.cispa.byetrack.TokenReceiver"));
+        if (METHOD_GET_CHANNEL.equals(method)) {
+            PendingIntent channel = makeBasePI(ctx, 0, PI_FLAGS_CHANNEL);
+            Bundle out = new Bundle();
+            out.putParcelable(EXTRA_CHANNEL, channel);
+            return out;
+        }
 
-        PendingIntent pipe = PendingIntent.getBroadcast(ctx, 0, base, PI_FLAGS);
+        if (METHOD_GET_PIPE.equals(method)) {
+            PendingIntent pipe = makeBasePI(ctx, 0, PI_FLAGS_ONESHOT);
 
-        Bundle out = new Bundle();
-        out.putParcelable(EXTRA_PIPE, pipe);
-        return out;
+            Bundle out = new Bundle();
+            out.putParcelable(EXTRA_PIPE, pipe);
+            return out;
+        }
+
+        return null;
+
     }
 
     private boolean verifyCallerIsTrusted(int uid) {
@@ -50,6 +60,14 @@ public class AppPipeProvider extends ContentProvider {
         String packageName = pm.getNameForUid(uid);
 
         return Objects.equals(packageName, "de.cispa.custominstaller");
+    }
+
+    private PendingIntent makeBasePI(Context ctx, int reqCode, int flags) {
+        android.content.Intent base = new android.content.Intent()
+                .setComponent(new android.content.ComponentName(
+                        ctx.getPackageName(), "de.cispa.byetrack.TokenReceiver"));
+        // no session required for zero changes to TokenReceiver
+        return android.app.PendingIntent.getBroadcast(ctx, reqCode, base, flags);
     }
 
 
