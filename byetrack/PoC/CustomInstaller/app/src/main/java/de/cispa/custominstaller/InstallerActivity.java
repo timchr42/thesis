@@ -73,7 +73,6 @@ public class InstallerActivity extends AppCompatActivity {
         findViewById(R.id.debugButton).setOnClickListener(v -> {
             if (isPackageInstalled("de.cispa.testapp")) {
                 statusText.setText("Detected installed app");
-                // extractAndSendPolicy("de.cispa.testapp");
             } else {
                 statusText.setText("App not installed");
             }
@@ -94,9 +93,9 @@ public class InstallerActivity extends AppCompatActivity {
 
             apkInstallLauncher.launch(intent);
 
-            statusText.setText(getString(R.string.installing_asset, assetName));
+            Log.i(LOGTAG, getString(R.string.installing_asset, assetName));
         } catch (IOException e) {
-            statusText.setText(getString(R.string.apk_error, e.getMessage()));
+            Log.e(LOGTAG, getString(R.string.apk_error, e.getMessage()));
         }
     }
 
@@ -107,16 +106,17 @@ public class InstallerActivity extends AppCompatActivity {
      */
     private void waitForPackageInstall(String packageName, int attempt) {
         if (isPackageInstalled(packageName)) {
-            statusText.setText(getString(R.string.install_success, packageName));
-            Log.d(LOGTAG, "Successfully installed app!");
+            Log.i(LOGTAG, "Successfully installed app!");
 
             JSONObject policy = extractPolicy(packageName);
             Orchestrator.deliverPolicy(this, policy, packageName);
+            // Only Debug purpose
+            statusText.setText(displayPolicy(policy));
             return;
         }
 
         if (attempt >= 40) {
-            statusText.setText(getString(R.string.install_fail, packageName));
+            Log.e(LOGTAG, getString(R.string.install_fail, packageName));
             return;
         }
 
@@ -161,7 +161,7 @@ public class InstallerActivity extends AppCompatActivity {
             Context targetContext = createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY);
             return getJsonObject(targetContext);
         } catch (Exception e) {
-            statusText.setText(getString(R.string.policy_not_found, packageName, e.getMessage()));
+            Log.e(LOGTAG, getString(R.string.policy_not_found, packageName, e.getMessage()));
             return null; // Signals no policy exist and Ambient Mode to be accessed
         }
     }
@@ -184,7 +184,7 @@ public class InstallerActivity extends AppCompatActivity {
     }
 
     @SuppressLint("SetTextI18n")
-    private void displayPolicy(JSONObject policy) {
+    private String displayPolicy(JSONObject policy) {
         try {
             StringBuilder output = new StringBuilder();
 
@@ -202,8 +202,9 @@ public class InstallerActivity extends AppCompatActivity {
             formatWildcard(output, "Private Jar", wildcard.getJSONArray("private"));
 
             statusText.setText(output.toString());
+            return output.toString();
         } catch (Exception e) {
-            statusText.setText("Displaying Policy failed");
+            return "Displaying Policy failed";
         }
     }
 
