@@ -24,6 +24,8 @@ public final class Orchestrator {
     public static final String AUTH_APP = "de.cispa.testapp.pipe";
 
     public static void deliverPolicy(Context ctx, JSONObject policy, String packageName) {
+        String policyStr = (policy == null) ? null : policy.toString();
+
         try {
             // Ask App for its channel to deliver final tokens "later"
             PendingIntent appChannel = getPI(ctx, AUTH_APP, METHOD_GET_CHANNEL);
@@ -39,7 +41,7 @@ public final class Orchestrator {
 
             // Send policy to Browser via its private receiver; include the app’s pipe
             Intent fill = new Intent()
-                    .putExtra("policy_json", policy.toString())
+                    .putExtra("policy_json", policyStr)
                     .putExtra("app_pipe", appPipe)
                     .putExtra("app_channel", appChannel)
                     .putExtra("package_name", packageName)

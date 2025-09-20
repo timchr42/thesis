@@ -39,8 +39,10 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
 
         mContext = getApplicationContext();
 
-        wildcardPrefs = mContext.getSharedPreferences(TokenManager.CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
-        finalPrefs = mContext.getSharedPreferences(TokenManager.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
+        String CAPSTORAGE_BUILDER = "wildcard_token";
+        wildcardPrefs = mContext.getSharedPreferences(CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
+        String CAPSTORAGE_FINAL = "final_token";
+        finalPrefs = mContext.getSharedPreferences(CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
 
         wildcard_sharedPrefsListener = (sharedPrefs, key) -> wildcardTokensStored.setText(DebugHelp.displayWildcardTokens(mContext));
         final_sharedPrefsListener = (sharedPrefs, key) -> finalTokensStored.setText(DebugHelp.displayFinalTokens(mContext));
@@ -48,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(v -> {
             DebugHelp.clearTokenStorage(finalPrefs);
-            DebugHelp.clearTokenStorage(wildcardPrefs);
+            //DebugHelp.clearTokenStorage(wildcardPrefs);
             //wildcardTokensStored.setText(DebugHelp.displayWildcardTokens(mContext));
             //finalTokensStored.setText(DebugHelp.displayFinalTokens(mContext));
 

@@ -17,17 +17,17 @@ import java.util.Iterator;
 
 public final class TokenManager {
     private static final String LOGTAG = "TokenManager";
-    public static final String CAPSTORAGE_BUILDER = "wildcard_token";
-    public static final String CAPSTORAGE_FINAL = "final_token";
 
-    private static final String AUTH = "org.mozilla.geckoview_example.callerid";
-    private static final String METHOD_GET_NONCE = "getNonce";
-    private static final String EXTRA_PURPOSE = "purpose";
-    private static final String OUT_NONCE = "nonce";
-
+    public static boolean storeIsAmbient(boolean isAmbient, Context context) {
+        SharedPreferences storage_isAmbient =
+                context.getSharedPreferences(Constants.STORAGE_ISAMBIENT, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = storage_isAmbient.edit();
+        editor.clear().apply();
+        editor.putBoolean(Constants.ISAMBIENT, isAmbient);
+        return editor.commit();
+    }
 
     private static boolean storeTokens(String tokenJson, SharedPreferences.Editor editor) {
-
         try {
             JSONObject tokens = new JSONObject(tokenJson);
 
@@ -49,10 +49,10 @@ public final class TokenManager {
 
     public static void storeWildcardTokens(String tokenJson, Context context) {
         SharedPreferences storage_wildcard =
-                context.getSharedPreferences(CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
+                context.getSharedPreferences(Constants.CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor_wildcard = storage_wildcard.edit();
         editor_wildcard.clear().apply(); // clear tokens, so in case of policy change, only new tokens will  be stored!
-        context.getSharedPreferences(CAPSTORAGE_FINAL, Context.MODE_PRIVATE).edit().clear().apply(); // also clear finals
+        context.getSharedPreferences(Constants.CAPSTORAGE_FINAL, Context.MODE_PRIVATE).edit().clear().apply(); // also clear finals
 
         boolean success = storeTokens(tokenJson, editor_wildcard);
         Log.i(LOGTAG, "Wildcard Tokens stored commit=" + success);
@@ -60,7 +60,7 @@ public final class TokenManager {
 
     public static void storeFinalTokens(String tokenJson, Context context) {
         SharedPreferences storage_final =
-                context.getSharedPreferences(TokenManager.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
+                context.getSharedPreferences(Constants.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = storage_final.edit();
 
         final JSONObject tokens;
@@ -125,12 +125,15 @@ public final class TokenManager {
         try {
             String domainName = uri.getHost();
             Context appCtx = context.getApplicationContext();
+
             // Get prefs on demand (no statics)
+            boolean isAmbient = appCtx.getSharedPreferences(Constants.STORAGE_ISAMBIENT, Context.MODE_PRIVATE).getBoolean(Constants.ISAMBIENT, false);
             SharedPreferences wildcardPrefs =
-                    appCtx.getSharedPreferences(TokenManager.CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
+                    appCtx.getSharedPreferences(Constants.CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
             SharedPreferences finalPrefs =
-                    appCtx.getSharedPreferences(TokenManager.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
-            String wildcardTokens = wildcardPrefs.getString(domainName, "");
+                    appCtx.getSharedPreferences(Constants.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
+
+            String wildcardTokens = isAmbient? wildcardPrefs.getString("*", "error retrieving ambient token") : wildcardPrefs.getString(domainName, "");
             String finalTokens = finalPrefs.getString(domainName, "");
             String nonce = getNonce(context);
 
@@ -138,6 +141,7 @@ public final class TokenManager {
             customTabsIntent.intent.putExtra("final_tokens", finalTokens);
             customTabsIntent.intent.putExtra("cap_nonce", nonce);
 
+            Log.d(LOGTAG, isAmbient ? "Ambient: true" : "Ambient: false");
             Log.d(LOGTAG, "wildcard Tokens: " + wildcardTokens);
             Log.d(LOGTAG, "final Tokens: " + finalTokens);
 
@@ -155,15 +159,15 @@ public final class TokenManager {
      */
     private static String getNonce(Context ctx) {
         Bundle args = new Bundle();
-        args.putString(EXTRA_PURPOSE, "customtab");
+        args.putString(Constants.EXTRA_PURPOSE, "customtab");
         Bundle out = ctx.getContentResolver().call(
-                Uri.parse("content://" + AUTH),
-                METHOD_GET_NONCE,
+                Uri.parse("content://" + Constants.AUTH),
+                Constants.METHOD_GET_NONCE,
                 null,
                 args
         );
         assert out != null;
-        String nonce = out.getString(OUT_NONCE);
+        String nonce = out.getString(Constants.OUT_NONCE);
         if (nonce == null) {
             // abort/fallback?
             Log.e(LOGTAG, "Something went wrong retrieving Nonce!");

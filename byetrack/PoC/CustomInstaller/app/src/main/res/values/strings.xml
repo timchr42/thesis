@@ -1,12 +1,3 @@
 <resources>
     <string name="app_name">CustomInstaller</string>
-
-    <string name="install_success">Installed: %1$s</string>
-    <string name="install_fail">Install failed/canceled for %1$s</string>
-    <string name="installing_asset">Installing %1$s…</string>
-    <string name="apk_error">The following error occurred: %1$s</string>
-    <string name="policy_origin_content">Policy from %1$s: %2$s</string>
-    <string name="metadata_not_found">No metadata entry for policy found in manifest of %1$s</string>
-    <string name="policy_not_found">Error reading policy of %1$s:\n %2$s</string>
-    <string name="policy_display">Policy from %1$s: \n\n %2$s</string>
 </resources>

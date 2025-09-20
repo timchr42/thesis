@@ -8,14 +8,14 @@ import java.util.Map;
 public final class DebugHelp {
 
     public static String displayFinalTokens(Context context) {
-        SharedPreferences finalPrefs = context.getSharedPreferences(TokenManager.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
+        SharedPreferences finalPrefs = context.getSharedPreferences(Constants.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
         String out = displayCapabilities(finalPrefs);
         return "Current Final Tokens:\n\n" + out;
     }
 
 
     public static String displayWildcardTokens(Context context) {
-        SharedPreferences wildcardPrefs = context.getSharedPreferences(TokenManager.CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
+        SharedPreferences wildcardPrefs = context.getSharedPreferences(Constants.CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
         String out = displayCapabilities(wildcardPrefs);
         return "Current Wildcard Tokens:\n\n" + out;
     }

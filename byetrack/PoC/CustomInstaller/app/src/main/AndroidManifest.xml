@@ -38,10 +38,12 @@
     </application>
 
     <queries>
+        <!-- Apps to be installed -->
         <package android:name="de.cispa.testapp" />
-        <package android:name="placeholderApp1" />
-        <package android:name="placeholderApp2" />
+        <!-- <package android:name="placeholderApp1" />
+        <package android:name="placeholderApp2" /> -->
 
+        <!-- Providers Orchestrator needs to talk to -->
         <provider android:authorities="org.mozilla.geckoview_example.pipe" />
         <provider android:authorities="de.cispa.byetrack.pipe" />
     </queries>

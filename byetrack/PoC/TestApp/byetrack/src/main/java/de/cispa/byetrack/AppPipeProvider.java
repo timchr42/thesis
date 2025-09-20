@@ -17,7 +17,6 @@ import java.util.Objects;
 public class AppPipeProvider extends ContentProvider {
     private static final String LOGTAG = "AppPipeProvider";
     public static final String METHOD_GET_PIPE = "GET_PIPE";
-
     public static final String METHOD_GET_CHANNEL = "GET_CHANNEL";
     public static final String EXTRA_PIPE = "de.cispa.byetrack.EXTRA_PIPE";
     public static final String EXTRA_CHANNEL = "de.cispa.byetrack.EXTRA_CHANNEL";
@@ -52,7 +51,6 @@ public class AppPipeProvider extends ContentProvider {
         }
 
         return null;
-
     }
 
     private boolean verifyCallerIsTrusted(int uid) {
