@@ -33,7 +33,8 @@ android {
 
 dependencies {
 
-    implementation(project(":byetrack"))
+    //implementation(project(":byetrack"))
+    implementation(libs.byetrack)
 
     implementation(libs.appcompat)
     implementation(libs.material)

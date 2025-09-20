@@ -171,7 +171,7 @@ public class InstallerActivity extends AppCompatActivity {
     @NonNull
     private static JSONObject getJsonObject(Context targetContext) throws IOException, JSONException {
         AssetManager assetManager = targetContext.getAssets();
-        InputStream input = assetManager.open("policy.jso");
+        InputStream input = assetManager.open("policy.json");
 
         // Read the JSON file into a String
         BufferedReader reader = new BufferedReader(new InputStreamReader(input));
