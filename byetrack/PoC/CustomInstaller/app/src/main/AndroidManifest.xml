@@ -40,7 +40,7 @@
     <queries>
         <!-- Apps to be installed -->
         <package android:name="de.cispa.testapp" />
-        <package android:name="org.hytrack.app.track.crossapptrackerone" />
+        <package android:name="org.hytrack.app.track.crossapptrackerone.instrumented" />
         <!-- <package android:name="placeholderApp2" /> -->
 
         <!-- Providers Orchestrator needs to talk to -->

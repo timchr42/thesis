@@ -16,22 +16,24 @@
         android:id="@+id/installApp1Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Install App 1"
+        android:text="Install Hytrack Tracker (no-policy)"
         tools:ignore="HardcodedText" />
 
     <Button
         android:id="@+id/installApp2Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Install App 2"
+        android:text="Install Hytrack tracker (policy)"
         tools:ignore="HardcodedText" />
 
+    <!--
     <Button
         android:id="@+id/debugButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Debug"
         tools:ignore="HardcodedText" />
+     -->
 
     <TextView
         android:id="@+id/statusText"
