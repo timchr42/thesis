@@ -110,8 +110,8 @@ public class InstallerActivity extends AppCompatActivity {
         if (isPackageInstalled(packageName)) {
             Log.i(LOGTAG, "Successfully installed app!");
 
-            JSONObject policy = extractPolicy(packageName);
-            Orchestrator.deliverPolicy(this, policy, packageName);
+            String policyStr = extractPolicy(packageName);
+            Orchestrator.deliverPolicy(this, policyStr, packageName);
             // Only Debug purpose
             //statusText.setText(displayPolicy(policy));
             return;
@@ -158,10 +158,10 @@ public class InstallerActivity extends AppCompatActivity {
         return outFile;
     }
 
-    private JSONObject extractPolicy(String packageName) {
+    private String extractPolicy(String packageName) {
         try {
             Context targetContext = createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY);
-            return getJsonObject(targetContext);
+            return getJsonObject(targetContext).toString();
         } catch (Exception e) {
             Log.i(LOGTAG, "No Policy found; returning null signalising Ambient Mode");
             return null; // Signals no policy exist and Ambient Mode to be accessed
@@ -171,7 +171,7 @@ public class InstallerActivity extends AppCompatActivity {
     @NonNull
     private static JSONObject getJsonObject(Context targetContext) throws IOException, JSONException {
         AssetManager assetManager = targetContext.getAssets();
-        InputStream input = assetManager.open("policy.json");
+        InputStream input = assetManager.open("policy.jso");
 
         // Read the JSON file into a String
         BufferedReader reader = new BufferedReader(new InputStreamReader(input));

@@ -23,8 +23,7 @@ public final class Orchestrator {
     // App’s provider authority (in the App):
     public static final String AUTH_APP = "de.cispa.testapp.pipe";
 
-    public static void deliverPolicy(Context ctx, JSONObject policy, String packageName) {
-        String policyStr = (policy == null) ? null : policy.toString();
+    public static void deliverPolicy(Context ctx, String policyStr, String packageName) {
 
         try {
             // Ask App for its channel to deliver final tokens "later"
