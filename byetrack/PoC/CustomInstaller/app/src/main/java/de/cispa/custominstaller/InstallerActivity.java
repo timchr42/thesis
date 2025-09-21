@@ -129,13 +129,13 @@ public class InstallerActivity extends AppCompatActivity {
      * Helper to check if a package is currently installed on the device.
      */
     private boolean isPackageInstalled(String packageName) {
-        PackageManager pm=getPackageManager();
+        PackageManager pm = getPackageManager();
         try {
-            PackageInfo info=pm.getPackageInfo(packageName,PackageManager.GET_META_DATA);
+            pm.getPackageInfo(packageName, 0); // no flags needed
+            return true; // package exists
         } catch (PackageManager.NameNotFoundException e) {
-            return false;
+            return false; // package not found
         }
-        return true;
     }
 
     /**
@@ -163,6 +163,7 @@ public class InstallerActivity extends AppCompatActivity {
             Context targetContext = createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY);
             return getJsonObject(targetContext).toString();
         } catch (Exception e) {
+            Log.e(LOGTAG, "Exception: ", e);
             Log.i(LOGTAG, "No Policy found; returning null signalising Ambient Mode");
             return null; // Signals no policy exist and Ambient Mode to be accessed
         }
