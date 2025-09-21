@@ -11,19 +11,14 @@ import org.json.JSONObject;
 
 public final class Orchestrator {
     private static final String LOGTAG = "Orchestrator";
-
     public static final String METHOD_GET_PIPE = "GET_PIPE";
     public static final String METHOD_GET_CHANNEL = "GET_CHANNEL";
     public static final String EXTRA_PIPE = "de.cispa.byetrack.EXTRA_PIPE";
     public static final String EXTRA_CHANNEL = "de.cispa.byetrack.EXTRA_CHANNEL";
-
-    // Authorities
-    // Browser’s provider authority (in the Browser app):
-    public static final String AUTH_BROWSER = "org.mozilla.geckoview_example.pipe";
-    // App’s provider authority (in the App):
-    public static final String AUTH_APP = "de.cispa.testapp.pipe";
+    public static final String AUTH_BROWSER = "org.mozilla.geckoview_example.pipe"; // Browser’s provider authority (in the Browser app):
 
     public static void deliverPolicy(Context ctx, String policyStr, String packageName) {
+        String AUTH_APP = packageName + ".pipe"; // App's provider authority
 
         try {
             // Ask App for its channel to deliver final tokens "later"
