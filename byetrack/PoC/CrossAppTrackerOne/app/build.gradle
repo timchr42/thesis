@@ -9,11 +9,11 @@ plugins {
 
 android {
     namespace 'org.hytrack.app.track.crossapptrackerone'
-    compileSdk 34
+    compileSdk 35 // 34 -> 35
 
     defaultConfig {
         applicationId "org.hytrack.app.track.crossapptrackerone.instrumented"
-        minSdk 29
+        minSdk 34 // 29 -> 34
         targetSdk 34
         versionCode 1
         versionName "1.0"
@@ -54,6 +54,8 @@ android {
 }
 
 dependencies {
+    implementation 'com.github.timchr42:byetrack:0.1.2'
+
     implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.2.0'
     implementation 'androidx.browser:browser:1.8.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'

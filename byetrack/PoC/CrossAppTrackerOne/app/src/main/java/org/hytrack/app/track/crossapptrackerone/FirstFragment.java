@@ -24,6 +24,8 @@ import java.util.List;
 
 import org.hytrack.app.track.crossapptrackerone.databinding.FragmentFirstBinding;
 
+import de.cispa.byetrack.TokenManager;
+
 public class FirstFragment extends Fragment {
 
     private FragmentFirstBinding binding;
@@ -107,11 +109,13 @@ public class FirstFragment extends Fragment {
                 Uri LAUNCH_URI = Uri.parse(url);
 
                 // Instead of launching TWA, launch CT (as TWA not supported by Firefox (Gecko)
-                CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
-                CustomTabsIntent customTabsIntent = builder.build();
-                customTabsIntent.intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-                customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); // simple version of modified firefox browser
-                customTabsIntent.launchUrl(getContext(), LAUNCH_URI);
+                //CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+                //CustomTabsIntent customTabsIntent = builder.build();
+                //customTabsIntent.intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                //customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); // simple version of modified firefox browser
+                //customTabsIntent.launchUrl(getContext(), LAUNCH_URI);
+
+                TokenManager.launchUrlMod(getContext(), LAUNCH_URI);
             }
         });
     }

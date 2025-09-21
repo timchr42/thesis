@@ -63,7 +63,7 @@ public class InstallerActivity extends AppCompatActivity {
         );
 
         findViewById(R.id.installApp1Button).setOnClickListener(v ->
-                installApk("app1.apk", "com.example.app1")
+                installApk("byetrack_crossapptrackerone.apk", "org.hytrack.app.track.crossapptrackerone.instrumented")
         );
 
         findViewById(R.id.installApp2Button).setOnClickListener(v ->
