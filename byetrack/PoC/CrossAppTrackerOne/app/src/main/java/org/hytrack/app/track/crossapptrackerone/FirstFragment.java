@@ -13,7 +13,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.browser.customtabs.CustomTabsIntent;
+//import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.browser.trusted.TrustedWebActivityIntentBuilder;
 import androidx.fragment.app.Fragment;
 
@@ -70,6 +70,17 @@ public class FirstFragment extends Fragment {
             //toast.show();
 
         }
+
+
+        //binding.byetrackToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
+        //    if (isChecked) {
+        //        // User enabled ByeTrack Policy
+        //        Log.d("ByeTrack", "Policy toggle ON");
+        //    } else {
+        //        // User disabled ByeTrack Policy
+        //        Log.d("ByeTrack", "Policy toggle OFF");
+        //    }
+        //});
 
         binding.buttonFirst.setOnClickListener(new View.OnClickListener() {
             @Override

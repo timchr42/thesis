@@ -50,7 +50,7 @@
 
         <activity
             android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
-            android:label="ITWA"
+            android:label="ITWA (instrumented)"
             android:exported="true">
 
             <!-- Edit android:value to change the url opened by the Trusted Web Activity -->
