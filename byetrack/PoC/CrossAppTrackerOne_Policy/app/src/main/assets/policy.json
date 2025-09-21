@@ -1,0 +1,18 @@
+{
+  "predefined": {
+    "global": {
+
+    },
+    "private": {
+
+    }
+  },
+  "wildcard": {
+    "global": [
+
+    ],
+    "private": [
+      "10.0.2.2"
+    ]
+  }
+}
