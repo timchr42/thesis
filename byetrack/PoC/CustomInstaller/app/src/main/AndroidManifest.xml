@@ -38,14 +38,14 @@
     </application>
 
     <queries>
-        <!-- Apps to be installed -->
+        <!-- Needed for PackageManager -->
         <package android:name="de.cispa.testapp" />
         <package android:name="org.hytrack.app.track.crossapptrackerone.instrumented" />
-        <!-- <package android:name="placeholderApp2" /> -->
+        <package android:name="org.hytrack.app.track.crossapptrackerone.policy" />
 
-        <!-- Providers Orchestrator needs to talk to -->
-        <provider android:authorities="org.mozilla.geckoview_example.pipe" />
-        <provider android:authorities="de.cispa.byetrack.pipe" />
+        <!-- Byetrack provider access -->
+        <package android:name="de.cispa.byetrack" />
+        <package android:name="org.mozilla.geckoview_example" />
     </queries>
 
 </manifest>

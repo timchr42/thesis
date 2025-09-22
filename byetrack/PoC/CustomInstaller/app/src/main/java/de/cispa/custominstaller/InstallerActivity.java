@@ -73,7 +73,9 @@ public class InstallerActivity extends AppCompatActivity {
         );
 
         findViewById(R.id.installApp2Button).setOnClickListener(v ->
-                statusText.setText("Not yet implemented")
+                //statusText.setText("Not yet implemented")
+                installWithLauncher("hytrack_trackerone.apk", "org.hytrack.app.track.crossapptrackerone.policy")
+
         );
 
         //findViewById(R.id.debugButton).setOnClickListener(v -> });
