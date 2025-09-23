@@ -18,8 +18,12 @@ public class AppPipeProvider extends ContentProvider {
     private static final String LOGTAG = "AppPipeProvider";
     public static final String METHOD_GET_PIPE = "GET_PIPE";
     public static final String METHOD_GET_CHANNEL = "GET_CHANNEL";
+    public static final String METHOD_GET_PUBKEY = "GET_PUBKEY";
+
     public static final String EXTRA_PIPE = "de.cispa.byetrack.EXTRA_PIPE";
     public static final String EXTRA_CHANNEL = "de.cispa.byetrack.EXTRA_CHANNEL";
+    public static final String EXTRA_PUBKEY = "de.cispa.byetrack.EXTRA_PUBKEY";
+
     public static final int PI_FLAGS_ONESHOT = android.app.PendingIntent.FLAG_ONE_SHOT | android.app.PendingIntent.FLAG_MUTABLE;
     public static final int PI_FLAGS_CHANNEL = android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_MUTABLE;
 
@@ -35,22 +39,29 @@ public class AppPipeProvider extends ContentProvider {
             return null;
         }
 
-        if (METHOD_GET_CHANNEL.equals(method)) {
-            PendingIntent channel = makeBasePI(ctx, 0, PI_FLAGS_CHANNEL);
-            Bundle out = new Bundle();
-            out.putParcelable(EXTRA_CHANNEL, channel);
-            return out;
+        switch (method) {
+            case METHOD_GET_CHANNEL: {
+                PendingIntent channel = makeBasePI(ctx, 0, PI_FLAGS_CHANNEL);
+                Bundle out = new Bundle();
+                out.putParcelable(EXTRA_CHANNEL, channel);
+                return out;
+            }
+            case METHOD_GET_PIPE: {
+                PendingIntent pipe = makeBasePI(ctx, 0, PI_FLAGS_ONESHOT);
+
+                Bundle out = new Bundle();
+                out.putParcelable(EXTRA_PIPE, pipe);
+                return out;
+            }
+            case METHOD_GET_PUBKEY:
+                Bundle out = new Bundle();
+                out.putParcelable(EXTRA_PUBKEY, null);
+                return out;
+
+            default:
+                return null;
         }
 
-        if (METHOD_GET_PIPE.equals(method)) {
-            PendingIntent pipe = makeBasePI(ctx, 0, PI_FLAGS_ONESHOT);
-
-            Bundle out = new Bundle();
-            out.putParcelable(EXTRA_PIPE, pipe);
-            return out;
-        }
-
-        return null;
     }
 
     private boolean verifyCallerIsTrusted(int uid) {
