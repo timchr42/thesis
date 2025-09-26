@@ -1,5 +1,7 @@
 package de.cispa.testapp;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
 import de.cispa.byetrack.DebugHelp;
 import de.cispa.byetrack.TokenManager;
 
@@ -8,6 +10,9 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.browser.customtabs.CustomTabColorSchemeParams;
+import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.core.content.ContextCompat;
 
 import android.content.Context;
 import android.net.Uri;
@@ -37,7 +42,7 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         wildcardTokensStored = findViewById(R.id.wildcardTokensStored);
         finalTokensStored = findViewById(R.id.finalTokensStored);
 
-        mContext = getApplicationContext();
+        mContext = MainActivity.this;
 
         String CAPSTORAGE_BUILDER = "wildcard_token";
         wildcardPrefs = mContext.getSharedPreferences(CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
@@ -67,16 +72,32 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         launchUntrustedUrl.setOnClickListener(v -> {
             String url = "http://10.0.2.2/"; // examplecorp.de -> 10.0.2.2 on emulator
             //String url = "http://10.0.2.2:8082/"; // mitmproxy url
-            TokenManager.launchUrlMod(mContext, Uri.parse(url));
 
+            CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+            CustomTabColorSchemeParams default_colors = new CustomTabColorSchemeParams.Builder()
+                    .setToolbarColor(ContextCompat.getColor(mContext, R.color.my_purple))
+                    .build();
+            builder.setDefaultColorSchemeParams(default_colors);
+            CustomTabsIntent customTabsIntent = builder.build();
+            customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); // -> Use if Firefox (Geckoview_Example) not default browser
+
+            TokenManager.launchUrl(customTabsIntent, MainActivity.this, Uri.parse(url)); // hook this later in androidx lib st. customTabsIntent.launchUrl(...) already entails my modifcations
             Log.d(LOGTAG, "CT to untrusted domain launched");
         });
 
         launchTrustedUrl.setOnClickListener(v -> {
             String url = "https://royaleapi.com";
-            TokenManager.launchUrlMod(mContext, Uri.parse(url));
 
+            // Build CustomTabsIntent (Let user do all his modification before applying defense)
+            CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+            CustomTabColorSchemeParams default_colors = new CustomTabColorSchemeParams.Builder()
+                    .setToolbarColor(ContextCompat.getColor(mContext, R.color.my_purple))
+                    .build();
+            builder.setDefaultColorSchemeParams(default_colors);
+            CustomTabsIntent customTabsIntent = builder.build();
+            //customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); // -> Use if Firefox (Geckoview_Example) not default browser
 
+            TokenManager.launchUrl(customTabsIntent, MainActivity.this, Uri.parse(url)); // hook this later in androidx lib st. customTabsIntent.launchUrl(...) already entails my modifcations
             Log.d(LOGTAG, "CT to trusted domain launched");
         });
     }

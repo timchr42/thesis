@@ -111,46 +111,46 @@ public final class TokenManager {
         }
     }
 
+    private static String getWildcardTokens(Context context, String domainName) {
+        boolean isAmbient = context.getSharedPreferences(Constants.STORAGE_ISAMBIENT, Context.MODE_PRIVATE).getBoolean(Constants.ISAMBIENT, false);
+        Log.d(LOGTAG, isAmbient ? "Ambient: true" : "Ambient: false");
+        SharedPreferences wildcardPrefs =
+                context.getSharedPreferences(Constants.CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
+
+        return isAmbient? wildcardPrefs.getString("*", "error retrieving ambient token") : wildcardPrefs.getString(domainName, "");
+
+    }
+
+    private static String getFinalTokens(Context context, String domainName) {
+        SharedPreferences finalPrefs =
+                context.getSharedPreferences(Constants.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
+
+        return finalPrefs.getString(domainName, "");
+    }
+
+
     /**
      * Launches a regular CustomTab if no Capabilities exist for domain, else attaches them to to the intent
      * @param uri to launch CustomTab for
      */
-    public static void launchUrlMod(Context context, Uri uri) {
-        // Build CustomTabsIntent
-        CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
-        CustomTabsIntent customTabsIntent = builder.build();
-        customTabsIntent.intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-        customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); // -> Use if Firefox (Geckoview_Example) not default browser
+    public static void launchUrl(CustomTabsIntent customTabsIntent, Context context, Uri uri) {
+        String domainName = uri.getHost();
 
-        try {
-            String domainName = uri.getHost();
-            Context appCtx = context.getApplicationContext();
+        // Get prefs on demand (no statics)
+        String wildcardTokens = getWildcardTokens(context, domainName);
+        String finalTokens = getFinalTokens(context, domainName);
+        String nonce = getNonce(context);
 
-            // Get prefs on demand (no statics)
-            boolean isAmbient = appCtx.getSharedPreferences(Constants.STORAGE_ISAMBIENT, Context.MODE_PRIVATE).getBoolean(Constants.ISAMBIENT, false);
-            SharedPreferences wildcardPrefs =
-                    appCtx.getSharedPreferences(Constants.CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
-            SharedPreferences finalPrefs =
-                    appCtx.getSharedPreferences(Constants.CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
+        customTabsIntent.intent.putExtra("wildcard_tokens", wildcardTokens);
+        customTabsIntent.intent.putExtra("final_tokens", finalTokens);
+        customTabsIntent.intent.putExtra("cap_nonce", nonce);
 
-            String wildcardTokens = isAmbient? wildcardPrefs.getString("*", "error retrieving ambient token") : wildcardPrefs.getString(domainName, "");
-            String finalTokens = finalPrefs.getString(domainName, "");
-            String nonce = getNonce(context);
-
-            customTabsIntent.intent.putExtra("wildcard_tokens", wildcardTokens);
-            customTabsIntent.intent.putExtra("final_tokens", finalTokens);
-            customTabsIntent.intent.putExtra("cap_nonce", nonce);
-
-            Log.d(LOGTAG, isAmbient ? "Ambient: true" : "Ambient: false");
-            Log.d(LOGTAG, "wildcard Tokens: " + wildcardTokens);
-            Log.d(LOGTAG, "final Tokens: " + finalTokens);
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        Log.d(LOGTAG, "wildcard Tokens: " + wildcardTokens);
+        Log.d(LOGTAG, "final Tokens: " + finalTokens);
 
         customTabsIntent.launchUrl(context, uri);
     }
+
 
     /**
      * Asks Browser for a short-lived nonce that Browser mapped to Apps uid/packagename via ContentProvider
