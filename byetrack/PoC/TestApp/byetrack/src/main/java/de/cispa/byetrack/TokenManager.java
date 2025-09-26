@@ -8,7 +8,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.core.content.ContextCompat;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -118,6 +120,11 @@ public final class TokenManager {
     public static void launchUrlMod(Context context, Uri uri) {
         // Build CustomTabsIntent
         CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+        CustomTabColorSchemeParams default_colors = new CustomTabColorSchemeParams.Builder()
+                .setToolbarColor(ContextCompat.getColor(context, androidx.cardview.R.color.cardview_dark_background))
+                .build();
+        builder.setDefaultColorSchemeParams(default_colors);
+
         CustomTabsIntent customTabsIntent = builder.build();
         customTabsIntent.intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
         customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); // -> Use if Firefox (Geckoview_Example) not default browser

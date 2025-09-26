@@ -1,5 +1,6 @@
 package de.cispa.testapp;
 
+import de.cispa.byetrack.ByetrackClient;
 import de.cispa.byetrack.DebugHelp;
 import de.cispa.byetrack.TokenManager;
 
@@ -47,6 +48,8 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         wildcard_sharedPrefsListener = (sharedPrefs, key) -> wildcardTokensStored.setText(DebugHelp.displayWildcardTokens(mContext));
         final_sharedPrefsListener = (sharedPrefs, key) -> finalTokensStored.setText(DebugHelp.displayFinalTokens(mContext));
 
+        ByetrackClient bc = new ByetrackClient(mContext);
+
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(v -> {
             DebugHelp.clearTokenStorage(finalPrefs);
@@ -75,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         launchTrustedUrl.setOnClickListener(v -> {
             String url = "https://royaleapi.com";
             TokenManager.launchUrlMod(mContext, Uri.parse(url));
+            //bc.launchUrl(mContext, Uri.parse(url));
 
 
             Log.d(LOGTAG, "CT to trusted domain launched");
