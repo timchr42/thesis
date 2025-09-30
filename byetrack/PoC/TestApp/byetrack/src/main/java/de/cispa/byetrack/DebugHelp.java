@@ -15,7 +15,7 @@ public final class DebugHelp {
 
 
     public static String displayWildcardTokens(Context context) {
-        SharedPreferences wildcardPrefs = context.getSharedPreferences(Constants.CAPSTORAGE_BUILDER, Context.MODE_PRIVATE);
+        SharedPreferences wildcardPrefs = context.getSharedPreferences(Constants.CAPSTORAGE_WILDCARD, Context.MODE_PRIVATE);
         String out = displayCapabilities(wildcardPrefs);
         return "Current Wildcard Tokens:\n\n" + out;
     }

@@ -1,15 +1,9 @@
 package de.cispa.byetrack;
 
-import static androidx.core.content.ContextCompat.startActivity;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-
-import static de.cispa.byetrack.TokenManager.storeFinalTokens;
-import static de.cispa.byetrack.TokenManager.storeIsAmbient;
-import static de.cispa.byetrack.TokenManager.storeWildcardTokens;
 
 public class TokenReceiver extends BroadcastReceiver {
     private static final String LOGTAG = "TokenReceiver";
@@ -23,8 +17,13 @@ public class TokenReceiver extends BroadcastReceiver {
         boolean isAmbient = intent.getBooleanExtra(Constants.EXTRA_ISAMBIENT, false);
         Log.d(LOGTAG, isAmbient ? "isAmbient: true" : "isAmbient: false");
 
-        if (wildcard_tokens_str != null) storeWildcardTokens(wildcard_tokens_str, context);
-        if (final_tokens_str != null) storeFinalTokens(final_tokens_str, context);
-        storeIsAmbient(isAmbient, context);
+        //if (wildcard_tokens_str != null) storeWildcardTokens(wildcard_tokens_str, context);
+        //if (final_tokens_str != null) storeFinalTokens(final_tokens_str, context);
+        //storeIsAmbient(isAmbient, context);
+        Log.i(LOGTAG, "Final Tokens String should be empty: " + final_tokens_str);
+        if (wildcard_tokens_str == null) return;
+        TokenManager.initPrefs(context);
+        TokenManager.storeWildcardTokens(wildcard_tokens_str);
+        TokenManager.storeIsAmbient(isAmbient);
     }
 }

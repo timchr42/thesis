@@ -52,6 +52,11 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
         wildcard_sharedPrefsListener = (sharedPrefs, key) -> wildcardTokensStored.setText(DebugHelp.displayWildcardTokens(mContext));
         final_sharedPrefsListener = (sharedPrefs, key) -> finalTokensStored.setText(DebugHelp.displayFinalTokens(mContext));
 
+        // Browser Packages
+        String GECKOVIEW_EXAMPLE = "org.mozilla.geckoview_example";
+        String FIREFOX_FENIX = "org.mozilla.fenix.debug";
+        String CHROME = "com.android.chrome";
+
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(v -> {
             DebugHelp.clearTokenStorage(finalPrefs);
@@ -63,8 +68,6 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
             //String url = "https://royaleapi.com";
             //CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
             //CustomTabsIntent customTabsIntent = builder.build();
-            //customTabsIntent.intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-            //customTabsIntent.intent.setPackage("com.android.chrome");
             //customTabsIntent.launchUrl(mContext, Uri.parse(url));
         });
 
@@ -79,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
                     .build();
             builder.setDefaultColorSchemeParams(default_colors);
             CustomTabsIntent customTabsIntent = builder.build();
-            customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); // -> Use if Firefox (Geckoview_Example) not default browser
+            customTabsIntent.intent.setPackage(FIREFOX_FENIX); // determine in what browser CT is launched
 
             TokenManager.launchUrl(customTabsIntent, MainActivity.this, Uri.parse(url)); // hook this later in androidx lib st. customTabsIntent.launchUrl(...) already entails my modifcations
             Log.d(LOGTAG, "CT to untrusted domain launched");
@@ -95,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
                     .build();
             builder.setDefaultColorSchemeParams(default_colors);
             CustomTabsIntent customTabsIntent = builder.build();
-            //customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); // -> Use if Firefox (Geckoview_Example) not default browser
+            customTabsIntent.intent.setPackage(FIREFOX_FENIX); // -> Use if Firefox (Geckoview_Example) not default browser
 
             TokenManager.launchUrl(customTabsIntent, MainActivity.this, Uri.parse(url)); // hook this later in androidx lib st. customTabsIntent.launchUrl(...) already entails my modifcations
             Log.d(LOGTAG, "CT to trusted domain launched");
