@@ -2,16 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
-        <!-- and ends with
-        <receiver
-            android:name="de.cispa.byetrack.TokenReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="org.mozilla.geckoview.CAPABILITY_TOKENS" />
-            </intent-filter>
-        </receiver>
-         -->
-
         <!-- Private endpoint: only invocable via PI -->
         <receiver
             android:name="de.cispa.byetrack.TokenReceiver"
@@ -31,9 +21,5 @@
             android:exported="true" />
 
     </application>
-
-    <queries>
-        <provider android:authorities="org.mozilla.geckoview_example.callerid" />
-    </queries>
 
 </manifest>

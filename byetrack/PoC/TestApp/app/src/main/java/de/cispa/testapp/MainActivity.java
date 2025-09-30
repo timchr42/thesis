@@ -21,7 +21,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 
-public class MainActivity extends AppCompatActivity implements MyCallback {
+public class MainActivity extends AppCompatActivity {
     private static final String LOGTAG = "TestApp";
     public TextView wildcardTokensStored;
     public TextView finalTokensStored;
@@ -103,16 +103,6 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
             TokenManager.launchUrl(customTabsIntent, MainActivity.this, Uri.parse(url)); // hook this later in androidx lib st. customTabsIntent.launchUrl(...) already entails my modifcations
             Log.d(LOGTAG, "CT to trusted domain launched");
         });
-    }
-
-    @Override
-    public void updateWildcardTokens(String myString) {
-        wildcardTokensStored.setText(myString);
-    }
-
-    @Override
-    public void updateFinalTokens(String myString) {
-        finalTokensStored.setText(myString);
     }
 
     @Override

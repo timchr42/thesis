@@ -129,12 +129,10 @@ public final class TokenManager {
         // Get prefs on demand (no statics)
         String wildcardTokens = getWildcardTokens(domainName);
         String finalTokens = getFinalTokens(domainName);
-        String nonce = getNonce(context);
 
         Bundle byetrackData = new Bundle();
         byetrackData.putString("wildcard_tokens", wildcardTokens);
         byetrackData.putString("final_tokens", finalTokens);
-        byetrackData.putString("nonce", nonce);
         byetrackData.putString("package_name", "de.cispa.testapp");
         customTabsIntent.intent.putExtra(Constants.BYETRACK_DATA, byetrackData);
 
@@ -142,30 +140,6 @@ public final class TokenManager {
         Log.d(LOGTAG, "final Tokens: " + finalTokens);
 
         customTabsIntent.launchUrl(context, uri);
-    }
-
-
-    /**
-     * Asks Browser for a short-lived nonce that Browser mapped to Apps uid/packagename via ContentProvider
-     * @param ctx Context to get ContentResolver for
-     * @return A nonce, of which ContentProvider can infer app's identity
-     */
-    private static String getNonce(Context ctx) {
-        Bundle out = ctx.getContentResolver().call(
-                Uri.parse("content://" + Constants.AUTH),
-                Constants.METHOD_GET_NONCE,
-                "customtab",
-                null
-        );
-        assert out != null;
-        String nonce = out.getString(Constants.OUT_NONCE);
-        if (nonce == null) {
-            // abort/fallback?
-            Log.e(LOGTAG, "Something went wrong retrieving Nonce!");
-            return null;
-        }
-        Log.d(LOGTAG, "Nonce: " + nonce);
-        return nonce;
     }
 
 }
