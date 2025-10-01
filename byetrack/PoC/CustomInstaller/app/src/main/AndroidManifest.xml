@@ -45,6 +45,7 @@
 
         <!-- Byetrack provider access -->
         <package android:name="de.cispa.byetrack" />
+        <package android:name="org.mozilla.fenix.debug" />
         <package android:name="org.mozilla.geckoview_example" />
     </queries>
 

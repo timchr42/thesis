@@ -2,8 +2,11 @@ package de.cispa.custominstaller;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -53,7 +56,7 @@ public class InstallerActivity extends AppCompatActivity {
                         Toast.makeText(this, "Install succeeded", Toast.LENGTH_LONG).show();
 
                         String policy = extractPolicy(currentInstallingPackageName);
-                        Orchestrator.deliverPolicy(getApplicationContext(), policy, currentInstallingPackageName);
+                        deliverPolicy(policy, currentInstallingPackageName);
 
                         statusText.setText(displayPolicy(policy));
                     } else {
@@ -114,6 +117,22 @@ public class InstallerActivity extends AppCompatActivity {
         }
     }
 
+    private void deliverPolicy(String policyStr, String packageName) {
+        try {
+            String AUTH = "content://org.mozilla.provider.policy/policy";
+
+            ContentValues values = new ContentValues();
+            values.put("policy_json", policyStr);
+            values.put("package_name", packageName);
+            values.put("version_name", getAppVersionName(packageName));
+
+            Log.d(LOGTAG, "[Byetrack] Sending tokens to " + packageName + " : " + policyStr);
+            getApplicationContext().getContentResolver().insert(Uri.parse(AUTH), values);
+        } catch (Exception e) {
+            Log.e(LOGTAG, "Failed delivering policy of " + packageName, e);
+        }
+    }
+
     public String extractPolicy(String packageName) {
         try {
             Context targetContext = createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY);
@@ -138,6 +157,19 @@ public class InstallerActivity extends AppCompatActivity {
         reader.close();
 
         return new JSONObject(jsonBuilder.toString());
+    }
+
+    private String getAppVersionName(String packageName) {
+        try {
+            PackageInfo info = getPackageManager().getPackageInfo(packageName, 0);
+            return info.versionName;  // e.g., "1.0.3"
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.w(LOGTAG, "Package not found: " + packageName, e);
+            return null;
+        } catch (Exception e) {
+            Log.e(LOGTAG, "Error retrieving package info for " + packageName, e);
+            return null;
+        }
     }
 
     @SuppressLint("SetTextI18n")

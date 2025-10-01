@@ -2,19 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
-        <!-- Private endpoint: only invocable via PI -->
-        <receiver
-            android:name="de.cispa.byetrack.TokenReceiver"
-            android:exported="false" />
-
-        <service
-            android:name="de.cispa.byetrack.TokenService"
-            android:exported="true" />
-
-        <provider
-            android:name="de.cispa.byetrack.AppPipeProvider"
-            android:authorities="${applicationId}.pipe"
-            android:exported="true" />
         <provider
             android:name="de.cispa.byetrack.TokenProvider"
             android:authorities="${applicationId}.tokens"
