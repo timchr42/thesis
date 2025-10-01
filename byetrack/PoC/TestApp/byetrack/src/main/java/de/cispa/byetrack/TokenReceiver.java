@@ -17,10 +17,6 @@ public class TokenReceiver extends BroadcastReceiver {
         boolean isAmbient = intent.getBooleanExtra(Constants.EXTRA_ISAMBIENT, false);
         Log.d(LOGTAG, isAmbient ? "isAmbient: true" : "isAmbient: false");
 
-        //if (wildcard_tokens_str != null) storeWildcardTokens(wildcard_tokens_str, context);
-        //if (final_tokens_str != null) storeFinalTokens(final_tokens_str, context);
-        //storeIsAmbient(isAmbient, context);
-        Log.i(LOGTAG, "Final Tokens String should be empty: " + final_tokens_str);
         if (wildcard_tokens_str == null) return;
         TokenManager.initPrefs(context);
         TokenManager.storeWildcardTokens(wildcard_tokens_str);

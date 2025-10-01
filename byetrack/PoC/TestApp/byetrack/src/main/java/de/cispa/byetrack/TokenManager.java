@@ -124,6 +124,7 @@ public final class TokenManager {
      * @param uri to launch CustomTab for
      */
     public static void launchUrl(CustomTabsIntent customTabsIntent, Context context, Uri uri) {
+        initPrefs(context);
         String domainName = uri.getHost();
 
         // Get prefs on demand (no statics)
