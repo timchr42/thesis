@@ -119,7 +119,7 @@ public class InstallerActivity extends AppCompatActivity {
 
     private void deliverPolicy(String policyStr, String packageName) {
         try {
-            String AUTH = "content://org.mozilla.provider.policy/policy";
+            String AUTH = "content://org.mozilla.provider.policy";
 
             ContentValues values = new ContentValues();
             values.put("policy_json", policyStr);

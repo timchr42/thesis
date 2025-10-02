@@ -3,7 +3,6 @@ package de.cispa.testapp;
 import de.cispa.byetrack.DebugHelp;
 import de.cispa.byetrack.ByetrackClient;
 
-
 import android.content.SharedPreferences;
 import android.os.Bundle;
 

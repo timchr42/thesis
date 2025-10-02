@@ -9,7 +9,7 @@ import org.json.JSONArray;
 
 import java.util.Iterator;
 
-public final class TokenManager {
+final class TokenManager {
     private static final String LOGTAG = "TokenManager";
 
     // Store in field to prevent read from disk every time
@@ -28,7 +28,7 @@ public final class TokenManager {
             storage_isAmbient = context.getSharedPreferences(Constants.ISAMBIENT, Context.MODE_PRIVATE);
     }
 
-    public static void storeIsAmbient(boolean isAmbient) {
+    static void storeIsAmbient(boolean isAmbient) {
 
         SharedPreferences.Editor editor = storage_isAmbient.edit();
         editor.clear().apply();
@@ -36,7 +36,7 @@ public final class TokenManager {
         editor.apply();
     }
 
-    public static void storeWildcardTokens(String tokenJson) {
+    static void storeWildcardTokens(String tokenJson) {
         SharedPreferences.Editor editor_wildcard = storage_wildcard.edit();
         editor_wildcard.clear().apply(); // clear tokens, so in case of policy change, only new tokens will  be stored!
         storage_final.edit().clear().apply(); // also clear finals
@@ -59,7 +59,7 @@ public final class TokenManager {
         }
     }
 
-    public static void storeFinalTokens(String tokenJson) {
+    static void storeFinalTokens(String tokenJson) {
         final JSONObject parsed;
         try {
             parsed = new JSONObject(tokenJson);
@@ -102,7 +102,7 @@ public final class TokenManager {
         Log.d(LOGTAG, "Stored tokens for " + domain + ": " + existing);
     }
 
-    public static String getWildcardTokens(String domainName) {
+    static String getWildcardTokens(String domainName) {
         boolean isAmbient = storage_isAmbient.getBoolean(Constants.ISAMBIENT, false);
         Log.d(LOGTAG, isAmbient ? "Ambient: true" : "Ambient: false");
 
@@ -110,7 +110,7 @@ public final class TokenManager {
 
     }
 
-    public static String getFinalTokens(String domainName) {
+    static String getFinalTokens(String domainName) {
         return storage_final.getString(domainName, "");
     }
 
