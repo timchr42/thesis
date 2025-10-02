@@ -2,11 +2,7 @@ package de.cispa.byetrack;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.net.Uri;
-import android.os.Bundle;
 import android.util.Log;
-
-import androidx.browser.customtabs.CustomTabsIntent;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -106,7 +102,7 @@ public final class TokenManager {
         Log.d(LOGTAG, "Stored tokens for " + domain + ": " + existing);
     }
 
-    private static String getWildcardTokens(String domainName) {
+    public static String getWildcardTokens(String domainName) {
         boolean isAmbient = storage_isAmbient.getBoolean(Constants.ISAMBIENT, false);
         Log.d(LOGTAG, isAmbient ? "Ambient: true" : "Ambient: false");
 
@@ -114,33 +110,8 @@ public final class TokenManager {
 
     }
 
-    private static String getFinalTokens(String domainName) {
+    public static String getFinalTokens(String domainName) {
         return storage_final.getString(domainName, "");
-    }
-
-
-    /**
-     * Launches a regular CustomTab if no Capabilities exist for domain, else attaches them to to the intent
-     * @param uri to launch CustomTab for
-     */
-    public static void launchUrl(CustomTabsIntent customTabsIntent, Context context, Uri uri) {
-        initPrefs(context);
-        String domainName = uri.getHost();
-
-        // Get prefs on demand (no statics)
-        String wildcardTokens = getWildcardTokens(domainName);
-        String finalTokens = getFinalTokens(domainName);
-
-        Bundle byetrackData = new Bundle();
-        byetrackData.putString("wildcard_tokens", wildcardTokens);
-        byetrackData.putString("final_tokens", finalTokens);
-        byetrackData.putString("package_name", "de.cispa.testapp");
-        customTabsIntent.intent.putExtra(Constants.BYETRACK_DATA, byetrackData);
-
-        Log.d(LOGTAG, "wildcard Tokens: " + wildcardTokens);
-        Log.d(LOGTAG, "final Tokens: " + finalTokens);
-
-        customTabsIntent.launchUrl(context, uri);
     }
 
 }

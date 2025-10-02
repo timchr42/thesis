@@ -1,9 +1,7 @@
 package de.cispa.testapp;
 
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-
 import de.cispa.byetrack.DebugHelp;
-import de.cispa.byetrack.TokenManager;
+import de.cispa.byetrack.ByetrackClient;
 
 
 import android.content.SharedPreferences;
@@ -63,12 +61,6 @@ public class MainActivity extends AppCompatActivity {
             //DebugHelp.clearTokenStorage(wildcardPrefs);
             //wildcardTokensStored.setText(DebugHelp.displayWildcardTokens(mContext));
             //finalTokensStored.setText(DebugHelp.displayFinalTokens(mContext));
-
-            // Test lauching regular CT
-            //String url = "https://royaleapi.com";
-            //CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
-            //CustomTabsIntent customTabsIntent = builder.build();
-            //customTabsIntent.launchUrl(mContext, Uri.parse(url));
         });
 
         // Simulate launching CT with capability (Note: Firefox does not support TWA)
@@ -84,7 +76,8 @@ public class MainActivity extends AppCompatActivity {
             CustomTabsIntent customTabsIntent = builder.build();
             customTabsIntent.intent.setPackage(FIREFOX_FENIX); // determine in what browser CT is launched
 
-            TokenManager.launchUrl(customTabsIntent, MainActivity.this, Uri.parse(url)); // hook this later in androidx lib st. customTabsIntent.launchUrl(...) already entails my modifcations
+            ByetrackClient.attachTokens(customTabsIntent.intent, MainActivity.this, Uri.parse(url));
+            customTabsIntent.launchUrl(MainActivity.this, Uri.parse(url));
             Log.d(LOGTAG, "CT to untrusted domain launched");
         });
 
@@ -100,7 +93,8 @@ public class MainActivity extends AppCompatActivity {
             CustomTabsIntent customTabsIntent = builder.build();
             customTabsIntent.intent.setPackage(FIREFOX_FENIX); // -> Use if Firefox (Geckoview_Example) not default browser
 
-            TokenManager.launchUrl(customTabsIntent, MainActivity.this, Uri.parse(url)); // hook this later in androidx lib st. customTabsIntent.launchUrl(...) already entails my modifcations
+            ByetrackClient.attachTokens(customTabsIntent.intent, MainActivity.this, Uri.parse(url));
+            customTabsIntent.launchUrl(MainActivity.this, Uri.parse(url));
             Log.d(LOGTAG, "CT to trusted domain launched");
         });
     }
