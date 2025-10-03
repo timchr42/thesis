@@ -35,12 +35,13 @@ dependencies {
 
     //implementation(project(":byetrack"))
     implementation(libs.byetrack)
+    implementation(libs.browser.byetrack)
 
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-    implementation(libs.browser)
+    //implementation(libs.browser)
     implementation(libs.firebase.crashlytics.buildtools)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

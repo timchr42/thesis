@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
             CustomTabsIntent customTabsIntent = builder.build();
             customTabsIntent.intent.setPackage(FIREFOX_FENIX); // determine in what browser CT is launched
 
-            ByetrackClient.attachTokens(customTabsIntent.intent, MainActivity.this, Uri.parse(url));
+            //ByetrackClient.attachTokens(customTabsIntent.intent, MainActivity.this, Uri.parse(url));
             customTabsIntent.launchUrl(MainActivity.this, Uri.parse(url));
             Log.d(LOGTAG, "CT to untrusted domain launched");
         });
@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
             CustomTabsIntent customTabsIntent = builder.build();
             customTabsIntent.intent.setPackage(FIREFOX_FENIX); // -> Use if Firefox (Geckoview_Example) not default browser
 
-            ByetrackClient.attachTokens(customTabsIntent.intent, MainActivity.this, Uri.parse(url));
+            //ByetrackClient.attachTokens(customTabsIntent.intent, MainActivity.this, Uri.parse(url));
             customTabsIntent.launchUrl(MainActivity.this, Uri.parse(url));
             Log.d(LOGTAG, "CT to trusted domain launched");
         });
