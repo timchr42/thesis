@@ -34,7 +34,7 @@ android {
 dependencies {
 
     //implementation(project(":byetrack"))
-    implementation(libs.byetrack)
+    //implementation(libs.byetrack)
     implementation(libs.browser.byetrack)
 
     implementation(libs.appcompat)

@@ -1,14 +1,12 @@
 package de.cispa.testapp;
 
-import de.cispa.byetrack.DebugHelp;
-import de.cispa.byetrack.ByetrackClient;
-
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.browser.customtabs.ByetrackDebugHelp;
 import androidx.core.content.ContextCompat;
 
 import android.content.Context;
@@ -46,8 +44,8 @@ public class MainActivity extends AppCompatActivity {
         String CAPSTORAGE_FINAL = "final_token";
         finalPrefs = mContext.getSharedPreferences(CAPSTORAGE_FINAL, Context.MODE_PRIVATE);
 
-        wildcard_sharedPrefsListener = (sharedPrefs, key) -> wildcardTokensStored.setText(DebugHelp.displayWildcardTokens(mContext));
-        final_sharedPrefsListener = (sharedPrefs, key) -> finalTokensStored.setText(DebugHelp.displayFinalTokens(mContext));
+        wildcard_sharedPrefsListener = (sharedPrefs, key) -> wildcardTokensStored.setText(ByetrackDebugHelp.displayWildcardTokens(mContext));
+        final_sharedPrefsListener = (sharedPrefs, key) -> finalTokensStored.setText(ByetrackDebugHelp.displayFinalTokens(mContext));
 
         // Browser Packages
         String GECKOVIEW_EXAMPLE = "org.mozilla.geckoview_example";
@@ -56,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(v -> {
-            DebugHelp.clearTokenStorage(finalPrefs);
+            ByetrackDebugHelp.clearTokenStorage(finalPrefs);
             //DebugHelp.clearTokenStorage(wildcardPrefs);
             //wildcardTokensStored.setText(DebugHelp.displayWildcardTokens(mContext));
             //finalTokensStored.setText(DebugHelp.displayFinalTokens(mContext));
@@ -103,8 +101,8 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         wildcardPrefs.registerOnSharedPreferenceChangeListener(wildcard_sharedPrefsListener);
         finalPrefs.registerOnSharedPreferenceChangeListener(final_sharedPrefsListener);
-        wildcardTokensStored.setText(DebugHelp.displayWildcardTokens(mContext));
-        finalTokensStored.setText(DebugHelp.displayFinalTokens(mContext));
+        wildcardTokensStored.setText(ByetrackDebugHelp.displayWildcardTokens(mContext));
+        finalTokensStored.setText(ByetrackDebugHelp.displayFinalTokens(mContext));
     }
 
     @Override

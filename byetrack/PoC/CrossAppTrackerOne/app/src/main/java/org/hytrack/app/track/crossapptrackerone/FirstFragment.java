@@ -13,8 +13,10 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-//import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.browser.customtabs.CustomTabColorSchemeParams;
+import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.browser.trusted.TrustedWebActivityIntentBuilder;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.androidbrowserhelper.trusted.TwaLauncher;
@@ -23,8 +25,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.hytrack.app.track.crossapptrackerone.databinding.FragmentFirstBinding;
-
-import de.cispa.byetrack.TokenManager;
 
 public class FirstFragment extends Fragment {
 
@@ -71,17 +71,6 @@ public class FirstFragment extends Fragment {
 
         }
 
-
-        //binding.byetrackToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
-        //    if (isChecked) {
-        //        // User enabled ByeTrack Policy
-        //        Log.d("ByeTrack", "Policy toggle ON");
-        //    } else {
-        //        // User disabled ByeTrack Policy
-        //        Log.d("ByeTrack", "Policy toggle OFF");
-        //    }
-        //});
-
         binding.buttonFirst.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -120,13 +109,13 @@ public class FirstFragment extends Fragment {
                 Uri LAUNCH_URI = Uri.parse(url);
 
                 // Instead of launching TWA, launch CT (as TWA not supported by Firefox (Gecko)
-                //CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
-                //CustomTabsIntent customTabsIntent = builder.build();
-                //customTabsIntent.intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-                //customTabsIntent.intent.setPackage("org.mozilla.geckoview_example"); // simple version of modified firefox browser
-                //customTabsIntent.launchUrl(getContext(), LAUNCH_URI);
-
-                TokenManager.launchUrlMod(getContext(), LAUNCH_URI);
+                CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+                CustomTabColorSchemeParams default_colors = new CustomTabColorSchemeParams.Builder()
+                        .setToolbarColor(ContextCompat.getColor(view.getContext(), R.color.purple_500))
+                        .build();
+                builder.setDefaultColorSchemeParams(default_colors);
+                CustomTabsIntent customTabsIntent = builder.build();
+                customTabsIntent.launchUrl(view.getContext(), LAUNCH_URI);
             }
         });
     }
