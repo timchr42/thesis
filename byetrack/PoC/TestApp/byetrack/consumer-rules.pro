@@ -1,2 +1,0 @@
--keep class de.cispa.byetrack.TokenProvider { *; }
--keep class de.cispa.byetrack.ByetrackClient { *; }

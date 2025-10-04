@@ -33,9 +33,8 @@ android {
 
 dependencies {
 
-    //implementation(project(":byetrack"))
-    //implementation(libs.byetrack)
-    implementation(libs.browser.byetrack)
+    implementation(libs.browser.byetrack) // Actual public Androidx.Browser lib to use
+    //implementation("com.timchr42:AndroidxBrowserByetrack:0.1.0") // local version for testing
 
     implementation(libs.appcompat)
     implementation(libs.material)
