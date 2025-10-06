@@ -77,7 +77,7 @@ public class FirstFragment extends Fragment {
                 String user_url = binding.trackingWebsite.getText().toString();
                 String appName = binding.appName.getText().toString();
                 String storedCookie = sharedPref.getString("c", "");
-                String url = user_url + "?hide=1&demo=1&app=" + appName + "&s=trackmeplsone";
+                String url = user_url + "?hide=1&demo=1&app=" + appName + "&s=donttrackmeplsone";
                 if(binding.toggle.isChecked()) url += "&c=" + storedCookie;
                 Log.w("CTT", url);
                 Uri LAUNCH_URI = Uri.parse(url);
