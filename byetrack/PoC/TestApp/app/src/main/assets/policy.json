@@ -4,7 +4,8 @@
       "royaleapi.com": ["__royaleapi_session_v2", "another_cookie"]
     },
     "private": {
-      "schnellnochraviolimachen.de": ["named_cookie"]
+      "schnellnochraviolimachen.de": ["named_cookie"],
+      "royaleapi.com": ["__royaleapi_session_v2"]
     }
   },
   "wildcard": {
@@ -12,7 +13,7 @@
       "royaleapi.com"
     ],
     "private": [
-      "10.0.2.2"
+      "nr-data.net"
     ]
   }
 }
