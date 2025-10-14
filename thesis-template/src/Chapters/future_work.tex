@@ -1,35 +1,39 @@
 \chapter{Future Work}
 \label{chap:future_work}
 
-% ---------------------------Future Work----------------------------
+% Policy evolution and distribution mechanisms.
 
-    \info{Maybe there exist a trusted authority that can declare a domain as trusted e.g. Facebook for SSO etc. for default policy? predefined policies?} 
+% Integration with Digital Asset Links or Android permissions.
 
-    \info{think about how to update the policy, expiration via nonce etc.}
+% Applicability to WebView, other browsers, or desktop environments.
 
-    \info{revocation strategies?}
+% Maybe there exist a trusted authority that can declare a domain as trusted e.g. Facebook for SSO etc. for default policy? predefined policies?
 
-    \info{Developer tooling: how to create/test policies before deployment?}
-    \info{Web-based policy editor?}
+% think about how to update the policy, expiration via nonce etc.
 
-    \info{Capability Caching or capability handles/references instead of full tokens for performance optimization}
+% revocation strategies?
 
-    \info{Generalizition beyond android}
+% Developer toodling: how to create/test policies before deployment?
 
-    \info{ Eric Ackermann's Idea: 
-      HyTrack without cookies, but rather exploits the fact that the browser's cache is shalso shared across apps.
-      Combine this with hash function to create a unique identifier for the user + image in response with unique name.
-      If Webserver receives a request, it nows that the user has visited the page before and can use the image that encodes the uniue identifier (?).
-      Otherwise, the server can send a new image with a new unique identifier.
+% Web-based policy editor?
 
-      Solution:
-      Extens capability system to also isolate the browser cache. 
-      Trusted domains -> access to browser cache; Untrusted domains -> no access to browser cache.
+% Capability Caching or capability handles/references instead of full tokens for performance optimization
 
-      => Also interesting for optimitzaation of the capability system later on.
-    }
+% Generalizition beyond android
 
-    \info{Major Problem: Android's Custom Tabs don’t preserve or expose the caller identity reliably => No way of retrieving the caller identity in the browser}
+%  Eric Ackermann's Idea: 
+      %HyTrack without cookies, but rather exploits the fact that the browser's cache is shalso shared across apps.
+      %Combine this with hash function to create a unique identifier for the user + image in response with unique name.
+      %If Webserver receives a request, it nows that the user has visited the page before and can use the image that encodes the uniue identifier (?).
+      %Otherwise, the server can send a new image with a new unique identifier.
+
+      %Solution:
+      %Extens capability system to also isolate the browser cache. 
+      %Trusted domains -> access to browser cache; Untrusted domains -> no access to browser cache.
+
+      %=> Also interesting for optimitzaation of the capability system later on.
+
+% Major Problem: Android's Custom Tabs don’t preserve or expose the caller identity reliably => No way of retrieving the caller identity in the browser
 
     % Tried the following approaches:
 
@@ -67,6 +71,9 @@
     %     callingPackage = referrerName.substring("android-app://".length());
     %   }
     % }
+% ---------------------------Future Work----------------------------
+
+
 
 
 
