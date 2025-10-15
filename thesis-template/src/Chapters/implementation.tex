@@ -16,4 +16,36 @@
 % 
 % - Describe technical challenges (AIDL integration, JNI bridging, content providers, duplicate class conflicts, etc.) and how you solved them.
 % 
-% - Highlight design decisions, e.g., why you used ContentProvider → Broadcast, or how the nonce mechanism identifies calling packages.
+% - Highlight design decisions: choice of token format, policy schema, storage mechanisms, ...
+
+% -----------------------------Implementation---------------------------
+
+To demonstrate the feasibility of our proposed mitigation strategy, we developed a proof-of-concept installer application, a new library that ships the changes and modified the androix browser library to inject our capability tokens for each call to launch a Custom Tab (CT) or Trusted Web Activity (TWA).
+
+In this proo-of-concept, we chose the firefox mobile browser (Fenix) to act as the policy enforcement point, but it could have been any other browser the authors of HyTrack~\cite{USENIX:Wessels:2025} found out to be vulnerable to their attack, such as Chrome or Brave. %TODO: cite and check!
+
+We modified the proof-of-concept apps provided by the authors of HyTrack and provide a test application for more insight into the framework's behavior.
+For completeness, we also provide a "evil" acting app that demonstrates what the HyTrack library included in tan app could do to circumvent the mitigation.
+
+\textit{Put a diagram here that shows the components and their interactions!!!}
+
+\section{Custom Installer}
+
+\section{Fenix Browser}
+
+\section{Libraries}
+
+  \subsection{Byetrack/Mitigation} % Write Byetrack here? Prob. title change needed "Byetrack: Capabilities as a Solution ..."
+
+  \subsection{AndroidX Browser}
+
+\section{HyTrack Demo Apps}
+
+  \section{TrackerOne}
+
+  \section{Launcher}
+
+\section{Test App}
+
+\section{Evil App}
+

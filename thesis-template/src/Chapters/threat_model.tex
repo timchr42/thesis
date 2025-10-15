@@ -1,0 +1,16 @@
+% Describe what components are trusted/untrusted / State assumption of HyTrack again (?) and our approach
+
+% - Attacker goals (cross-app tracking through shared cookies)
+% - Attacker capabilities (can embed third-party libraries, open CT/TWA, use web storage)
+% - Trusted components (browser, OS integrity, capability signing)
+% - Assumptions (user installs apps intentionally; developer may misconfigure but not maliciously)
+% - Out-of-scope threats (fingerprinting, malicious browsers, network-level adversaries)
+
+\section{The Threat Model}
+
+The developer of an Android application unknowingly includes a third-party library that uses the HyTrack technique for their own purposes, such as advertising.
+We want to prevent this library from tracking the apps user across multiple apps and empower the app developer to use any third-party library without risking user privacy in regards to cross-app tracking via HyTrack.
+
+For this, we assume that the app developer is not malicious and does not intend to violate user privacy. Otherwise, they could simply choose to not use our mitigation framework and directly use the HyTrack library on their will.
+
+...
