@@ -10,3 +10,21 @@
 
 % - Optionally, include related mitigations (e.g., CHIPS, Total Cookie Protection).
 % - Introduce Capabilities/Tokens?
+
+\section{Custom Tabs and Trusted Web Activities on Android}
+%Overview of CTs, TWAs
+
+Custom Tabs (CTs) and Trusted Web Activities (TWAs) enable a seamless integration between apps and the web by sharing browser state -- most notably, session cookies.
+While this enhances user experience, it also introduces a significant privacy risk: third-party libraries can exploit the shared browser state to track users across multiple apps in which they are embedded.
+For instance, HyTrack demonstrates that a single shared third-party library used across multiple apps is sufficient to persistently identify and track users, bypassing conventional browser and OS sandboxing mechanisms.
+
+\section{HyTrack Attack Overview}
+summarize its attack flow (with figure describing Hytrack?), key findings, and impact. Or should this go into its own chapter?
+
+% New Sections about root causes for HyTrack and how to mitigate them
+\input{src/Chapters/root_causes.tex}
+
+\section{Capabilities}
+What are Capabilities?
+
+

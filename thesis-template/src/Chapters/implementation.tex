@@ -20,18 +20,105 @@
 
 % -----------------------------Implementation---------------------------
 
-To demonstrate the feasibility of our proposed mitigation strategy, we developed a proof-of-concept installer application, a new library that ships the changes and modified the androix browser library to inject our capability tokens for each call to launch a Custom Tab (CT) or Trusted Web Activity (TWA).
+To demonstrate the feasibility of our mitigation strategy, we developed a proof-of-concept installer application, a new library that ships the changes and modified the androix browser library to inject our capability tokens for each call to launch a Custom Tab (CT) or Trusted Web Activity (TWA).
 
-In this proo-of-concept, we chose the firefox mobile browser (Fenix) to act as the policy enforcement point, but it could have been any other browser the authors of HyTrack~\cite{USENIX:Wessels:2025} found out to be vulnerable to their attack, such as Chrome or Brave. %TODO: cite and check!
+In this proof-of-concept, we chose the firefox mobile browser (Fenix) to act as the policy enforcement point, but it could have been any other browser the authors of HyTrack~\cite{USENIX:Wessels:2025} found out to be vulnerable to their attack, such as Chrome or Brave. %TODO: cite and check!
 
 We modified the proof-of-concept apps provided by the authors of HyTrack and provide a test application for more insight into the framework's behavior.
 For completeness, we also provide a "evil" acting app that demonstrates what the HyTrack library included in tan app could do to circumvent the mitigation.
 
 \textit{Put a diagram here that shows the components and their interactions!!!}
 
-\section{Custom Installer}
+\section{Policy Format}
+The Byetrack policy defines the capability configuration that determines which domains are eligible to receive capability tokens and under which isolation context (global or private) they operate. The policy is expressed in a structured JSON format that is divided into two primary sections: predefined and wildcard.
 
-\section{Fenix Browser}
+Each section further distinguishes between two isolation scopes:
+\begin{itemize}
+  \item global -- referring to tokens or capabilities that are valid across all browser profiles or trusted applications (e.g. legitimate SSO domains).
+  \item private -- referring to tokens restricted to the local application or site context (e.g. third-party trackers like the authors of HyTrack describe).
+\end{itemize}
+
+\textbf{Predefined Section:} The predefined section specifiec explicit capability bindings between domains ad the cookies that are allowed to be associated with them.
+These entries define exactly which cookie names are permitted for which domains.
+Each key corresponds to a domain, and the associated list defines cookie names that are explicitly authorized for that domain.
+The distinction between global and private in the predefined section allows a domain to hold both a global token (usable across trusted contexts) and a private token (restricted to one context). The two scopes are treated independently and can coexist safely. %TODO Put this in Design rather?
+
+\textbf{Wildcard Section:} The wildcard section defines simplified or implicit rules for domains where explicit cookie level definitions are not necessary.
+Instead of listing cookie names, the wildcard policy only specifies domains that shall receive capability tokens defined by the isolation scope.
+
+The wildcard and predefined entries operate independently — a domain can appear in both lists if necessary. For example, a domain may have a global predefined token for a specific cookie and a private wildcard token for general use. This allows flexible, layered control over cookie behavior. %TODO put this in Design?
+
+An example policy with explaination can be found in the appendix \ref{appendix:policy}.
+
+\section{Custom Installer}
+The installer stored the apks of the apps to be installed in its assets folder.
+This folder is read-only at runtime, so we copy the apks to the app's private storage first when an installationis initiated.
+The apks uri is then installed by setting it in the intent, wich is finally launched.
+As we can only read the policy with the help of the AssetManager once the apk is actually installed, we use ActivityForResult to directly continue after the installation is finished to circumvent the need to continuously poll for the installation status. 
+Once the policy json file is read into a json string, it is sent to the browser together with the installed apps version and package name provided by the PackageManager by calling a designated content provider exposed by the browser.
+The reason for choosing a content provider for inter process communication is that it is easy to implement by just extending the ContentProvider class and registering it in the manifest and offers functionality to receive the identity of the calling app, which is crucial for our use case.
+Even though in latest Android versions (CITE HERE), there exists functionality to get the calling package name of an intent received via a broadcast, it is not reliable and in my case only returned null.
+Attaching the policy, package name and version as extras to the intent and wrapping it in a pending intent is a workaround, but this faces the problem of spoofing, as the tracking library could simply create the pending intent itself and send a fake policy to the browser.
+A service could be another option, but it is more complex to implement and requires more boilerplate code, even though being the more clean solution by establishing a reusable communication channel between the installer and the browser.
+The downside of using a service is that the browser needs to be running in order for the installer to connect to it, which in this scenario is not guaranteed.
+
+
+\section{Browser}
+% State why the browser generates token and not the installer (one trusted component needs to be chosen)
+The modifications conducted in the browser can be divided into two main parts: token generation and additional features in the java layer and the actual enforcement in the c++ layer. 
+Despite the overlapping functionality, it was best to stricly isolate the two parts and have them "share" a secret key.
+This is due to the fact that once the content provider is called, the browser is not running and therefore no GeckoRuntime exists.
+Having no runtime though makes it impossible to call into the c++ layer directly from the content provider.
+Trying to launch a temporary runtime to call into the c++ layer -- despite it introducing a lot of complexity and overhead -- turned out to be troublesome and error prone as it messed with the actual runtime of the browser once it was started.
+
+\subsection{Token Generation}
+Once the content provider received the policy, the process of generating the tokens defined by the policy begins.
+For each policy entry, the generator constructs a capability token object.
+Each token encapsulates:
+\begin{itemize} % Also probably only in Design chapter
+  \item the domain it applies to,
+  \item the optional list of cookie names (for predefined tokens),
+  \item the scope flag (global or private),
+  \item the app identifier and version (send along with the policy), and
+  \item a rights field describing permitted operations. 
+     private wildcard tokens get assigned no rights, while private predefined and any other public token have the right to be read and written.
+     These rights are modelled as a simple String.
+\end{itemize}
+
+Each token is encoded as a compact JSON object and then serialized into a Base64-encoded string.
+At this stage, the generator distinguishes between:
+
+\begin{itemize}
+  \item Predefined tokens: created per cookie name in the policy,
+  \item Wildcard tokens: created per domain entry, with an initially empty cookie list,
+  \item Ambient tokens: fallbacks created when no policy exists or verification fails, defaulting to global scope.
+\end{itemize}
+
+3. Deduplication and Policy Validation
+
+Before finalizing, the generator ensures policy consistency:
+
+Duplicate domain entries or cookie names are merged.
+
+Conflicts between global and private scopes are detected and resolved according to the downgrade rules (e.g., global + private wildcard → downgrade to private).
+This guarantees that a domain cannot accidentally receive multiple, conflicting capabilities.
+
+4. Cryptographic Signing
+
+To make tokens tamper-evident, the generator signs each token using a browser-side secret key.
+The signing process hashes the token payload and attaches the resulting signature as an additional field.
+This signature ensures that apps cannot forge new tokens or escalate privileges by editing their content — only the browser (as the trusted Policy Enforcement Point) can issue valid tokens.
+
+5. Token Distribution
+
+Once generated, tokens are returned to the app in a JSON array, typically via the PolicyProvider or the result of an installation broadcast.
+The app then persists these tokens locally and attaches them to each browser launch intent (e.g., Custom Tab or Trusted Web Activity).
+On receiving the intent, the browser verifies the signature, validates that the app ID and version match, and enforces the described scope and rights when deciding how to store cookies.
+
+\subsection{Enforcement}
+
+\subsection{Additional Features}
+
 
 \section{Libraries}
 
@@ -40,10 +127,6 @@ For completeness, we also provide a "evil" acting app that demonstrates what the
   \subsection{AndroidX Browser}
 
 \section{HyTrack Demo Apps}
-
-  \section{TrackerOne}
-
-  \section{Launcher}
 
 \section{Test App}
 

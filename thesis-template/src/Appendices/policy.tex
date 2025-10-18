@@ -1,0 +1,35 @@
+\section*{Example Policy File}
+
+\label{appendix:policy}
+
+\begin{verbatim}
+{
+  "predefined": {
+    "global": {
+      "royaleapi.com": ["__royaleapi_session_v2", "another_cookie"]
+    },
+    "private": {
+      "schnellnochraviolimachen.de": ["named_cookie"],
+      "royaleapi.com": ["__royaleapi_session_v2"]
+    }
+  },
+  "wildcard": {
+    "global": [
+      "royaleapi.com"
+    ],
+    "private": [
+      "nr-data.net"
+    ]
+  }
+}
+\end{verbatim}
+
+\begin{itemize}
+  \item \textit{royaleapi.com} only receives a predefined private and a global wildcard token (for general cookie usage).
+    This is because the identical cookie \textit{\_\_royaleapi\_session\_v2} of the same domain is registered to receive a token for both isolation scopes.
+    The token generator therefore downgrades the token to the private one, as it is more restrictive.
+
+  \item \textit{schnellnochraviolimachen.de} receives a private predefined token limited to one cookie.
+
+  \item \textit{nr-data.net} receives a private wildcard token, granting limited cookie handling rights without predefined cookie names.
+\end{itemize}
