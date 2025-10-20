@@ -1,4 +1,5 @@
 \chapter{Implementation}
+\label{chap:implementation}
 
 % Document proof-of-concept in detail:
 % 
@@ -72,55 +73,46 @@ Having no runtime though makes it impossible to call into the c++ layer directly
 Trying to launch a temporary runtime to call into the c++ layer -- despite it introducing a lot of complexity and overhead -- turned out to be troublesome and error prone as it messed with the actual runtime of the browser once it was started.
 
 \subsection{Token Generation}
-Once the content provider received the policy, the process of generating the tokens defined by the policy begins.
-For each policy entry, the generator constructs a capability token object.
-Each token encapsulates:
-\begin{itemize} % Also probably only in Design chapter
-  \item the domain it applies to,
-  \item the optional list of cookie names (for predefined tokens),
-  \item the scope flag (global or private),
-  \item the app identifier and version (send along with the policy), and
-  \item a rights field describing permitted operations. 
-     private wildcard tokens get assigned no rights, while private predefined and any other public token have the right to be read and written.
-     These rights are modelled as a simple String.
-\end{itemize}
+Before generating any capability tokens, the browser performs a policy downgrade step to sanitize the received policy.
+This step is implemented inside the TokenGenerator.generateCapabilityTokens() function and ensures that conflicting or overlapping entries are resolved according to a “minimal security” principle — meaning that private entries always take precedence over global ones, and predefined and wildcard rules remain independent.
 
-Each token is encoded as a compact JSON object and then serialized into a Base64-encoded string.
-At this stage, the generator distinguishes between:
+When the content provider receives a policy from the installer, it first parses the JSON structure into four collections directly corresponding to the four sections of the policy: predefined global, predefined private, wildcard global, and wildcard private.
+Each collection represents either a mapping from domains to explicit cookie names (for predefined entries), or a list of domains (for wildcard entries).
 
-\begin{itemize}
-  \item Predefined tokens: created per cookie name in the policy,
-  \item Wildcard tokens: created per domain entry, with an initially empty cookie list,
-  \item Ambient tokens: fallbacks created when no policy exists or verification fails, defaulting to global scope.
-\end{itemize}
+\textbf{Predefined Conflict Detection:} The first downgrade check handles domain-level and cookie-level conflicts within predefined entries.
+If a domain appears in both predefined global and predefined private, the global entry is removed entirely.
+If the same cookie name is found under both sections for the same domain, the global cookie is removed, keeping only the private one.
+This logic is realized by iterating over the global map and comparing it to the private map and similarly for cookie-level checks.
 
-3. Deduplication and Policy Validation
+\textbf{Wildcard Conflict Detection:} A similar check is applied to wildcard entries.
+If the same domain appears in both wildcard global and wildcard private, the global entry is discarded.
 
-Before finalizing, the generator ensures policy consistency:
+\textbf{Independence Between Predefined and Wildcard Sections:} 
+Importantly, predefined and wildcard rules are treated independently.
+The downgrade logic explicitly avoids removing entries across these two categories.
+This means that a domain can safely appear in both sections with different privilege levels. 
+This independence is reflected in the implementation by simply skipping cross-type downgrades
+An example can be found in the appendix \ref{appendix:policy}.
 
-Duplicate domain entries or cookie names are merged.
+% Actual Generation Part
+Once all conflicts are resolved, the downgraded policy structures are passed into the token generation routines -- processing of the predefined map and wildcard list.
+These functions iterate over the filtered domain and cookie lists, creating one encrypted capability token per entry using \textit{generateSingleToken(domain, cookieName, "*", globalJar, packageName, versionName, rights);}.
+As a result, only conflict-free and least-privilege tokens are ever created.
 
-Conflicts between global and private scopes are detected and resolved according to the downgrade rules (e.g., global + private wildcard → downgrade to private).
-This guarantees that a domain cannot accidentally receive multiple, conflicting capabilities.
+ Each token object is then encoded as a compact JSON object and serialized into a Base64-encoded string.
+Finally, the encoded string is signed using hmacSHA256 and the signature attached to the token object separated with a dot, similar to JWTs ~\cite{RFC7519}, before encrypting it using AES-CBC with a random IV using the browsers secret key.
+This makes the tokens tamper-evident and ensures that only the browser can generate valid tokens.
 
-4. Cryptographic Signing
-
-To make tokens tamper-evident, the generator signs each token using a browser-side secret key.
-The signing process hashes the token payload and attaches the resulting signature as an additional field.
-This signature ensures that apps cannot forge new tokens or escalate privileges by editing their content — only the browser (as the trusted Policy Enforcement Point) can issue valid tokens.
-
-5. Token Distribution
-
-Once generated, tokens are returned to the app in a JSON array, typically via the PolicyProvider or the result of an installation broadcast.
-The app then persists these tokens locally and attaches them to each browser launch intent (e.g., Custom Tab or Trusted Web Activity).
-On receiving the intent, the browser verifies the signature, validates that the app ID and version match, and enforces the described scope and rights when deciding how to store cookies.
+Once generated, tokens are send to the app in a map from String (domain) to JSON array via the same content provider that received the policy so that the app can persist them locally (\ref{sec:libraries}).
 
 \subsection{Enforcement}
+On receiving the intent, the browser verifies the signature, validates that the app ID and version match, and enforces the described scope and rights when deciding how to store cookies.
 
 \subsection{Additional Features}
 
 
 \section{Libraries}
+\label{sec:libraries}
 
   \subsection{Byetrack/Mitigation} % Write Byetrack here? Prob. title change needed "Byetrack: Capabilities as a Solution ..."
 

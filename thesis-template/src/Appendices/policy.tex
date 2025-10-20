@@ -33,3 +33,9 @@
 
   \item \textit{nr-data.net} receives a private wildcard token, granting limited cookie handling rights without predefined cookie names.
 \end{itemize}
+
+\section*{Downgrading Policy Example}
+Here, the predefined rule downgrades the predefined global access of \textit{\_\_royaleapi\_session\_v2} to the private predefined entry. 
+Cross Conflicts on the other hand are ignored. 
+The wildcard rule allows all cookies on the same domain to global storage, except the predefined one.
+Both entries are kept during downgrade.

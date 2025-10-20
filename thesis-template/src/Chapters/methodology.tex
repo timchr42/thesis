@@ -72,14 +72,46 @@ Therefore, the wildcard capabilities can be seen as templates for generating fin
 % Developer Policy Declaration
 \section{Capability initialization flow}
 During app installation, the installer extracts and transmits the policy to the browser.
- According to this policy, the browser creates wildcard capability tokens for the app wrapping important metadata into a secure structure, encoded, signed and encrypted, similar to JSON Web Tokens (JWT)~\cite{rfc7519}.
+Before creating any capability tokens based on the received policy, the browser validates and, if necessary, downgrades the policy to ensure minimal privilege.
+This downgrade step prevents ambiguous or conflicting entries from resulting in overly permissive capability tokens.
+The downgrade follows these rules:
+
+\begin{itemize}
+\item Predefined conflicts:
+If a domain or cookie name appears under both predefined global and predefined private, the global entry is discarded and replaced by the private one.
+This ensures that private capabilities (i.e., those restricted to the app’s private cookie jar) always take precedence over global capabilities.
+
+\item Cookie-level conflicts:
+If the same cookie name occurs in both global and private lists for the same domain, only the private entry is retained.
+This prevents a single cookie from being accessible with two different privilege levels.
+
+\item Wildcard conflicts:
+If the same domain appears in both wildcard global and wildcard private, the domain is downgraded to private.
+This ensures that domain-wide capabilities default to the least permissive (private) scope.
+
+\item Independence of wildcard and predefined sections:
+The predefined and wildcard sections are treated independently.
+This means a global predefined rule (e.g., for a specific cookie) and a private wildcard rule (e.g., for all other cookies on the same domain) can coexist.
+Likewise, a global wildcard and private predefined entry may both exist for the same domain.
+These combinations are allowed because they describe complementary rather than conflicting access scopes.
+\end{itemize}
+
+The result of this downgrade process is a sanitized, conflict-free policy that preserves legitimate combinations of predefined and wildcard entries, while eliminating overlapping or inconsistent privilege assignments.
+This ensures that capability tokens generated from the downgraded policy follow the principle of least privilege, minimizing the attack surface if an app misconfigures or intentionally inflates its declared policy.
+The generation process itself is straightforward:
 If the policy contains predefined entries, the browser generates corresponding predefined capability tokens for each specified domain and cookie name.
 If the policy contains only a domain stating that all cookies from this domain should be stored in the global jar, the browser creates a classic wildcard capability for this domain with the global jar flag set accordingly, and vice versa for the private jar.
 If no policy is provided, the browser creates an ambient capability with the global jar flag set, effectively reverting to the default behavior of storing all cookies in the shared jar.
+Finally, each token is signed, ensuring its authenticity and integrity before being encrypted to ensure the tracking library cannot even read its contents to conduct tracking by leveraging cookie names or values.
 
 After successful generation, the browser sends all created wildcard capability tokens to the app, which stores them in its private wildcard storage for future use.
 The browser also lets the app know whether the app runs in ambient mode or not, i.e., whether a policy was provided by the developer or not.
 This is important for the app to know whether the token it received was the ambient capability or another token, as they are encoded and encrypted and thus indistinguishable for the app.
+Note: The app also stores the final capabilities separately in its private final storage, which are initially empty and may only be received upon requests to the web server.
+
+Storing the wildcard and final tokens separately serves solely implementation convenience, as discussed in the implementation chapter \ref{chap:implementation}. % TODO keep this or remove?
+
+When the app is updated, the installer resends the policy to the browser, which can then issue new capabilities that overwrite the previous ones.
 
 % App-to-Browser Communication via Capabilities
 \section{CT and TWA workflow with our capability mechanism}
@@ -119,6 +151,16 @@ Beyond eliminating cross-app tracking through HyTrack and its postulated goals, 
   \item \textbf{No Third-Party Code Changes}: The web server does not need to be aware of the capabilities or make any changes to its code, as the browser handles the capability management.
   \item \textbf{Backwards Compatibility}: In case the developer does not implement its own policy, it will default to allowing any domain using the shared browser state, consequently behaving like the state-of-the-art cookie management. 
 \end{enumerate}
+
+\section{Other Considerations}
+Instead of the installer sending the app's policy to the browser, which then generates the capabilities accordingly and sending them to the apps, an alternative approach would be to let the installer directly generate the capabilities based on the policy and send them to the app.
+
+This would free the browser from the resposibility of generating the capabilities and thus reduce its complexity to only enforcing them and would no longer require communication between installer and browser for each app.
+For further deployment, this could be beneficial as the installer is part of the OS and thus does not require updates like the browser would, such as only require cooperating browsers to only implement the enforcemt.
+However, this would require a decentralization of the token functionality and thus require the installer and browser to initially share a secret key, which increases the trusted computing base and thus the attack surface.
+Therefore, we decided against this approach and chose the browser as the sole trusted component responsible for capability generation and enforcement for our proof-of-concept.
+
+% TODO: What about bootstrapping 
 
 % -----------------------------------------------------------------
 
