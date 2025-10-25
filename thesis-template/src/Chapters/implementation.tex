@@ -21,6 +21,61 @@
 
 % -----------------------------Implementation---------------------------
 
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=1.3cm,
+  every node/.style={rectangle, draw=black, rounded corners=2pt, align=center, text width=8cm, font=\small, fill=gray!5},
+  arrow/.style={->, thick, >=stealth}
+]
+
+\node (cookie) {
+\textbf{1. CookieService (C++)}\\[2pt]
+Processes \texttt{Set-Cookie} headers\\
+Decides action via \texttt{DecideCookieAction()}\\
+Captures private tokens via \texttt{StageTokenForReturn()}
+};
+
+\node (httpbase) [below=of cookie] {
+\textbf{2. HttpBaseChannel (C++)}\\[2pt]
+Collects staged tokens in \texttt{mByetrackTokensToReturn}\\
+Serializes domain→token map to JSON\\
+Emits observer topic \texttt{"byetrack-final-tokens"}
+};
+
+\node (gvnav) [below=of httpbase] {
+\textbf{3. GeckoViewNavigation (JS)}\\[2pt]
+Receives observer notification\\
+Deduplicates by \texttt{bcId:batchId}\\
+Dispatches event \texttt{"GeckoView:ByetrackFinalTokens"}\\
+with JSON + package name
+};
+
+\node (gvsess) [below=of gvnav] {
+\textbf{4. GeckoSession (Java)}\\[2pt]
+Handles event from GeckoView\\
+Builds \texttt{ContentValues} with token JSON\\
+Calls \texttt{ContentResolver.insert()} on\\
+\texttt{content://<package>.tokens}
+};
+
+\node (app) [below=of gvsess] {
+\textbf{5. Byetrack App (Android)}\\[2pt]
+Receives inserted tokens via \texttt{ContentProvider}\\
+Merges them into the local capability store
+};
+
+% Arrows
+\draw[arrow] (cookie) -- (httpbase);
+\draw[arrow] (httpbase) -- (gvnav);
+\draw[arrow] (gvnav) -- (gvsess);
+\draw[arrow] (gvsess) -- (app);
+
+\end{tikzpicture}
+\caption{Flow of captured Byetrack tokens from Gecko’s network layer to the application layer.}
+\label{fig:byetrack-token-flow}
+\end{figure}
+
 To demonstrate the feasibility of our mitigation strategy, we developed a proof-of-concept installer application, a new library that ships the changes and modified the androix browser library to inject our capability tokens for each call to launch a Custom Tab (CT) or Trusted Web Activity (TWA).
 
 In this proof-of-concept, we chose the firefox mobile browser (Fenix) to act as the policy enforcement point, but it could have been any other browser the authors of HyTrack~\cite{USENIX:Wessels:2025} found out to be vulnerable to their attack, such as Chrome or Brave. %TODO: cite and check!
@@ -64,13 +119,13 @@ A service could be another option, but it is more complex to implement and requi
 The downside of using a service is that the browser needs to be running in order for the installer to connect to it, which in this scenario is not guaranteed.
 
 
-\section{Browser}
+\section{Browser (Fenix)}
 % State why the browser generates token and not the installer (one trusted component needs to be chosen)
-The modifications conducted in the browser can be divided into two main parts: token generation and additional features in the java layer and the actual enforcement in the c++ layer. 
+The modifications conducted in the browser can be divided into two main parts: token generation and additional utility in the java layer and the actual enforcement in the C++ layer. 
 Despite the overlapping functionality, it was best to stricly isolate the two parts and have them "share" a secret key.
 This is due to the fact that once the content provider is called, the browser is not running and therefore no GeckoRuntime exists.
-Having no runtime though makes it impossible to call into the c++ layer directly from the content provider.
-Trying to launch a temporary runtime to call into the c++ layer -- despite it introducing a lot of complexity and overhead -- turned out to be troublesome and error prone as it messed with the actual runtime of the browser once it was started.
+Having no runtime though makes it impossible to call into the C++ layer directly from the content provider.
+Trying to launch a temporary runtime to call into the C++ layer -- despite it introducing a lot of complexity and overhead -- turned out to be troublesome and error prone as it messed with the actual runtime of the browser once it was started.
 
 \subsection{Token Generation}
 Before generating any capability tokens, the browser performs a policy downgrade step to sanitize the received policy.
@@ -98,29 +153,251 @@ An example can be found in the appendix \ref{appendix:policy}.
 Once all conflicts are resolved, the downgraded policy structures are passed into the token generation routines -- processing of the predefined map and wildcard list.
 These functions iterate over the filtered domain and cookie lists, creating one encrypted capability token per entry using \textit{generateSingleToken(domain, cookieName, "*", globalJar, packageName, versionName, rights);}.
 As a result, only conflict-free and least-privilege tokens are ever created.
+Note that the cooki name parameter is set to "*" for wildcard tokens to indicate that they apply to all cookies for the given domain and that the rights parameter is set to "NONE" for all wildcard tokens.
+This is due to the reason that wildcard tokens stay the way they are and are used as a blueprint for the browser to generate final tokens when cookies are actually received from the network and hence we do not want developers to accidentally overwrite the cookie value and thereby break the system.
 
- Each token object is then encoded as a compact JSON object and serialized into a Base64-encoded string.
+Each token object is then encoded as a compact JSON object and serialized into a Base64-encoded string.
 Finally, the encoded string is signed using hmacSHA256 and the signature attached to the token object separated with a dot, similar to JWTs ~\cite{RFC7519}, before encrypting it using AES-CBC with a random IV using the browsers secret key.
 This makes the tokens tamper-evident and ensures that only the browser can generate valid tokens.
 
 Once generated, tokens are send to the app in a map from String (domain) to JSON array via the same content provider that received the policy so that the app can persist them locally (\ref{sec:libraries}).
 
-\subsection{Enforcement}
-On receiving the intent, the browser verifies the signature, validates that the app ID and version match, and enforces the described scope and rights when deciding how to store cookies.
+\subsection{Launching Custom Tabs / TWAs with Tokens}
+As our goal is to isolate cookies based on our capability tokens, and cookies sending/receiving is handled in the C++ layer (in CookieService) of firefox's browser engine Gecko, we first need to thread the tokens down from the java layer through the JNI bridge into the C++ layer.
 
-\subsection{Additional Features}
+\subsubsection{Threading} %\textbf{Threading:}
+The threading mechanism ensures that all capability-related data (tokens and caller information) are propagated consistently through the Android and GeckoView layers until they reach the browser engine.
+
+In Firefox for Android (Fenix), all incoming intents that trigger a Custom Tab (CT) launch are handled by the CustomTabsIntentProcessor class, which resides in the Android Components library—Mozilla’s reusable collection of browser building blocks.
+Since Fenix currently does not support Trusted Web Activities (TWAs), any incoming TWA intent is downgraded to a standard Custom Tab intent and handled by the same processor.
+
+Analogous to the existing getAdditionalHeaders() function—used to retrieve and attach custom HTTP headers to CT or TWA requests—we introduced a dedicated function that collects and returns all Byetrack-specific context data.
+This function retrieves the final and wildcard capability tokens, the UID of the calling application, and returns them as a structured map.
+
+This map is then threaded through several layers of the Android Components architecture.
+Starting from the initial intent processing, it follows the Custom Tab launch path until it reaches the GeckoEngineSession class.
+GeckoEngineSession acts as a bridge between Android Components (where the Custom Tabs logic resides) and GeckoView, Mozilla’s Android library that exposes the Gecko browser engine APIs.
+
+Within GeckoEngineSession, the data are handed over to the GeckoSession loader—the central entry point responsible for initiating page loads in GeckoView.
+Here, similar to other loaders that handle fields such as headerFilter, additionalHeaders, or flags, we introduced a new loader to transmit the capability tokens and UID.
+
+Inside this loader, the PackageManager is used to derive the calling app's package name and version name from the UID passed in the intent.
+All these values -- tokens, package name, and version name -- are then encapsulated in a GeckoBundle, a lightweight key-value store optimized for inter-process communication between the Java and C++ layers of GeckoView.
+
+The bundle is stored in the GeckoSession and attached to the LoadUri dispatch message.
+When this message is processed, the loader extracts the previously stored Byetrack fields and forwards them to the browser's fixupAndLoadURIString function.
+At this point, the capability tokens and caller metadata become available to the internal Gecko loading pipeline.
+
+Gecko's DocumentLoadListener is responsible for managing the lifecycle of document loads, and therefore the ideal place to give the threaded opaque data meaning by parsing them back into usable tokens.
+
+During the document loading process, the Byetrack integration hooks into the DocumentLoadListener to process and apply capability tokens associated with a given navigation.
+The first step is carried out by the ProcessTokenBlob function, which transforms an incoming serialized token blob into validated ByetrackToken objects.
+Each blob is first parsed into its individual encrypted token strings, which are then decrypted into their JSON form.
+These JSON representations are deserialized into structured token objects and subsequently validated against the current application identity, consisting of the package name, version, and target domain.
+Tokens that fail to meet these validation criteria are discarded, ensuring that only authentic and context-appropriate capability tokens are propagated further in the loading process.
+
+We implement a ApplyByetrackFromLoadStateToBrowserContext function that transfers our from the DocShellLoadState into the active top level top level browsing context, where they become accessible thoughout the top level browsing lifecycle.
+
+The function first verifies that no tokens or cookie headers have already been attached to the context, preventing redundant state updates.
+It then retrieves both the final and wildcard token blobs, along with the domain and package metadata, and processes them through the same parsing and validation pipeline.
+The final tokens are converted into a consolidated cookie header string, which is attached to the top level browsing context to be used by the network stack during request creation.
+Wildcard tokens, on the other hand, are stored directly in the context's internal token array, allowing them to be evaluated dynamically for future requests.
+
+Through this mechanism, the top level browsing context becomes the authoritative holder of Byetrack state for each navigation.
+It provides the cookie and network layers with all validated tokens and associated headers needed to enforce domain-scoped tracking policies.
+This design ensures that token verification occurs early in the navigation lifecycle while such that they only have to be parsed and validated once per navigation.
+This establishes a separation between token management and enforcement, allowing the network layer to focus solely on isolating cookies based on the pre-validated tokens.
+
+%\textbf{Enforcement:} 
+\subsubsection{Enforcement / Cookie Isolation}
+The actual enforcement of cookie isolation based on the capability tokens occurs in the CookieService and HttpBaseChannel class.
+
+When a network request is initiated, the HttpBaseChannel uses the CookieService to (1) prepare the Cookie header for outgoing requests and (2) process incoming Set-Cookie headers from server responses and storing the cookies in the browser storage.
+
+%(HttpBaseChannel::AddCookiesToRequest calls CookieService::GetCookieStringFromHttp & HttpBaseChannel::SetCookieHeaders calls CookieService::SetCookieStringFromHttp are the two functions responsible for these tasks, respectively.)
+\textbf{(1)} The main flow for attaching cookies to outgoing requests happens in HttpBaseChannel's \textsc{AddCookiesToRequest} function.
+Here, the CookieService's GetCookieStringFromHttp is used to retrieve the appropriate cookies for the request's target domain.
+Similarly, we use the top level browsing context to retrieve our prebuild Cookie header string based on the final capabilities associated that were attached to the top level browsing context during the document load phase.
+The outgoing request's header is then simply built by appending our capability-based Cookie string to the existing Cookie header separated by a semicolon.
+
+\textbf{(2)} For incoming Set-Cookie headers, the HttpBaseChannel's \textsc{SetCookieHeaders} function is responsible for processing and storing cookies received from server responses.
+It calls the CookieService's \textsc{SetCookieStringFromHttp} function iteratively for each cookie string found in the response headers storing them in the browser's cookie jar.
+Here, we again leverage the top level browsing context to retrieve the wildcard capability tokens and pass them on via an additional parameter to the \textsc{SetCookieStringFromHttp} function.
+As we need to check the tokens for each cookie individually, there is no shortcut like in the previous case and we need to change the behavior of how cookies are stored based on the wildcard capabilities.
+This function is also the place where the CHIPS ~\cite{googlechips} implementation in Firefox is located, so it was straightforward to add our own logic here.
+In fact, the CHIPS logic is executed first, and only if it allows the cookie to be stored, our Byetrack logic is applied next.
+
+When a response containing cookies is received, our implementation first extracts the cookie name and value from the nsCookie object and logs this information alongside the associated base domain and the number of active tokens currently available for that site.
+These tokens represent the capability-based permissions granted to the application according to its installed policy, such as whether specific domains or cookies may be stored globally or privately.
+
+The extracted information is then passed to the function \textsc{DecideCookieAction()}, which encapsulates the core of our decision-making logic.
+This function evaluates all available tokens for the current cookie based on the following precedence rules:
+
+\begin{enumerate}
+  \item 
+Predefined tokens have absolute priority over wildcard tokens.
+
+  \item
+Within the same class, private tokens override global ones, ensuring that stricter privacy rules are always applied when present.
+
+  \item
+Wildcard tokens apply when no predefined token is available and indicate that all cookies from that domain should be handled according to their declared scope (global or private).
+\end{enumerate}
+
+The result is a ByetrackCookieDecision object that specifies both the action to take (e.g., store, capture, or reject) and the corresponding token that granted the decision.
+
+Depending on this decision, the integration proceeds as follows:
+
+\begin{enumerate}
+  \item 
+StoreNormally:
+If the cookie is authorized for global storage (e.g., by a predefined or wildcard global token), Byetrack simply continues the native Gecko cookie insertion flow via the storage->AddCookie().
+This preserves default browser functionality for legitimate cases, such as cookies essential for same-site sessions or user preferences.
+
+  \item
+CapturePredefined:
+For cookies explicitly defined in the policy as private (e.g., session identifiers that must not leak cross-site), the cookie’s value is embedded into the associated token by updating the token's value field.
+The token’s access rights are updated to READ\_WRITE to reflect that it now carries an active cookie value -- essentially turning it into a final token.
+We do this for the reason how the additional utility on our tokens work (\ref{utility}).
+Instead of being stored in the browser’s global jar, this updated token is forwarded to StageTokenForReturn(), a helper routine that serializes the token information and stages it for return to the originating application.
+
+  \item
+CaptureWildcard:
+Wildcard tokens behave similarly: if a domain is destined for the private jar by a wildcard rule, not only the cookie name but also the value is captured into the token.
+The only important difference is that here, the token's access rights are not updated (default is no access rights "NONE"), as otherwise the tracking library could simply read out the value again, echo it back to its server, and thereby circumvent the isolation.
+
+  \item
+Reject:
+If no token matches the cookie or if the policy forbids storing cookies for this domain, the cookie is just dropped.
+This prevents unwanted cross-site tracking by suppressing unauthorized cookie storage operations.
+
+\end{enumerate}
+
+This ensures that all unmodified web behavior remains intact while Byetrack enforces policy-based restrictions transparently.
+
+\textbf{Returning Tokens to the App:} 
+Before the actual token is again serialzed and handed back up to the java layer to be sent to the app, we need to make sure that the token does not already exist in the app's private jar.
+For this, we fetch the cookie header stored in the top level browsing context and check if the cookie encapsulated by the token already exists in the header.
+This is simply done by constructing the cookie string "token.name=token.value" and checking if it is contained in the merged cookie header stored in the top level browsing context, used for outgoing requests.
+If the token is found there, we simply discard it as the app already has it.
+Otherwise, the token payload is serialized back into its JSON representation and then Base64-encoded, signed and encrypted the same way as during generation, before it is added to a temporary map stored in the HttpBaseChannel object by using its internal channel.
+This map associates each domain with an array of token strings, allowing multiple tokens for different domains to be staged for return to the application.
+
+To synchronize the browser's enforcement results with the application process, we extends Gecko's networking stack with a dedicated emission helper implemented in HttpBaseChannel's EmitByetrackTokensToGeckoView().
+This function is invoked from HttpChannelParent::OnStopRequest() -- that is, at the exact moment when an HTTP request completes and all cookies have been processed by the CookieService.
+Note that at this point, our subsystem has already collected any filled in tokens tokens into the temporary map stored in the channel object by the StageTokenForReturn() function.
+
+The EmitByetrackTokensToGeckoView() helper serializes this in-memory map into a compact JSON structure and forwards it through Gecko's observer service.
+Before emitting, the function checks a boolean flag and a unique batch identifier to prevent re-emitting the same batch of tokens multiple times for a single channel instance.
+Using mozillas JSON writer utility, the function iterate voer the map entries, associating each domain with an array of token strings.
+The output of the JSON follows the same structure as the one used during token generation, ensuring consistency between the two processes and thereby simplifying parsing on the receiving side.
+The function uses the global nsIObserverService to broadcast a notification with the topic "byetrack-final-tokens".
+This effectively acts as an IPC bridge between the networking layer in C++ and JavaScript/Java.
+After emitting the tokens, the internal map is cleared to avoid redundant emissions.
+
+By performing this emission inside HttpChannelParent's OnStopRequest(), we guarantee that the final set of captured tokens is only emitted once the HTTP transaction has completed and all cookies have been processed.
+This ensures that no partial or intermediate state is sent to the embedding application.
+
+On the embedding side, the "byetrack-final-tokens" observer event is handled within GeckoViewNavigation, the same place where the threading in GeckoView started.
+The observer's observe() method processes the serialized JSON map and uses GeckoView's event dispatch system to send a message of type "GeckoView:Byetrack:FinalTokens" carrying the tokens and the application identity (package name).
+This event is caught on the Java side inside the GeckoSession class -- the same locaiton where LoadUri and similar events are processed.
+When the "GeckoView:Byetrack:FinalTokens" event is received, the Java handler constructs a ContentValues object containng the token JSON and writes it to the application's registered content provider. allowing it to update its local capability store.
 
 
-\section{Libraries}
+\subsection{Additional Utility}
+\label{sec:utility}
+
+All additional utility functions are implemented in a separate ContentProvider exposed by the browser.
+In this content provider, we leverage the parameter "method" of the call function to distinguish between the different utility functions.
+This also implies that all results are returned as a Bundle object, which is the standard return type of the call function.
+The data for each function to work on is passed via remaining parameters of the function -- \textsc{arg} (String)and \textsc{extras} (Bundle) if necessary. 
+
+\textbf{GetTokenNames:} 
+If the method parameter is set to \texttt{"get\_token\_cookie\_names"}, the function expects a list of capability tokens in JSON array format as the \textsc{arg} parameter.
+Each token is decoded from its encrypted form using the \texttt{Token.decodeEncrypted()} function, which reconstructs the underlying \texttt{TokenPayload}.
+If the decoded token's \texttt{applicationId} does not match the caller's package name, the request is rejected.
+Otherwise, the function adds the mapping between the token string and its associated cookie name to the resulting \texttt{Bundle}, which is then returned to the caller.
+This enables external applications (e.g., the Byetrack client library) to inspect which cookie names are encapsulated by their issued capability tokens, without disclosing data from other apps.
+
+\textbf{GetTokenValue:}
+If the method parameter is set to \texttt{"get\_token\_cookie\_value"}, the function expects a single encrypted capability token as the \textsc{arg} parameter.
+Similar to the previous case, the token is decoded and verified against the caller's package name.
+Afterwards, the browser verifies the access rights encoded within the capability token.
+Only if the \texttt{canRead()} flag inside the payload is set does the provider return the corresponding cookie value as the field \texttt{"value"} in the result \texttt{Bundle}.
+Otherwise, a permission error string is returned.
+This design enforces read isolation and ensures that only apps possessing valid read rights for a specific capability can query associated cookie values.
+
+\textbf{WriteTokenValue:}
+If the method parameter is set to \texttt{"write\_token\_cookie\_value"}, the provider allows controlled modification of the cookie value embedded in a capability token.
+Again, the encrypted token is decoded, verified against the caller's package name, and its permissions checked via \texttt{canWrite()}.
+If write access is permitted, the new cookie value is taken from the \textsc{extras} bundle under the key \texttt{"value"}.
+Since all fields of the payload are immutable, a new \texttt{TokenPayload} instance is created internally with the updated value, re-signed using the browser's signing key, and re-encrypted into a new token string.
+The updated token and its target domain are then returned to the caller.
+This process ensures that all token modifications remain cryptographically verifiable and bound to the correct application context.
+
+\section{App-side changes}
 \label{sec:libraries}
 
-  \subsection{Byetrack/Mitigation} % Write Byetrack here? Prob. title change needed "Byetrack: Capabilities as a Solution ..."
+On the application side, two main components were introduced to integrate the Byetrack mitigation seamlessly into existing Android apps:
+(1) a standalone Byetrack helper library, which encapsulates all logic related to capability token management and injection, and
+(2) minor modifications to the AndroidX Browser library that transparently hook into the Custom Tabs and Trusted Web Activity launch mechanisms.
+Together, these ensure that any app using the standard AndroidX Browser interface automatically benefits from the Byetrack functionality without requiring manual integration.
 
-  \subsection{AndroidX Browser}
+\subsection{Byetrack Helper Library}
+\label{sec:byetracklib}
 
-\section{HyTrack Demo Apps}
+The Byetrack library acts as the bridge between the embedding app and the browser.
+It manages the storage, retrieval, and injection of capability tokens and exposes a minimal, high-level API through the ByetrackClient class.
+Internally, it consists of several modular components that collectively handle token management, secure communication with the browser, and intent preparation.
 
-\section{Test App}
+\textbf{Token Management: }
+To facilitate secure and persistent token handling, the library exposes a \texttt{ContentProvider} (\texttt{TokenProvider}) through which the browser can deliver tokens to the application.
+This provider only implements the \textsc{insert()} method, as neither querying nor deletion is required.
+When the browser calls \textsc{insert()}, the library first verifies the calling package name to ensure that only legitimate browsers can write to the app's token store.
+Upon successful verification, the transmitted tokens -- typically provided as a key-value map containing both final and wildcard tokens -- are persisted locally.
 
-\section{Evil App}
+Tokens are stored in \texttt{SharedPreferences} under separate namespaces (final\_token, wildcard\_token, and is\_ambient) to distinguish between different token types.
+The additional ambient flag indicates whether the app is currently operating in ambient mode, which is crucial for correctly interpreting tokens that otherwise share the same structure.
+\texttt{SharedPreferences} were chosen for simplicity, persistence across restarts, and asynchronous write support -- characteristics well suited for our lightweight storage requirements.
+
+The \texttt{TokenManager} class abstracts all access to this local storage, offering thread-safe read and write operations and providing convenience wrappers to fetch or update specific token sets.
+
+\textbf{Token Injection into Intents: }
+Before launching a browser instance, the app must attach its capability tokens to the outgoing intent.
+This is handled by the \texttt{ByetrackClient} via its \textsc{attachTokens()} and \textsc{injectTokens()} methods.
+When called, these methods gather all relevant tokens from the store, serialize them into a compact JSON bundle, and append them to the intent extras.
+If additional domains are supplied (e.g., in a multi-domain flow), the function ensures that tokens for these hosts are also included.
+
+This injection step is completely transparent to the embedding app.
+Developers can use the same CustomTabsIntent or TrustedWebActivityIntent interfaces as before; the library automatically enriches them with the necessary Byetrack metadata prior to launch.
+
+\textbf{Utility Components: }
+Supporting utilities such as \texttt{Util} and \texttt{DebugHelp} provide helper functions for (1) calling the browser's exposed content provider for additional operations on tokens and (2) displaying debug information about the current token stored and which cookies they (final tokens) encapsulate.
+%These are deliberately kept separate from the core logic, but can easily be imported and used by the embedding app.
+
+\subsection{AndroidX Browser Integration}
+\label{sec:androidx-browser}
+
+To eliminate the need for developers to manually include the Byetrack library or modify their own app code, we integrated it directly into a fork of the \texttt{AndroidX Browser} library.
+This ensures automatic token injection whenever an app uses CTs or TWAs.
+
+Specifically, both \textsc{CustomTabsIntent.launchUrl()} and \textsc{TrustedWebActivityIntent.launchTrustedWebActivity()} were extended to call the \textsc{ByetrackClient.attachTokens()} method before invoking \textsc{ContextCompat.startActivity()}.
+This guarantees that every navigation initiated through these standard AndroidX interfaces automatically carries the appropriate capability tokens to the browser.
+
+Additionally, we introduced overloaded versions of both launch functions that accept an optional list of additional hosts.
+These allow developers (or future automation logic) to specify related domains that should receive tokens as well -- for instance, if the application anticipates cross-domain requests as part of the same trust context.
+
+Overall, these modifications make Byetrack entirely transparent to app developers: any app compiled against our customized AndroidX Browser version inherently benefits from Byetrack's mitigation without requiring code changes or awareness of the underlying token system.
+
+\section{Integration into Existing HyTrack Demo Applications}
+\label{sec:hytrackapps}
+
+Both HyTrack demo applications, \texttt{CrossAppLauncher} and \texttt{CrossAppTrackerOne}, originally launched Trusted Web Activities (TWAs) using Google Chrome's \texttt{android-browser-helper} library, which automatically establishes a TWA connection to Chrome for convenience.
+To make these apps compatible with our mitigation system, we removed this dependency and integrated our modified AndroidX Browser library instead. The TWA connection is now established manually with our customized Fenix browser.
+
+For the launcher variant, we additionally implemented a standalone \texttt{TwaLauncherActivity} that launches a TWA on startup, since Firefox currently does not provide a comparable helper library like Google’s \texttt{android-browser-helper}.
+Although Firefox does not natively support TWAs yet, no further changes to the applications were required: the TWA intents are transparently downgraded to standard Custom Tab intents within the browser.
+
+\section{Implementation Challenges}
+TODO: retrieve uid from intent problem: pendingIntent, encryption, shared key, ipc connection only with session (TWAs); Working schemes: Commitment Scheme (Eric Sven), wrap in pending intent and let browser launch TWA/CT, Change android source code to add extra to intent so uid can easily be retrieved.
 
