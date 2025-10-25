@@ -157,7 +157,7 @@ Note that the cooki name parameter is set to "*" for wildcard tokens to indicate
 This is due to the reason that wildcard tokens stay the way they are and are used as a blueprint for the browser to generate final tokens when cookies are actually received from the network and hence we do not want developers to accidentally overwrite the cookie value and thereby break the system.
 
 Each token object is then encoded as a compact JSON object and serialized into a Base64-encoded string.
-Finally, the encoded string is signed using hmacSHA256 and the signature attached to the token object separated with a dot, similar to JWTs ~\cite{RFC7519}, before encrypting it using AES-CBC with a random IV using the browsers secret key.
+Finally, the encoded string is signed using hmacSHA256 and the signature attached to the token object separated with a dot, similar to JWTs ~\cite{rfc7519}, before encrypting it using AES-CBC with a random IV using the browsers secret key.
 This makes the tokens tamper-evident and ensures that only the browser can generate valid tokens.
 
 Once generated, tokens are send to the app in a map from String (domain) to JSON array via the same content provider that received the policy so that the app can persist them locally (\ref{sec:libraries}).
@@ -399,5 +399,48 @@ For the launcher variant, we additionally implemented a standalone \texttt{TwaLa
 Although Firefox does not natively support TWAs yet, no further changes to the applications were required: the TWA intents are transparently downgraded to standard Custom Tab intents within the browser.
 
 \section{Implementation Challenges}
-TODO: retrieve uid from intent problem: pendingIntent, encryption, shared key, ipc connection only with session (TWAs); Working schemes: Commitment Scheme (Eric Sven), wrap in pending intent and let browser launch TWA/CT, Change android source code to add extra to intent so uid can easily be retrieved.
 
+\subsection{Securely Identifying the Calling App}
+The most challenging and crucial part of the implementation is identifying the app that launched the Custom Tab in a secure manner.
+Note this does not apply to TWAs, as they are required a session to be established with the browser first (binder channel), which already provides the app identity in a secure manner. 
+
+This is the most important piece of information, as it is needed to verify that the capability tokens presented to the browser actually belong to the app that launched the Custom Tab.
+Therefore, it is essential that this information cannot simply be spoofed by a third-party app.
+Even though Android's Intents form a IPC channel between apps, they do not provide built-in functionality to securely identify the calling app via the intent itself.
+
+We tried multiple approaches to solve this problem, where most of them fail due to being insecure regarding our thread model \ref{chap:threat_model} or because they require modifications that would change a simple CT launch into a overly complex flow.
+Here are some of the approaches we tried:
+
+\textbf{Plain Intent Extras: }
+The simplest approach is to attach the app's package name as extra to the intent in the same way as we do with the capability tokens so that the browser can read it out.
+However, this approach is fundamentally insecure, as a package name is just a String and thus any other app could simply attach the same package name to the intent and thereby impersonate another app.
+
+\textbf{Shared Secret and Intent Extras: }
+The next idea was to share a secret key between the app and the browser during installer via for example \texttt{KeyStore} and establish a challenge-response protocol.
+This fails for the reason that we have to assume that the tracking library included in the app can also access the shared secret, as it has the same permissions as the app itself.
+With this knowledge, the tracking library could simply do the challenge-response itself and share information with other collaborating apps, thereby circumventing the approach.
+
+\textbf{Using Medium that provides Caller Identity: }
+Another idea was to fall back to a medium that already provided the caller identity in a secure manner from which the browser could derive the package name and link it to the intent launching the Custom Tab.
+This turned out to be quite difficult, as it is hard to use a identifier the app can send to the browser that cannot be read by the tracking library and therefore spoofed.
+
+\textbf{Commitment Scheme: }
+An approach that follows this idea is inspired by commitment schemes, which by design features a two-phase protocol: commit and reveal ~\cite{enwiki:1318450859}.
+First, the app would commit the requested url and capability tokens for launching a CT to the browser in advance via a secure channel from which the app identity can be derived.
+Then next time the app launches a CT, the Intent would remain "empty" without any extra data and the browser would launch the CT based on the previously committed data.
+
+With this approach, the tracking library would not be able to spoof the app identity, as the commit phase happens over a secure channel.
+Despite being able to make its own commitments, the tracking library is limited to the app's identity and therefore the tokens it holds.
+
+However, there are multiple downsides to this approach: Instead of only launching a CT with a single intent and injecting the tokens there, the app now has to perform two separate operations, which increases complexity and overhead.
+Also, any other app could launch a CT based on previously committed data, as there is no link between the commit and reveal phase.
+
+\textbf{Pending Intent: }
+A similar approach that overcomes the downside of having two separate operations is to use Android's \texttt{PendingIntent} mechanism ~\cite{android:pendingintents}.
+The CT intent could be wrapped into a PendingIntent flagged as immutable for launching the CT, the tokens included as additional data before being sent over to the browser.
+The browser could then retrieve the package name by calling \textsc{getCreatorPackage} on the PendngIntent object and invoke it to launch the CT on behalf of the app.
+
+Other apps would still be able to launch pending intents of different apps if shared, but they would not be able to spoof the app identity and thereby impersonate another app and leverage its tokens. %TODO: double check this
+
+\subsection{Other Challenge}
+What else?
