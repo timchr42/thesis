@@ -76,17 +76,35 @@ Merges them into the local capability store
 \label{fig:byetrack-token-flow}
 \end{figure}
 
-To demonstrate the feasibility of our mitigation strategy, we developed a proof-of-concept installer application, a new library that ships the changes and modified the androix browser library to inject our capability tokens for each call to launch a Custom Tab (CT) or Trusted Web Activity (TWA).
+\section{Overview}
 
-In this proof-of-concept, we chose the firefox mobile browser (Fenix) to act as the policy enforcement point, but it could have been any other browser the authors of HyTrack~\cite{USENIX:Wessels:2025} found out to be vulnerable to their attack, such as Chrome or Brave. %TODO: cite and check!
+This chapter details the implementation of our proof-of-concept prototype that realizes the Byetrack mitigation described in the previous chapter.
+The prototype consists of three main components that together cover policy distribution, capability token generation, and enforcement within the browser:
 
-We modified the proof-of-concept apps provided by the authors of HyTrack and provide a test application for more insight into the framework's behavior.
-For completeness, we also provide a "evil" acting app that demonstrates what the HyTrack library included in tan app could do to circumvent the mitigation.
+\begin{itemize}
+  \item 
+Custom Installer Application — responsible for installing test apps and transmitting their declared policies to the browser.
 
-\textit{Put a diagram here that shows the components and their interactions!!!}
+\item
+Byetrack Helper Library — a reusable client-side library that manages capability tokens, communication with the browser, and transparent token injection into outgoing intents.
+
+\item
+Modified AndroidX Browser Library — a drop-in replacement for the standard AndroidX Browser module that automatically integrates Byetrack logic into every \textit{Custom Tab (CT)} and \textit{Trusted Web Activity (TWA)} invocation.
+
+\end{itemize}
+For the enforcement component, we selected Mozilla Firefox for Android (Fenix) as the browser base due to its open architecture and direct access to the GeckoView engine.
+Within Fenix, Byetrack is implemented across two layers:
+a Java layer that handles policy ingestion and token generation, and
+a native C++ layer within Gecko responsible for enforcing cookie isolation and network-level restrictions.
+Both layers communicate through structured JNI bindings and share a common cryptographic key for token signing and verification.
+
+To demonstrate interoperability, we integrated the system into the original HyTrack demo applications (\texttt{CrossAppLauncher} and \texttt{CrossAppTrackerOne}) and developed an additional test app as well as an adversarial tracking app.
+This allowed us to evaluate the behavior of our enforcement logic across benign, mixed, and malicious interaction scenarios.
 
 \section{Policy Format}
-The Byetrack policy defines the capability configuration that determines which domains are eligible to receive capability tokens and under which isolation context (global or private) they operate. The policy is expressed in a structured JSON format that is divided into two primary sections: predefined and wildcard.
+
+The Byetrack policy defines the configuration of capability tokens, specifying which domains may receive them and under which isolation context (global or private). 
+It is expressed as a structured JSON object divided into two top-level sections: \textit{predefined} and \textit{wildcard}.
 
 Each section further distinguishes between two isolation scopes:
 \begin{itemize}
@@ -94,38 +112,47 @@ Each section further distinguishes between two isolation scopes:
   \item private -- referring to tokens restricted to the local application or site context (e.g. third-party trackers like the authors of HyTrack describe).
 \end{itemize}
 
-\textbf{Predefined Section:} The predefined section specifiec explicit capability bindings between domains ad the cookies that are allowed to be associated with them.
+\textbf{Predefined Section:} The predefined section specifies explicit capability bindings between domains ad the cookies that are allowed to be associated with them.
 These entries define exactly which cookie names are permitted for which domains.
 Each key corresponds to a domain, and the associated list defines cookie names that are explicitly authorized for that domain.
-The distinction between global and private in the predefined section allows a domain to hold both a global token (usable across trusted contexts) and a private token (restricted to one context). The two scopes are treated independently and can coexist safely. %TODO Put this in Design rather?
+The distinction between global and private in the predefined section allows a domain to hold both a global token  and a private token.
+The two scopes are treated independently and can coexist safely. %TODO Put this in Design rather?
 
 \textbf{Wildcard Section:} The wildcard section defines simplified or implicit rules for domains where explicit cookie level definitions are not necessary.
 Instead of listing cookie names, the wildcard policy only specifies domains that shall receive capability tokens defined by the isolation scope.
 
-The wildcard and predefined entries operate independently — a domain can appear in both lists if necessary. For example, a domain may have a global predefined token for a specific cookie and a private wildcard token for general use. This allows flexible, layered control over cookie behavior. %TODO put this in Design?
+The wildcard and predefined entries operate independently -- a domain can appear in both lists if necessary. For example, a domain may have a global predefined token for a specific cookie and a private wildcard token for general use. This allows flexible, layered control over cookie behavior. %TODO put this in Design?
 
-An example policy with explaination can be found in the appendix \ref{appendix:policy}.
+An example policy with explanaition can be found in the appendix \ref{appendix:policy}.
 
 \section{Custom Installer}
-The installer stored the apks of the apps to be installed in its assets folder.
-This folder is read-only at runtime, so we copy the apks to the app's private storage first when an installationis initiated.
-The apks uri is then installed by setting it in the intent, wich is finally launched.
-As we can only read the policy with the help of the AssetManager once the apk is actually installed, we use ActivityForResult to directly continue after the installation is finished to circumvent the need to continuously poll for the installation status. 
-Once the policy json file is read into a json string, it is sent to the browser together with the installed apps version and package name provided by the PackageManager by calling a designated content provider exposed by the browser.
-The reason for choosing a content provider for inter process communication is that it is easy to implement by just extending the ContentProvider class and registering it in the manifest and offers functionality to receive the identity of the calling app, which is crucial for our use case.
-Even though in latest Android versions (CITE HERE), there exists functionality to get the calling package name of an intent received via a broadcast, it is not reliable and in my case only returned null.
-Attaching the policy, package name and version as extras to the intent and wrapping it in a pending intent is a workaround, but this faces the problem of spoofing, as the tracking library could simply create the pending intent itself and send a fake policy to the browser.
-A service could be another option, but it is more complex to implement and requires more boilerplate code, even though being the more clean solution by establishing a reusable communication channel between the installer and the browser.
-The downside of using a service is that the browser needs to be running in order for the installer to connect to it, which in this scenario is not guaranteed.
+
+The installer application packages the proof-of-concept apps as APKs within its \texttt{assets/} directory. 
+Since this directory is read-only at runtime, the APKs are first copied into the app’s private storage before installation.
+Each installation is initiated through an intent pointing to the local APK URI.
+
+Once installation completes, the installer immediately proceeds to read the policy file from the newly installed app’s assets using the \texttt{AssetManager}. 
+To avoid polling for completion, the process is implemented via \texttt{ActivityForResult}, allowing direct continuation after installation finishes.
+
+After parsing the policy JSON into a string, the installer transmits it to the browser—along with the package name and version obtained via the \texttt{PackageManager}—through a designated \texttt{ContentProvider} exposed by the browser.
+We selected a content provider for inter-process communication because it is simple to implement, automatically conveys the caller’s identity, and provides structured data exchange via Bundles.
+
+Although recent Android versions introduce mechanisms to derive the calling package of a broadcast intent, we found this approach unreliable in practice (often returning \texttt{null}). 
+Wrapping the intent in a \texttt{PendingIntent} is a possible workaround but susceptible to spoofing if a malicious library creates and dispatches its own fake pending intent.
+A bound service could also serve as an IPC channel but would require the browser process to be active and significantly increase implementation complexity.
 
 
 \section{Browser (Fenix)}
 % State why the browser generates token and not the installer (one trusted component needs to be chosen)
-The modifications conducted in the browser can be divided into two main parts: token generation and additional utility in the java layer and the actual enforcement in the C++ layer. 
-Despite the overlapping functionality, it was best to stricly isolate the two parts and have them "share" a secret key.
-This is due to the fact that once the content provider is called, the browser is not running and therefore no GeckoRuntime exists.
-Having no runtime though makes it impossible to call into the C++ layer directly from the content provider.
-Trying to launch a temporary runtime to call into the C++ layer -- despite it introducing a lot of complexity and overhead -- turned out to be troublesome and error prone as it messed with the actual runtime of the browser once it was started.
+The browser serves as the policy enforcement point in our architecture. 
+Its modifications fall into two distinct components:
+(1) a Java layer responsible for token generation and management, and
+(2) a native C++ layer responsible for enforcement within Gecko’s cookie and networking subsystems.
+
+This separation maintains a clear trust boundary between high-level policy logic and low-level enforcement. 
+Although their responsibilities overlap conceptually, direct invocation across these layers proved impractical, as the browser may receive policies before its \texttt{GeckoRuntime} is initialized. 
+Launching a temporary runtime solely for token processing introduced instability and race conditions. 
+Therefore, the two layers share a symmetric secret key to ensure coordinated behavior without direct cross-layer calls.
 
 \subsection{Token Generation}
 Before generating any capability tokens, the browser performs a policy downgrade step to sanitize the received policy.
@@ -153,19 +180,19 @@ An example can be found in the appendix \ref{appendix:policy}.
 Once all conflicts are resolved, the downgraded policy structures are passed into the token generation routines -- processing of the predefined map and wildcard list.
 These functions iterate over the filtered domain and cookie lists, creating one encrypted capability token per entry using \textit{generateSingleToken(domain, cookieName, "*", globalJar, packageName, versionName, rights);}.
 As a result, only conflict-free and least-privilege tokens are ever created.
-Note that the cooki name parameter is set to "*" for wildcard tokens to indicate that they apply to all cookies for the given domain and that the rights parameter is set to "NONE" for all wildcard tokens.
+Note that the cookie name parameter is set to "*" for wildcard tokens to indicate that they apply to all cookies for the given domain and that the rights parameter is set to "NONE" for all wildcard tokens.
 This is due to the reason that wildcard tokens stay the way they are and are used as a blueprint for the browser to generate final tokens when cookies are actually received from the network and hence we do not want developers to accidentally overwrite the cookie value and thereby break the system.
 
 Each token object is then encoded as a compact JSON object and serialized into a Base64-encoded string.
 Finally, the encoded string is signed using hmacSHA256 and the signature attached to the token object separated with a dot, similar to JWTs ~\cite{rfc7519}, before encrypting it using AES-CBC with a random IV using the browsers secret key.
 This makes the tokens tamper-evident and ensures that only the browser can generate valid tokens.
 
-Once generated, tokens are send to the app in a map from String (domain) to JSON array via the same content provider that received the policy so that the app can persist them locally (\ref{sec:libraries}).
+Once generated, tokens are send to the app in a map from String (domain) to JSON array via the same content provider that received the policy so that the app can persist them locally (Section \ref{sec:libraries}).
 
 \subsection{Launching Custom Tabs / TWAs with Tokens}
-As our goal is to isolate cookies based on our capability tokens, and cookies sending/receiving is handled in the C++ layer (in CookieService) of firefox's browser engine Gecko, we first need to thread the tokens down from the java layer through the JNI bridge into the C++ layer.
+The browser performs this process in two stages: (1) threading capability data from the Android layer down into the Gecko engine, and (2) enforcing cookie isolation inside Gecko's networking stack.
 
-\subsubsection{Threading} %\textbf{Threading:}
+\paragraph{Stage 1 – Threading of Capability Data.}
 The threading mechanism ensures that all capability-related data (tokens and caller information) are propagated consistently through the Android and GeckoView layers until they reach the browser engine.
 
 In Firefox for Android (Fenix), all incoming intents that trigger a Custom Tab (CT) launch are handled by the CustomTabsIntentProcessor class, which resides in the Android Components library—Mozilla’s reusable collection of browser building blocks.
@@ -208,24 +235,23 @@ It provides the cookie and network layers with all validated tokens and associat
 This design ensures that token verification occurs early in the navigation lifecycle while such that they only have to be parsed and validated once per navigation.
 This establishes a separation between token management and enforcement, allowing the network layer to focus solely on isolating cookies based on the pre-validated tokens.
 
-%\textbf{Enforcement:} 
-\subsubsection{Enforcement / Cookie Isolation}
+\paragraph{Stage 2 – Enforcement of Cookie Isolation.}
 The actual enforcement of cookie isolation based on the capability tokens occurs in the CookieService and HttpBaseChannel class.
 
 When a network request is initiated, the HttpBaseChannel uses the CookieService to (1) prepare the Cookie header for outgoing requests and (2) process incoming Set-Cookie headers from server responses and storing the cookies in the browser storage.
 
 %(HttpBaseChannel::AddCookiesToRequest calls CookieService::GetCookieStringFromHttp & HttpBaseChannel::SetCookieHeaders calls CookieService::SetCookieStringFromHttp are the two functions responsible for these tasks, respectively.)
-\textbf{(1)} The main flow for attaching cookies to outgoing requests happens in HttpBaseChannel's \textsc{AddCookiesToRequest} function.
-Here, the CookieService's GetCookieStringFromHttp is used to retrieve the appropriate cookies for the request's target domain.
-Similarly, we use the top level browsing context to retrieve our prebuild Cookie header string based on the final capabilities associated that were attached to the top level browsing context during the document load phase.
-The outgoing request's header is then simply built by appending our capability-based Cookie string to the existing Cookie header separated by a semicolon.
+\paragraph{Outgoing Cookies.}
+The main flow for attaching cookies to outgoing requests occurs in \texttt{HttpBaseChannel::AddCookiesToRequest}. 
+Here, the \texttt{CookieService::GetCookieStringFromHttp} function retrieves the appropriate cookies for the target domain.
+Similarly, we use the top-level browsing context to retrieve our prebuilt cookie header string based on the final capabilities associated during the document load phase.
+The outgoing request header is constructed by appending our capability-based cookie string to the existing Cookie header, separated by a semicolon.
 
-\textbf{(2)} For incoming Set-Cookie headers, the HttpBaseChannel's \textsc{SetCookieHeaders} function is responsible for processing and storing cookies received from server responses.
-It calls the CookieService's \textsc{SetCookieStringFromHttp} function iteratively for each cookie string found in the response headers storing them in the browser's cookie jar.
-Here, we again leverage the top level browsing context to retrieve the wildcard capability tokens and pass them on via an additional parameter to the \textsc{SetCookieStringFromHttp} function.
-As we need to check the tokens for each cookie individually, there is no shortcut like in the previous case and we need to change the behavior of how cookies are stored based on the wildcard capabilities.
-This function is also the place where the CHIPS ~\cite{googlechips} implementation in Firefox is located, so it was straightforward to add our own logic here.
-In fact, the CHIPS logic is executed first, and only if it allows the cookie to be stored, our Byetrack logic is applied next.
+\paragraph{Incoming Cookies.}
+For incoming \texttt{Set-Cookie} headers, \texttt{HttpBaseChannel::SetCookieHeaders} processes and stores cookies received from server responses.
+It calls \texttt{CookieService::SetCookieStringFromHttp} iteratively for each cookie string and stores them in the browser's cookie jar.
+Here, we again leverage the top-level browsing context to retrieve wildcard capability tokens and pass them as an additional parameter.
+This location also hosts the CHIPS~\cite{googlechips} implementation, making it straightforward to integrate our logic: CHIPS is evaluated first, and only if it allows storage does the Byetrack logic apply next.
 
 When a response containing cookies is received, our implementation first extracts the cookie name and value from the nsCookie object and logs this information alongside the associated base domain and the number of active tokens currently available for that site.
 These tokens represent the capability-based permissions granted to the application according to its installed policy, such as whether specific domains or cookies may be stored globally or privately.
@@ -275,8 +301,8 @@ This prevents unwanted cross-site tracking by suppressing unauthorized cookie st
 
 This ensures that all unmodified web behavior remains intact while Byetrack enforces policy-based restrictions transparently.
 
-\textbf{Returning Tokens to the App:} 
-Before the actual token is again serialzed and handed back up to the java layer to be sent to the app, we need to make sure that the token does not already exist in the app's private jar.
+\paragraph{Returning Tokens to the App} 
+Before the token is serialized again and handed back up to the java layer to be sent to the app, we need to make sure that the token does not already exist in the app's private jar.
 For this, we fetch the cookie header stored in the top level browsing context and check if the cookie encapsulated by the token already exists in the header.
 This is simply done by constructing the cookie string "token.name=token.value" and checking if it is contained in the merged cookie header stored in the top level browsing context, used for outgoing requests.
 If the token is found there, we simply discard it as the app already has it.
@@ -312,14 +338,14 @@ In this content provider, we leverage the parameter "method" of the call functio
 This also implies that all results are returned as a Bundle object, which is the standard return type of the call function.
 The data for each function to work on is passed via remaining parameters of the function -- \textsc{arg} (String)and \textsc{extras} (Bundle) if necessary. 
 
-\textbf{GetTokenNames:} 
+\paragraph{GetTokenNames.} 
 If the method parameter is set to \texttt{"get\_token\_cookie\_names"}, the function expects a list of capability tokens in JSON array format as the \textsc{arg} parameter.
 Each token is decoded from its encrypted form using the \texttt{Token.decodeEncrypted()} function, which reconstructs the underlying \texttt{TokenPayload}.
 If the decoded token's \texttt{applicationId} does not match the caller's package name, the request is rejected.
 Otherwise, the function adds the mapping between the token string and its associated cookie name to the resulting \texttt{Bundle}, which is then returned to the caller.
 This enables external applications (e.g., the Byetrack client library) to inspect which cookie names are encapsulated by their issued capability tokens, without disclosing data from other apps.
 
-\textbf{GetTokenValue:}
+\paragraph{GetTokenValue.}
 If the method parameter is set to \texttt{"get\_token\_cookie\_value"}, the function expects a single encrypted capability token as the \textsc{arg} parameter.
 Similar to the previous case, the token is decoded and verified against the caller's package name.
 Afterwards, the browser verifies the access rights encoded within the capability token.
@@ -327,7 +353,7 @@ Only if the \texttt{canRead()} flag inside the payload is set does the provider 
 Otherwise, a permission error string is returned.
 This design enforces read isolation and ensures that only apps possessing valid read rights for a specific capability can query associated cookie values.
 
-\textbf{WriteTokenValue:}
+\paragraph{WriteTokenValue.}
 If the method parameter is set to \texttt{"write\_token\_cookie\_value"}, the provider allows controlled modification of the cookie value embedded in a capability token.
 Again, the encrypted token is decoded, verified against the caller's package name, and its permissions checked via \texttt{canWrite()}.
 If write access is permitted, the new cookie value is taken from the \textsc{extras} bundle under the key \texttt{"value"}.
@@ -335,13 +361,13 @@ Since all fields of the payload are immutable, a new \texttt{TokenPayload} insta
 The updated token and its target domain are then returned to the caller.
 This process ensures that all token modifications remain cryptographically verifiable and bound to the correct application context.
 
-\section{App-side changes}
-\label{sec:libraries}
+\subsection{App-side Integration}
+\label{sec:appside}
 
-On the application side, two main components were introduced to integrate the Byetrack mitigation seamlessly into existing Android apps:
-(1) a standalone Byetrack helper library, which encapsulates all logic related to capability token management and injection, and
-(2) minor modifications to the AndroidX Browser library that transparently hook into the Custom Tabs and Trusted Web Activity launch mechanisms.
-Together, these ensure that any app using the standard AndroidX Browser interface automatically benefits from the Byetrack functionality without requiring manual integration.
+On the application side, we introduced two main components to enable seamless integration of Byetrack into existing Android apps:
+(1) a standalone Byetrack helper library that encapsulates capability token management, and 
+(2) a customized AndroidX Browser library that automatically injects tokens into all Custom Tab and TWA launches.
+Together, these components ensure that apps using standard AndroidX interfaces transparently benefit from Byetrack's protection without code modifications.
 
 \subsection{Byetrack Helper Library}
 \label{sec:byetracklib}
@@ -350,7 +376,7 @@ The Byetrack library acts as the bridge between the embedding app and the browse
 It manages the storage, retrieval, and injection of capability tokens and exposes a minimal, high-level API through the ByetrackClient class.
 Internally, it consists of several modular components that collectively handle token management, secure communication with the browser, and intent preparation.
 
-\textbf{Token Management: }
+\paragraph{Token Management.}
 To facilitate secure and persistent token handling, the library exposes a \texttt{ContentProvider} (\texttt{TokenProvider}) through which the browser can deliver tokens to the application.
 This provider only implements the \textsc{insert()} method, as neither querying nor deletion is required.
 When the browser calls \textsc{insert()}, the library first verifies the calling package name to ensure that only legitimate browsers can write to the app's token store.
@@ -362,7 +388,7 @@ The additional ambient flag indicates whether the app is currently operating in 
 
 The \texttt{TokenManager} class abstracts all access to this local storage, offering thread-safe read and write operations and providing convenience wrappers to fetch or update specific token sets.
 
-\textbf{Token Injection into Intents: }
+\paragraph{Token Injection into Intents.}
 Before launching a browser instance, the app must attach its capability tokens to the outgoing intent.
 This is handled by the \texttt{ByetrackClient} via its \textsc{attachTokens()} and \textsc{injectTokens()} methods.
 When called, these methods gather all relevant tokens from the store, serialize them into a compact JSON bundle, and append them to the intent extras.
@@ -371,7 +397,7 @@ If additional domains are supplied (e.g., in a multi-domain flow), the function 
 This injection step is completely transparent to the embedding app.
 Developers can use the same CustomTabsIntent or TrustedWebActivityIntent interfaces as before; the library automatically enriches them with the necessary Byetrack metadata prior to launch.
 
-\textbf{Utility Components: }
+\paragraph{Utility Components.}
 Supporting utilities such as \texttt{Util} and \texttt{DebugHelp} provide helper functions for (1) calling the browser's exposed content provider for additional operations on tokens and (2) displaying debug information about the current token stored and which cookies they (final tokens) encapsulate.
 %These are deliberately kept separate from the core logic, but can easily be imported and used by the embedding app.
 
@@ -399,48 +425,56 @@ For the launcher variant, we additionally implemented a standalone \texttt{TwaLa
 Although Firefox does not natively support TWAs yet, no further changes to the applications were required: the TWA intents are transparently downgraded to standard Custom Tab intents within the browser.
 
 \section{Implementation Challenges}
+\label{sec:implementation_challenges}
 
-\subsection{Securely Identifying the Calling App}
-The most challenging and crucial part of the implementation is identifying the app that launched the Custom Tab in a secure manner.
-Note this does not apply to TWAs, as they are required a session to be established with the browser first (binder channel), which already provides the app identity in a secure manner. 
+The implementation process presented several notable challenges that required balancing security, practicality, and compatibility with existing Android mechanisms. 
+This section summarizes the most critical ones encountered during development.
 
-This is the most important piece of information, as it is needed to verify that the capability tokens presented to the browser actually belong to the app that launched the Custom Tab.
-Therefore, it is essential that this information cannot simply be spoofed by a third-party app.
-Even though Android's Intents form a IPC channel between apps, they do not provide built-in functionality to securely identify the calling app via the intent itself.
+\subsection{Securely Identifying the Calling Application}
 
-We tried multiple approaches to solve this problem, where most of them fail due to being insecure regarding our thread model \ref{chap:threat_model} or because they require modifications that would change a simple CT launch into a overly complex flow.
-Here are some of the approaches we tried:
+The most crucial challenge was securely identifying the application that launched a \textit{Custom Tab}.  
+This information is essential to verify that the capability tokens presented to the browser genuinely belong to the invoking application and are not spoofed by another app.  
+In contrast, \textit{Trusted Web Activities (TWAs)} are not affected by this problem, as they establish a session with the browser over a Binder channel that inherently conveys the caller's identity.
 
-\textbf{Plain Intent Extras: }
-The simplest approach is to attach the app's package name as extra to the intent in the same way as we do with the capability tokens so that the browser can read it out.
-However, this approach is fundamentally insecure, as a package name is just a String and thus any other app could simply attach the same package name to the intent and thereby impersonate another app.
+Although Android's \texttt{Intent} mechanism provides an IPC channel between applications, it does not include a built-in way to authenticate the sender of an intent.  
+We therefore explored multiple approaches to securely determine the calling application's identity, many of which turned out to be insecure or impractical within our threat model (see Section~\ref{chap:threat_model}).
 
-\textbf{Shared Secret and Intent Extras: }
-The next idea was to share a secret key between the app and the browser during installer via for example \texttt{KeyStore} and establish a challenge-response protocol.
-This fails for the reason that we have to assume that the tracking library included in the app can also access the shared secret, as it has the same permissions as the app itself.
-With this knowledge, the tracking library could simply do the challenge-response itself and share information with other collaborating apps, thereby circumventing the approach.
+\paragraph{Plain Intent Extras.}
+The simplest approach was to attach the application's package name as an extra to the intent, similar to how capability tokens are passed.  
+However, this method is fundamentally insecure since the package name is merely a string that can easily be spoofed by a malicious app pretending to be another package.
 
-\textbf{Using Medium that provides Caller Identity: }
-Another idea was to fall back to a medium that already provided the caller identity in a secure manner from which the browser could derive the package name and link it to the intent launching the Custom Tab.
-This turned out to be quite difficult, as it is hard to use a identifier the app can send to the browser that cannot be read by the tracking library and therefore spoofed.
+\paragraph{Shared Secret and Challenge-Response.}
+A more advanced approach was to establish a shared secret between the application and the browser (e.g., using the \texttt{KeyStore}) and perform a challenge–response protocol during Custom Tab launch.  
+This approach fails under our threat model, since a tracking library included in the app has the same privileges as the app itself and can therefore access the shared secret and execute the challenge–response on its own.  
+Consequently, this mechanism cannot prevent colluding apps or libraries from impersonating the legitimate caller.
 
-\textbf{Commitment Scheme: }
-An approach that follows this idea is inspired by commitment schemes, which by design features a two-phase protocol: commit and reveal ~\cite{enwiki:1318450859}.
-First, the app would commit the requested url and capability tokens for launching a CT to the browser in advance via a secure channel from which the app identity can be derived.
-Then next time the app launches a CT, the Intent would remain "empty" without any extra data and the browser would launch the CT based on the previously committed data.
+\paragraph{Using a Medium that Provides Caller Identity.}
+We also explored mechanisms that inherently expose the caller’s identity to the browser, such as using a Binder-based communication channel.  
+However, deriving the identity from such a medium and linking it securely to the Custom Tab launch intent proved difficult, as any identifier accessible to the app is also accessible to the tracking library, and can thus be spoofed.
 
-With this approach, the tracking library would not be able to spoof the app identity, as the commit phase happens over a secure channel.
-Despite being able to make its own commitments, the tracking library is limited to the app's identity and therefore the tokens it holds.
+\paragraph{Commitment Scheme.}
+Inspired by cryptographic commitment schemes~\cite{enwiki:1318450859}, we considered a two-phase protocol involving a \emph{commit} and a \emph{reveal} phase.  
+In this design, the application would first commit the intended URL and capability tokens via a secure channel from which the browser can derive the caller’s identity.  
+When the Custom Tab is later launched, the intent itself remains empty, and the browser uses the previously committed data.  
 
-However, there are multiple downsides to this approach: Instead of only launching a CT with a single intent and injecting the tokens there, the app now has to perform two separate operations, which increases complexity and overhead.
-Also, any other app could launch a CT based on previously committed data, as there is no link between the commit and reveal phase.
+While this design provides strong authenticity guarantees—since the commitment occurs over a secure channel—it introduces significant complexity.  
+The app must perform two separate actions (commit and reveal), and any other app could trigger a launch using previously committed data, as there is no strong link between the two phases.
 
-\textbf{Pending Intent: }
-A similar approach that overcomes the downside of having two separate operations is to use Android's \texttt{PendingIntent} mechanism ~\cite{android:pendingintents}.
-The CT intent could be wrapped into a PendingIntent flagged as immutable for launching the CT, the tokens included as additional data before being sent over to the browser.
-The browser could then retrieve the package name by calling \textsc{getCreatorPackage} on the PendngIntent object and invoke it to launch the CT on behalf of the app.
+\paragraph{Pending Intent.}
+A more practical alternative was to leverage Android’s \texttt{PendingIntent} mechanism~\cite{android:pendingintents}.  
+In this approach, the Custom Tab intent is wrapped into a \texttt{PendingIntent} marked as \texttt{FLAG\_IMMUTABLE}, and capability tokens are attached as extras.  
+The browser can then obtain the caller identity securely via \texttt{getCreatorPackage()} or \texttt{getCreatorUid()} and invoke the PendingIntent on behalf of the app.  
 
-Other apps would still be able to launch pending intents of different apps if shared, but they would not be able to spoof the app identity and thereby impersonate another app and leverage its tokens. %TODO: double check this
+Even if another app gains access to this PendingIntent, it cannot alter its content or spoof the original app’s identity.  
+This method therefore provides a viable balance between security and usability without requiring major architectural changes to the Custom Tab launch flow.
 
-\subsection{Other Challenge}
-What else?
+\subsection{Bridging Between Java and Native Layers}
+\label{subsec:jni_bridging}
+
+Another technical challenge concerned bridging functionality between the Java-based browser components (Fenix and GeckoView) and the native enforcement logic in the C++ layer.  
+Although both parts share overlapping responsibilities, they are intentionally separated for security and maintainability reasons.  
+However, this separation complicates cross-layer calls, particularly in contexts where no \texttt{GeckoRuntime} instance exists—such as during \texttt{ContentProvider} invocations.  
+
+Since launching a temporary runtime solely for token processing proved unreliable and introduced unnecessary complexity, we opted to strictly separate concerns: the Java layer handles token generation and management, while the C++ layer performs enforcement once the browser process and runtime are active.  
+Both layers share a secret key to ensure secure coordination without requiring direct runtime invocations.
+
