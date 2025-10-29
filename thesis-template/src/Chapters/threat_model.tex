@@ -1,4 +1,4 @@
-\chapter{The Threat Model}
+\section{The Threat Model}
 \label{chap:threat_model}
 % Describe what components are trusted/untrusted / State assumption of HyTrack again (?) and our approach
 
@@ -23,5 +23,36 @@ As the tracking library is included in the app, it has the same permissions as t
 Additionally, we have to assume collaboration between the tracking library and other apps to share stored tokens and meta data of the mitigation framework.
 Attemps such as sending policy to their own benefit and thus circumventing the mitigation are also possible.
 
-As we hook our defense in the androidx browser library, any developer that wants to use the malicous tracking library -- or any other library that relies on Custom Tabs or Trusted Web Activities -- automatically uses our mitigatin framework. Thus, the developer cannot choose to omit the mitigation, but still disable it by not giving a policy at all.
+As we hook our defense in the androidx browser library, any developer that wants to use the malicous tracking library -- or any other library that relies on Custom Tabs or Trusted Web Activities -- automatically uses our mitigatin framework.
+Thus, the developer cannot choose to omit the mitigation, but still disable it by not giving a policy at all.
 Therefore, only the androidx browser library needs to be updated, instead of relying on the developer to additionally include the mitigation library, which could be forgotten or omitted intentionally. %TODO cite research here
+
+
+%\section{Threat Model and Design Goals}
+%We consider a benign but privacy-unaware developer who builds an Android application that includes a third-party library—such as an advertising or analytics SDK—that secretly employs the HyTrack technique to perform cross-app tracking.  
+%The developer does not intend to violate user privacy but may unknowingly introduce such behavior by depending on third-party code.
+%
+%Our goal is to protect the user even in this situation: the mitigation must prevent the embedded library from tracking users across multiple apps, without breaking legitimate functionality such as single sign-on (SSO) or federated authentication.
+%
+%The key assumptions are as follows:
+%
+%\begin{itemize}
+%  \item The \textbf{app developer} is honest but may include untrusted code.  
+%  \item The \textbf{tracking library} executes within the same app process and therefore shares all of the app's permissions, including file and network access.  
+%  \item Multiple apps may collude through these libraries to share identifiers or tokens, attempting to bypass our defenses.  
+%  \item The \textbf{installer} is trusted and acts as the system component responsible for delivering the app to the device, extracting its policy, and providing it to the trusted browser.  
+%  \item The \textbf{browser} is the policy enforcement point (PEP) and the only entity trusted to issue and interpret capability tokens correctly.
+%\end{itemize}
+%
+%Since the mitigation is integrated into the AndroidX Browser library itself, any developer that uses standard browser integration interfaces—such as \texttt{Custom Tabs (CT)} or \texttt{Trusted Web Activities (TWA)}—automatically benefits from Byetrack.  
+%Even if the developer is unaware of the system or includes a malicious tracking SDK, all CT and TWA invocations are processed through our instrumented browser stack.  
+%The only way to disable Byetrack is by omitting a policy file entirely, in which case the browser defaults to legacy behavior without privacy isolation.
+%
+%Our design goals can therefore be summarized as:
+%
+%\begin{itemize}
+%  \item Prevent cross-app cookie sharing even if a tracking library is embedded in multiple apps.  
+%  \item Preserve legitimate, intended sharing (e.g., SSO or embedded web views).  
+%  \item Require no developer configuration beyond providing an optional policy file.  
+%  \item Operate transparently for users and with minimal disruption to standard Android app workflows.
+%\end{itemize}

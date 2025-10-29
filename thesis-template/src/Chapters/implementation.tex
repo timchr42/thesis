@@ -178,9 +178,22 @@ An example can be found in the appendix \ref{appendix:policy}.
 
 % Actual Generation Part
 Once all conflicts are resolved, the downgraded policy structures are passed into the token generation routines -- processing of the predefined map and wildcard list.
-These functions iterate over the filtered domain and cookie lists, creating one encrypted capability token per entry using \textit{generateSingleToken(domain, cookieName, "*", globalJar, packageName, versionName, rights);}.
-As a result, only conflict-free and least-privilege tokens are ever created.
-Note that the cookie name parameter is set to "*" for wildcard tokens to indicate that they apply to all cookies for the given domain and that the rights parameter is set to "NONE" for all wildcard tokens.
+These functions iterate over the filtered domain and cookie lists, creating one encrypted capability token per entry using \textsc{generateSingleToken(domain, cookieName, "*", globalJar, packageName, versionName, rights)}.
+As a result, only conflict-free and least-privilege token objects of the following format are generated:
+
+\begin{itemize}
+  \item \texttt{cookie\_name}, \texttt{cookie\_value}: The name and value of the cookie represented by this token.
+  \item \texttt{domain}: The associated web domain this capability applies to.
+  \item \texttt{application\_id}: The package name of the application that owns the token.
+  \item \texttt{app\_version}: The version name of the issuing application, used for version consistency checks.
+  \item \texttt{rights}: The encoded access permissions (read, write, or none) granted for the cookie value.
+  \item \texttt{global\_jar}: Boolean flag indicating whether the cookie belongs to the shared or private cookie jar.
+  \item \texttt{signature}: HMAC-SHA256 signature over all fields, ensuring integrity and authenticity.
+\end{itemize}
+
+Note that the classic wildcard tokens omit the \texttt{cookie\_name} and \texttt{cookie\_value} fields, using "\texttt{*}" as placeholder value to indicate that they apply to all cookies for the given domain.
+Ambient tokens extend this paradigm further by also omitting the \texttt{domain} field, effectively applying to all domains.
+For wildcard tokens, the rights filed is set to \texttt{NONE} by default.
 This is due to the reason that wildcard tokens stay the way they are and are used as a blueprint for the browser to generate final tokens when cookies are actually received from the network and hence we do not want developers to accidentally overwrite the cookie value and thereby break the system.
 
 Each token object is then encoded as a compact JSON object and serialized into a Base64-encoded string.
@@ -198,14 +211,16 @@ The threading mechanism ensures that all capability-related data (tokens and cal
 In Firefox for Android (Fenix), all incoming intents that trigger a Custom Tab (CT) launch are handled by the CustomTabsIntentProcessor class, which resides in the Android Components library—Mozilla’s reusable collection of browser building blocks.
 Since Fenix currently does not support Trusted Web Activities (TWAs), any incoming TWA intent is downgraded to a standard Custom Tab intent and handled by the same processor.
 
-Analogous to the existing getAdditionalHeaders() function—used to retrieve and attach custom HTTP headers to CT or TWA requests—we introduced a dedicated function that collects and returns all Byetrack-specific context data.
-This function retrieves the final and wildcard capability tokens, the UID of the calling application, and returns them as a structured map.
+Analogous to the existing getAdditionalHeaders() function -- used to retrieve and attach custom HTTP headers to CT or TWA requests -- we introduced a dedicated function that collects and returns all Byetrack-specific context data.
+This function retrieves the final and wildcard capability tokens, the UID of the calling application, a flag "true" and returns them as a structured map.
+We need the flag to distinguish between normal website launches initiated by the user and launches initiated by an app via Custom Tabs or TWAs, as only the latter should enforce Byetrack logic.
+Otherwise, the normal browsing experience would be affected as no cookies would be stored for normal website visits as the browser would not receive any tokens, and hence drop all cookies.
 
 This map is then threaded through several layers of the Android Components architecture.
 Starting from the initial intent processing, it follows the Custom Tab launch path until it reaches the GeckoEngineSession class.
 GeckoEngineSession acts as a bridge between Android Components (where the Custom Tabs logic resides) and GeckoView, Mozilla’s Android library that exposes the Gecko browser engine APIs.
 
-Within GeckoEngineSession, the data are handed over to the GeckoSession loader—the central entry point responsible for initiating page loads in GeckoView.
+Within GeckoEngineSession, the data are handed over to the GeckoSession loader -- the central entry point responsible for initiating page loads in GeckoView.
 Here, similar to other loaders that handle fields such as headerFilter, additionalHeaders, or flags, we introduced a new loader to transmit the capability tokens and UID.
 
 Inside this loader, the PackageManager is used to derive the calling app's package name and version name from the UID passed in the intent.
@@ -213,7 +228,8 @@ All these values -- tokens, package name, and version name -- are then encapsula
 
 The bundle is stored in the GeckoSession and attached to the LoadUri dispatch message.
 When this message is processed, the loader extracts the previously stored Byetrack fields and forwards them to the browser's fixupAndLoadURIString function.
-At this point, the capability tokens and caller metadata become available to the internal Gecko loading pipeline.
+The parameters of this function are registered in the LoadURIOptions dictionary which holds load arguments for docshell loads.
+The docshell load parameters are initialized in the DocShellLoadState structure and carries functionality to get and set various load options we use in the Gecko's DocumentLoadListener.
 
 Gecko's DocumentLoadListener is responsible for managing the lifecycle of document loads, and therefore the ideal place to give the threaded opaque data meaning by parsing them back into usable tokens.
 
@@ -250,14 +266,16 @@ The outgoing request header is constructed by appending our capability-based coo
 \paragraph{Incoming Cookies.}
 For incoming \texttt{Set-Cookie} headers, \texttt{HttpBaseChannel::SetCookieHeaders} processes and stores cookies received from server responses.
 It calls \texttt{CookieService::SetCookieStringFromHttp} iteratively for each cookie string and stores them in the browser's cookie jar.
-Here, we again leverage the top-level browsing context to retrieve wildcard capability tokens and pass them as an additional parameter.
+Here, we again leverage the top-level browsing context to retrieve wildcard capability tokens such as the "enforcement" flag and pass them as an additional parameter.
 This location also hosts the CHIPS~\cite{googlechips} implementation, making it straightforward to integrate our logic: CHIPS is evaluated first, and only if it allows storage does the Byetrack logic apply next.
 
 When a response containing cookies is received, our implementation first extracts the cookie name and value from the nsCookie object and logs this information alongside the associated base domain and the number of active tokens currently available for that site.
 These tokens represent the capability-based permissions granted to the application according to its installed policy, such as whether specific domains or cookies may be stored globally or privately.
 
 The extracted information is then passed to the function \textsc{DecideCookieAction()}, which encapsulates the core of our decision-making logic.
-This function evaluates all available tokens for the current cookie based on the following precedence rules:
+Before any evaluation occurs, the function checks the "enforcement" flag whether Byetrack enforcement is enabled for this session.
+If enforcement is disabled, the function immediately returns a decision to store the cookie normally, preserving default browser behavior.
+Otherwise, all available tokens for the current cookie are evaluated based on the following precedence rules:
 
 \begin{enumerate}
   \item 

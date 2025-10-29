@@ -4,30 +4,76 @@
 
 % - Overview of Custom Tabs (CTs), Trusted Web Activities (TWAs), and browser cookie sharing on Android.
 
-% - Explain HyTrack in more detail (summarize its attack flow, key findings, and impact) — this links to your implementation context.
+% (- Explain HyTrack in more detail (summarize its attack flow, key findings, and impact) — this links to your implementation context.)
 
-% - Introduce capability-based access control and JWTs as foundational ideas.
-
-% - Optionally, include related mitigations (e.g., CHIPS, Total Cookie Protection).
-% - Introduce Capabilities/Tokens?
-
-\section{Custom Tabs and Trusted Web Activities on Android}
-%Overview of CTs, TWAs
-
-Custom Tabs (CTs) and Trusted Web Activities (TWAs) enable a seamless integration between apps and the web by sharing browser state -- most notably, session cookies.
-While this enhances user experience, it also introduces a significant privacy risk: third-party libraries can exploit the shared browser state to track users across multiple apps in which they are embedded.
-For instance, HyTrack demonstrates that a single shared third-party library used across multiple apps is sufficient to persistently identify and track users, bypassing conventional browser and OS sandboxing mechanisms.
-
-How are they launched under the hood? Where can attaching of metadata happen?
-
-\section{HyTrack Attack Overview}
-summarize its attack flow (with figure describing Hytrack?), key findings, and impact. Or should this go into its own chapter?
-
-% New Sections about root causes for HyTrack and how to mitigate them
-\input{src/Chapters/root_causes.tex}
+% (- Introduce Capabilities/Tokens?)
 
 \section{Capabilities}
 What are Capabilities?
 how to classify our capabilities -> identity-based cryptographic
 
+\section{Custom Tabs and Trusted Web Activities on Android}
+
+To integrate web content into Android applications, developers can use several mechanisms that differ in terms of security, performance, and user experience.
+Among these, Custom Tabs (CTs) and Trusted Web Activities (TWAs) have emerged as the most popular alternatives to traditional WebViews, offering better performance and tighter integration with the user's default browser.
+
+Custom Tabs were introduced to allow apps to display web content within the app's interface while leveraging the full capabilities of the user's browser.
+Unlike a WebView, which runs a separate, minimal web engine within the app, a Custom Tab is rendered by the installed browser itself.
+This means that all browser features -- such as optimized rendering, password managers, saved credentials, and cookies -- remain available.
+Developers can also customize the browser's UI elements, such as toolbar color and menu items, to visually align the Custom Tab with their app's theme.
+As a result, users perceive a seamless transition between native and web content without leaving the app context.
+
+Trusted Web Activities (TWAs) extend this concept further by removing nearly all browser UI elements, including the URL bar, and displaying web content in full-screen mode.
+This allows developers to integrate entire Progressive Web Apps (PWAs) or other web-based experiences into their native apps while maintaining a consistent appearance.
+For security reasons, launching a TWA requires a Digital Asset Link (DAL) -- a mutual verification between the app and the website -- ensuring that both belong to the same trusted party.
+If this trust relationship cannot be verified, Android automatically downgrades the TWA to a regular Custom Tab.
+
+A key advantage of both CTs and TWAs is that they share the browser's state.
+This means users can stay logged in to websites, reuse stored cookies, and maintain personalized settings across different apps and browsing sessions.
+This behavior improves usability and supports features like Single Sign-On (SSO), as authentication tokens from the browser can be reused within an app's embedded web view.
+However, as later discussed in Section \ref{sec:hytrack}, this same feature also introduces significant privacy risks.
+The shared cookie storage allows any app -- intentionally or not -- to access browser state information used by others, thereby enabling persistent cross-app and cross-web tracking techniques such as HyTrack.
+
+In summary, Custom Tabs and Trusted Web Activities offer a powerful bridge between the native and web ecosystems on Android.
+They combine the convenience and functionality of a full browser with the visual coherence of an app-embedded experience.
+Yet, the same integration that improves usability also blurs traditional security and privacy boundaries between apps and the web, which is exploited by for persistent-cross app tracking in the form of the HyTrack attack.
+
+\section{HyTrack Attack Overview}
+\label{sec:hytrack}
+HyTrack, introduced by Wessels et al. \cite{USENIX:Wessels:2025}, exposes a fundamental privacy flaw in this shared-state model.
+It demonstrates that third-party libraries embedded in multiple apps can exploit the browser's global cookie storage to identify and track users across applications and even into their normal web browsing sessions.
+By leveraging standard Android features—rather than any explicit vulnerability—HyTrack highlights how the very mechanisms designed to make CTs and TWAs seamless for users can also undermine Android's app isolation guarantees.
+
+Whenever an app opens a CT or TWA to display web content, the request is executed within the context of the user’s default browser.
+This means that all cookies set by the visited domain are stored in the browser’s global cookie jar and automatically reused in subsequent sessions — even if they originate from different apps.
+While this shared state enables seamless Single Sign-On and personalization, it also allows a tracking entity to correlate activity across multiple apps that interact with the same web domain.
+
+HyTrack leverages this design as follows: a seemingly benign third-party library, included in several independent apps, silently opens a CT or TWA to a tracking domain controlled by the library’s author.
+When this web page is first loaded, the server sets a unique identifier in a cookie, which is then stored in the shared browser state.
+When another app using the same library later opens a CT or TWA to the same tracking domain, the browser automatically attaches the existing cookie, thereby revealing that both apps are used by the same user.
+This creates a powerful cross-app identity link that persists outside Android’s app sandbox and is invisible to both users and app developers.
+
+Even more concerning, HyTrack’s tracking identifiers are resilient to deletion.
+Because Android’s automatic backup mechanisms restore application data, including browser-managed cookies, the tracking identifier can survive browser resets, app reinstallations, and even factory resets.
+In effect, HyTrack achieves evercookie-like persistence at the system level, reviving deleted identifiers upon device restoration.
+
+The feasibility of this attack stems from three fundamental weaknesses in the current CT and TWA model:
+
+\paragraph{Implicit and Persistent Cookie Sharing:}
+All apps using CTs or TWAs share a single, persistent global browser cookie jar, regardless of developer intent.
+This shared state persists across app launches and user attempts to clear tracking data.
+
+\paragraph{Lack of App Context in the Browser:}
+The browser has no knowledge of which app initiated a given request and therefore cannot enforce app-specific cookie isolation or policy controls.
+
+\paragraph{Unrestricted Third-Party Inclusion:}
+Any third-party library embedded across multiple apps can open CTs or TWAs, gaining access to the shared browser state and enabling tracking across unrelated apps.
+
+By exploiting these design characteristics, HyTrack bridges the isolation between native and web contexts, effectively transforming legitimate web-integration features into a cross-app tracking channel.
+
+
+% -------------------------------------------------Draft Capability Section -------------------------------------
+
+%\section{Capabilities}
+%We try to leverage the nature of capabilities as unforgeable tokens that grant the holder specific access rights to a resource.
 

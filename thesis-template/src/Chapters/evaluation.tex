@@ -24,46 +24,115 @@
 
 % -----------------------------Evaluation---------------------------
 
-To assess the effectiveness of our proposed mitigation strategy, we adopt the three primary goals identified by the authors of HyTrack as essential for any viable defense:
+\section{Experimental Setup}
+\subsection{HyTrack Applications}
 
-\begin{enumerate}[label=\arabic*)]
-  \item \textbf{Support all features of the web platform:} The solution must allow applications to display fully functional web content, including support for cookies, JavaScript, and modern APIs.
-  \item \textbf{Preserve seamless integration:} The user experience must remain uninterrupted.
-This includes avoiding obtrusive permission dialogs and maintaining smooth transitions between native and web content.
-\item \textbf{Enable controlled access to shared browser state:} While isolation is required to prevent cross-app tracking, legitimate scenarios such as Single Sign-On (SSO) must remain functional.
+We base our evaluation on the two original HyTrack proof-of-concept applications provided by the authors: \texttt{CrossAppTrackerOne} and \texttt{CrossAppLauncher}.
+Each app was prepared in two variants:
+
+\begin{enumerate}
+  \item 
+    a baseline version without any policy, replicating the original HyTrack attack scenario, and
+
+  \item
+    a mitigated version including a developer-defined policy that enforces cookie isolation for the tracking domain.
 \end{enumerate}
 
-These criteria reflect the fact that HyTrack exploits standard Android behavior -- specifically, the shared browser state exposed through Custom Tabs and Trusted Web Activities -- rather than relying on unauthorized access or system vulnerabilities.
-Therefore, naive approaches like disabling shared cookies entirely would break common use cases and are not acceptable.
+Integrating our mitigation framework into these apps required no code changes to the application logic.
+Developers only need to replace the standard AndroidX Browser dependency with our modified version that supports the capability-based mitigation mechanism.
+Instead of installing the apps directly, we used our custom installer, which extracts and registers the policy with the browser before installation, enabling capability issuance.
 
-To validate these hypotheses, we will build on the open-sourced measurement tooling and proof-of-concept applications provided by the authors of HyTrack.
-Specifically, we plan to:
-\begin{itemize}
-  \item Replicate the original HyTrack experiments under controlled conditions using two unrelated Android apps that embed the tracking library (similar to the HyTrack demo).
-%  \item Instrument network traffic (e.g., using mitmproxy or Frida) to observe the in capabilities wrapped cookies and their interactions with the browser. \change{check annotation again}
-  \item Apply the mitigation framework and compare observed behavior against the baseline.
-\end{itemize}
+Because the original HyTrack apps relied on the Android Browser Helper library--tailored for establishing Trusted Web Activities (TWAs) with Chrome--simply switching to our enhanced Firefox browser was insufficient.
+Therefore, we removed the Android Browser Helper dependency and established the required session connection to Firefox manually, allowing the apps to open TWAs (or Custom Tab fallbacks) in our modified Fenix browser.
 
-We will collect and analyze the following metric:
-\begin{itemize}
-  \item Number of Capabilities created and used by the browser.
-%  \item The latency of framework operations, such as creating and validating Capabilities, in comparison with the baseline. \change{check annotation again}
-\end{itemize}
+\subsection{Test Application}
 
-In doing so, we aim to demonstrate that the proposed solution effectively blocks HyTrack's cross-app tracking channel while preserving compatibility with existing web features and maintaining seamless user experience.
-Additionally, we will show that this strategy can be used by developers to control cookie transmission in a fine-grained and policy-driven manner to enable safer and more transparent integration of third-party web content.
+To gain deeper insight into the runtime behavior of our framework, we implemented an additional test application.
+This app displays all capability tokens received from the browser when launching a Custom Tab or Trusted Web Activity to a specific domain, along with the corresponding cookies they encapsulate.
 
-% Adhere to the goals of HyTrack
-% Use proof of concept apps and open-sourced measurement tooling
+The app provides dedicated controls to launch both private and global domains--defined in its policy--to observe the browser's cookie-handling behavior.
+It also illustrates policy downgrading for ambiguous configurations, and allows testing of reading and writing cookie values via the issued capabilities.
+This setup provides a controlled environment to validate the correct isolation and usage of capability tokens.
 
-% ------------------------------------------------------------------
+\section{Results}
+\subsection{Mitigation of HyTrack}
 
+We first replicated the HyTrack attack under baseline conditions.
+When both HyTrack apps were installed without a policy, the tracking domain successfully set and retrieved a persistent identifier cookie shared across both applications--confirming the presence of cross-app tracking as described in the original work.
 
-\subsection{Test Setup}
-TODO
+After applying our mitigation framework with a policy marking the tracking domain as private, this behavior was eliminated.
+The browser correctly issued a capability to the app encapsulating the tracking cookie, instead of storing it in its global jar.
+Consequently, when the second app opened a TWA to the same domain, no cookie was sent, and the tracking domain issued a new identifier.
+Each app thus maintained an independent cookie context, effectively breaking the cross-app tracking channel.
 
-\subsection{Test App}
-TODO
+Subsequent requests within each app still reused their local capability tokens, preserving session continuity within the same app.
+These results demonstrate that our mitigation successfully isolates cookie state across apps while preserving per-app continuity--a key goal of our approach.
 
-\subsection{Results}
-TODO
+\subsection{Assessment of Primary Goals}
+
+To assess our mitigation's effectiveness, we follow the three primary goals established by the HyTrack authors for viable defenses:
+
+\begin{enumerate}
+  \item \textbf{Support for Web Platform Features}
+    Since our framework does not modify the browser's rendering engine, all standard web platform features (cookies, JavaScript, modern APIs) remain fully functional.
+
+  \item \textbf{Seamless Integration}
+    No changes to the app's or browser's user interface were required.
+    The mitigation operates transparently in the background, preserving a seamless user experience.
+
+  \item \textbf{Controlled Access to Shared Browser State}
+    Our approach isolates untrusted domains defined as private while allowing trusted domains (e.g., SSO providers) to remain in the shared global jar.
+    This ensures that legitimate cross-app use cases such as Single Sign-On (SSO) continue to function, while tracking across untrusted apps is prevented.
+\end{enumerate}
+
+In summary, our mitigation achieves all three goals:
+(1) it maintains full web functionality, (2) it integrates transparently, and (3) it provides fine-grained control over shared browser state.
+
+\subsection{Developer Control and Transparency}
+
+Beyond mitigating tracking, our framework empowers developers with explicit control over cookie behavior.
+By declaring specific domains or cookie names as private in the policy, developers can prevent sensitive cookies from being stored in the global jar, ensuring that they remain confined to the app’s local context.
+This enables transparent handling of embedded third-party content without risking leakage of sensitive cookies to external trackers.
+Additionally, developers can directly interact with issued capability tokens to read or modify cookie values from within their app, offering a fine-grained and auditable control model.
+
+\subsection{Compatibility with Existing Mechanisms}
+
+Our approach complements existing cookie isolation mechanisms, such as CHIPS~\cite{googlechips}, which is natively supported in Firefox (\autoref{chap:related_work}).
+If a capability grants access to the shared jar, cookies are stored using the browser's native CHIPS partitioning.
+Otherwise, storage occurs entirely within the app's local context.
+Thus, our system extends rather than replaces existing isolation mechanisms, adding an additional layer of policy-driven isolation.
+
+\subsection{Backwards Compatibility and Integration Effort}
+
+When an app lacks a policy, our framework defaults to issuing an ambient capability that allows full access to the shared cookie jar, preserving backward compatibility with existing apps and browsers.
+If an app defines a policy but is launched in a browser without our modifications, the attached capabilities are simply ignored, and the app continues to function normally.
+This ensures graceful degradation and interoperability across browsers.
+
+Integration effort for developers remains minimal.
+Replacing the browser library dependency and adding a simple policy file to the app's assets are sufficient steps.
+Launching TWAs or Custom Tabs remains unchanged from the developer's perspective, as all token-handling logic is performed transparently within the modified library.
+
+\subsection{Usability and Developer Experience}
+
+Our mitigation framework is designed to be unobtrusive and developer-friendly.
+It requires no new APIs, permissions, or configuration interfaces.
+Developers who wish to enable cookie isolation only need to include a policy file; those who do not can omit it and retain full backward compatibility.
+Developers might also only wish to only decouple their cookies from the browser state, for which they can simply mark their first party domain as private or use predefined capabilities entirely for specific cookies.
+This low-friction design ensures that the mitigation can be adopted incrementally without breaking existing workflows or user experiences.
+
+% % Hypotheses    (ONLY NEEDED FOR PRPOSAL?)
+% \section{Hypotheses}
+% The evaluation is based on the following hypotheses:
+% 
+% \begin{enumerate}[label=H\arabic*)]
+%   \item Passing capabilities with each intent enables the browser to validate and manage cookies securely and effectively. It also ensures the browser does not need to store app states.
+%   \item The custom installer reliably transmits developer-defined policies to the browser.
+%   \item The proposed mechanism is compatible with the original three goals of HyTrack as outlined in Section~\ref{chap:eval}.
+%   \item The mechanism significantly mitigates cross-app tracking by isolating browser state based on trusted policy definitions.
+%   \item The use of \textit{Ambient Capabilities} ensures backwards compatibility with existing systems.
+%   \item In the case of invalid or missing capabilities, the browser by default discards the received Cookie, preventing fallback to shared state.
+%   \item The proposed approach requires no modifications to existing third-party web server code.
+% \end{enumerate}
+% 
+% % -----------------------------------------------------------------
+% 
