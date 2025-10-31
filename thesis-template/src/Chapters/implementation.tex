@@ -123,7 +123,7 @@ Instead of listing cookie names, the wildcard policy only specifies domains that
 
 The wildcard and predefined entries operate independently -- a domain can appear in both lists if necessary. For example, a domain may have a global predefined token for a specific cookie and a private wildcard token for general use. This allows flexible, layered control over cookie behavior. %TODO put this in Design?
 
-An example policy with explanaition can be found in the appendix \ref{appendix:policy}.
+An example policy with explanaition can be found in the appendix \autoref{appendix:policy}.
 
 \section{Custom Installer}
 
@@ -200,7 +200,7 @@ Each token object is then encoded as a compact JSON object and serialized into a
 Finally, the encoded string is signed using hmacSHA256 and the signature attached to the token object separated with a dot, similar to JWTs ~\cite{rfc7519}, before encrypting it using AES-CBC with a random IV using the browsers secret key.
 This makes the tokens tamper-evident and ensures that only the browser can generate valid tokens.
 
-Once generated, tokens are send to the app in a map from String (domain) to JSON array via the same content provider that received the policy so that the app can persist them locally (Section \ref{sec:libraries}).
+Once generated, tokens are send to the app in a map from String (domain) to JSON array via the same content provider that received the policy so that the app can persist them locally (\autoref{sec:byetracklib}).
 
 \subsection{Launching Custom Tabs / TWAs with Tokens}
 The browser performs this process in two stages: (1) threading capability data from the Android layer down into the Gecko engine, and (2) enforcing cookie isolation inside Gecko's networking stack.
@@ -302,7 +302,7 @@ This preserves default browser functionality for legitimate cases, such as cooki
 CapturePredefined:
 For cookies explicitly defined in the policy as private (e.g., session identifiers that must not leak cross-site), the cookie’s value is embedded into the associated token by updating the token's value field.
 The token’s access rights are updated to READ\_WRITE to reflect that it now carries an active cookie value -- essentially turning it into a final token.
-We do this for the reason how the additional utility on our tokens work (\ref{utility}).
+We do this for the reason how the additional utility on our tokens work (\autoref{sec:utility}).
 Instead of being stored in the browser’s global jar, this updated token is forwarded to StageTokenForReturn(), a helper routine that serializes the token information and stages it for return to the originating application.
 
   \item
@@ -379,7 +379,7 @@ Since all fields of the payload are immutable, a new \texttt{TokenPayload} insta
 The updated token and its target domain are then returned to the caller.
 This process ensures that all token modifications remain cryptographically verifiable and bound to the correct application context.
 
-\subsection{App-side Integration}
+\section{App-side Integration}
 \label{sec:appside}
 
 On the application side, we introduced two main components to enable seamless integration of Byetrack into existing Android apps:
@@ -495,4 +495,35 @@ However, this separation complicates cross-layer calls, particularly in contexts
 
 Since launching a temporary runtime solely for token processing proved unreliable and introduced unnecessary complexity, we opted to strictly separate concerns: the Java layer handles token generation and management, while the C++ layer performs enforcement once the browser process and runtime are active.  
 Both layers share a secret key to ensure secure coordination without requiring direct runtime invocations.
+
+% -------------------Add this to implementation? ------------------------
+%\section{Capability Token Structure}
+%Each capability token encodes metadata defining the scope and permissions associated with a cookie.  
+%The following fields form the basis of our design:
+%
+%\begin{itemize}
+%  \item \textbf{Cookie Name and Value:} Contain the actual cookie data managed by the browser.
+%  \item \textbf{Signature:} Ensures the capability was issued by the browser and has not been modified.
+%  \item \textbf{Package Name:} Identifies the app that owns the capability.  
+%    This prevents implicit delegation—without it, a receiving app could reuse capabilities issued to another app.
+%  \item \textbf{Domain:} Specifies the target web server.  
+%    The browser enforces that cookies are only valid for this domain, preventing malicious libraries from reusing capabilities to store untrusted cookies in the global jar.
+%  \item \textbf{App Version Number:} Allows the browser to detect outdated tokens after app updates.  
+%    Whenever the app is updated, the installer retransmits the policy so the browser can issue new capabilities consistent with the new version.
+%  \item \textbf{Rights:} Define the permitted actions—reading, writing, or both—on cookie data.  
+%    These rights prevent tracking libraries from exploiting browser access to extract or misuse capability contents.
+%  \item \textbf{Global Jar Flag:} Indicates whether the cookie belongs to the shared global jar or to the app-specific isolated jar.
+%\end{itemize}
+%
+%\section{Capability Types}
+%We distinguish between \textit{final}, \textit{wildcard}, and \textit{ambient} capabilities.
+%
+%\begin{itemize}
+%  \item \textbf{Final Capabilities:} Fully specified tokens containing explicit cookie names and values.  
+%    They represent concrete cookie instances and are used directly for cookie enforcement.
+%  \item \textbf{Wildcard Capabilities:} Partially specified tokens that omit cookie names or values.  
+%    They serve as templates from which final tokens are derived once cookies are received from a web server.
+%  \item \textbf{Ambient Capabilities:} Represent the browser’s default behavior—storing all cookies in the shared global jar.  
+%    These act as fallbacks when no explicit policy is provided and offer no privacy guarantees.
+%\end{itemize}
 

@@ -22,6 +22,8 @@
 %
 % - Optionally include screenshots, logs, or policy examples.
 
+% Evaluation -> What resultes were observed?
+
 % -----------------------------Evaluation---------------------------
 
 \section{Experimental Setup}
@@ -68,57 +70,64 @@ Each app thus maintained an independent cookie context, effectively breaking the
 Subsequent requests within each app still reused their local capability tokens, preserving session continuity within the same app.
 These results demonstrate that our mitigation successfully isolates cookie state across apps while preserving per-app continuity--a key goal of our approach.
 
-\subsection{Assessment of Primary Goals}
+\subsection{How the Weaknesses are addressed}
+\begin{itemize}
+  \item \textbf{Explicit Cookie Isolation:} Cookies are stored only if a capability for the corresponding domain exists.  
+    Based on the access rights granted by the capability, cookies are either stored in the shared jar or returned to the app for isolated local storage.
+  \item \textbf{App-Aware Browser Context:} Each capability encodes the app's identity and version, enabling the browser to enforce per-app cookie policies and invalidate outdated tokens.
+  \item \textbf{Capability-Scoped Access Control:} Third-party domains without valid capabilities cannot access shared state, thereby blocking cross-app tracking.  
+    Legitimate use cases such as Single Sign-On (SSO) remain supported if the app developer explicitly allows them in the policy.
+\end{itemize}
 
-To assess our mitigation's effectiveness, we follow the three primary goals established by the HyTrack authors for viable defenses:
+\subsection{Verification of Design Goals}
+
+Our system was designed with three primary goals in mind, as outlined in ~\autoref{chap:method}.
+The following evaluation confirms that our implementation satisfies these goals.
 
 \begin{enumerate}
-  \item \textbf{Support for Web Platform Features}
-    Since our framework does not modify the browser's rendering engine, all standard web platform features (cookies, JavaScript, modern APIs) remain fully functional.
+  \item \textbf{Support for Web Platform Features.}
+  All standard web platform features, including cookies, JavaScript, and modern APIs, remained fully functional throughout our evaluation, only the cookie storage behavior was altered.
 
-  \item \textbf{Seamless Integration}
-    No changes to the app's or browser's user interface were required.
-    The mitigation operates transparently in the background, preserving a seamless user experience.
+  \item \textbf{Seamless Integration.}
+  The mitigation operates transparently without affecting the user interface of the app or browser.
+  Launching TWAs and Custom Tabs required no additional steps, and transitions between native and web content remained smooth.
 
-  \item \textbf{Controlled Access to Shared Browser State}
-    Our approach isolates untrusted domains defined as private while allowing trusted domains (e.g., SSO providers) to remain in the shared global jar.
-    This ensures that legitimate cross-app use cases such as Single Sign-On (SSO) continue to function, while tracking across untrusted apps is prevented.
+  \item \textbf{Controlled Access to Shared Browser State.}
+  Domains defined as private (predefined or wildcard) in the policy were correctly isolated from the global cookie jar.
+  Trusted domains (e.g., SSO providers) remained accessible via the shared jar, allowing legitimate cross-app scenarios such as Single Sign-On to continue functioning as expected.
 \end{enumerate}
 
-In summary, our mitigation achieves all three goals:
-(1) it maintains full web functionality, (2) it integrates transparently, and (3) it provides fine-grained control over shared browser state.
+These observations confirm that our mitigation maintains compatibility with web features, integrates seamlessly, and provides reliable control over access to shared browser state.
 
-\subsection{Developer Control and Transparency}
+\subsection{Additional Behavioral Verification}
 
-Beyond mitigating tracking, our framework empowers developers with explicit control over cookie behavior.
-By declaring specific domains or cookie names as private in the policy, developers can prevent sensitive cookies from being stored in the global jar, ensuring that they remain confined to the app’s local context.
-This enables transparent handling of embedded third-party content without risking leakage of sensitive cookies to external trackers.
-Additionally, developers can directly interact with issued capability tokens to read or modify cookie values from within their app, offering a fine-grained and auditable control model.
+Beyond mitigating HyTrack, we verified that:
 
-\subsection{Compatibility with Existing Mechanisms}
+\begin{itemize}
+  \item Developers can define domain- or cookie-specific isolation rules via the policy file. 
+        Cookies defined as private were correctly excluded from the global jar and encapsulated in capabilities returned to the app.
+  \item If an app was installed without a policy, the browser reverted to the default behavior by issuing an ambient capability, maintaining full backward compatibility.
+  \item Apps defining policies but running in unmodified browsers continued to function correctly, as unrecognized capabilities were ignored.
+  \item Integration effort remained minimal—replacing the browser library dependency and adding a policy file were sufficient steps.
+\end{itemize}
 
-Our approach complements existing cookie isolation mechanisms, such as CHIPS~\cite{googlechips}, which is natively supported in Firefox (\autoref{chap:related_work}).
-If a capability grants access to the shared jar, cookies are stored using the browser's native CHIPS partitioning.
-Otherwise, storage occurs entirely within the app's local context.
-Thus, our system extends rather than replaces existing isolation mechanisms, adding an additional layer of policy-driven isolation.
+These experiments confirm that the mitigation behaves consistently across different configurations and that it can be adopted with minimal developer effort.
 
-\subsection{Backwards Compatibility and Integration Effort}
+\section{Summary}
 
-When an app lacks a policy, our framework defaults to issuing an ambient capability that allows full access to the shared cookie jar, preserving backward compatibility with existing apps and browsers.
-If an app defines a policy but is launched in a browser without our modifications, the attached capabilities are simply ignored, and the app continues to function normally.
-This ensures graceful degradation and interoperability across browsers.
+In summary, the evaluation confirms that the proposed mitigation framework:
+\begin{itemize}
+  \item effectively prevents cross-app tracking by isolating cookies on a per-app basis,
+  \item maintains full compatibility with existing web features and browser mechanisms, and
+  \item introduces no significant usability or integration overhead.
+\end{itemize}
 
-Integration effort for developers remains minimal.
-Replacing the browser library dependency and adding a simple policy file to the app's assets are sufficient steps.
-Launching TWAs or Custom Tabs remains unchanged from the developer's perspective, as all token-handling logic is performed transparently within the modified library.
+The evaluation confirms the correctness and feasibility of our mitigation framework. 
+Next, we discuss the broader implications of these results, including their security, usability, and compatibility aspects.
 
-\subsection{Usability and Developer Experience}
-
-Our mitigation framework is designed to be unobtrusive and developer-friendly.
-It requires no new APIs, permissions, or configuration interfaces.
-Developers who wish to enable cookie isolation only need to include a policy file; those who do not can omit it and retain full backward compatibility.
-Developers might also only wish to only decouple their cookies from the browser state, for which they can simply mark their first party domain as private or use predefined capabilities entirely for specific cookies.
-This low-friction design ensures that the mitigation can be adopted incrementally without breaking existing workflows or user experiences.
+The evaluation demonstrates that our capability-based mitigation framework effectively prevents cross-app tracking while maintaining full browser functionality and compatibility with existing applications. 
+However, the presented results primarily focus on the technical behavior and correctness of the system. 
+In the following chapter, we discuss the broader implications of these findings, relate them to our threat model and design goals, and analyze the strengths, limitations, and potential extensions of our approach.
 
 % % Hypotheses    (ONLY NEEDED FOR PRPOSAL?)
 % \section{Hypotheses}

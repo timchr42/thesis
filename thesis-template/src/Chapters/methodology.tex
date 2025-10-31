@@ -1,61 +1,26 @@
-\chapter{System Design}
-\label{chap:design}
+% How and why the system is structured that way
 
-To mitigate cross-app tracking via HyTrack, we introduce a developer-defined policy mechanism enforced by cryptographically secured capability tokens that govern cookie sharing and isolation on a per-app basis.  
-This chapter describes the design of this capability-based approach, the structure of the capability tokens, their enforcement model, and the overall system flow between the installer, app, browser, and web servers.
+\chapter{Methodology}
+\label{chap:method}
 
-\section{Design Overview}
-Our system builds on the concept of capabilities -- unforgeable tokens that grant their holder specific rights to access a resource.
-Unlike traditional access control lists (ACLs), capabilities enable a decentralized and fine-grained access model, as the right to perform an operation is encoded directly within the token rather than managed by a central authority.  
-This means the browser can enforce cookie access based on the capabilities presented by the app, without maintaining a global permission mapping of app identities to cookies.
+\section{Research Approach}
+This thesis follows a design and implementation-oriented methodology aimed at developing and evaluating a privacy-preserving extension for Android applications using Custom Tabs (CTs) and Trusted Web Activities (TWA).
+The main research goal is to prevent HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by eliminating the fundamental weaknesses \autoref{sec:hytrack-weaknesses} that enable such tracking while confirming to the design goals \autoref{sec:hytrack-goals} outlined by Wessels et al. without sacrificing usability or compatibility -- unlike Browser State Partitioning or Forced User Interaction \autoref{sec:hytrack-mitigations}.
 
-Byetrack applies this principle to browser state management: cookies are encapsulated within capability tokens that specify how and under which conditions they can be accessed or stored.  
-The browser acts as a Policy Enforcement Point (PEP), while the app, guided by a developer-provided policy, receives only the capabilities necessary for its legitimate functionality.
+We fill this gap by wrapping Cookies into fine-grained capability tokens -- created by the browser according to a policy defined by the app's developer --, the browser decides which cookies are stored in the shared cookie jar and which are stored in the app-specific storage, depending on a flag analogous to CHIPS' ~\cite{googlechips} \texttt{Partitioned} attribute.
+This ensures that there is no cross-app tracking possible for untrusted third-party libraries, as each app stores its own tracking cookie.
+As the shared cookie storage still exists for domains declared as first-party or trusted by the app developer, legitimate uses of the shared browser state (e.g. SSO) are preserved (Goal~3).
+Because the system operates purely at the app–browser interface and does not alter the browser's rendering engine, it preserves compatibility with all existing web platform features (Goal~1).
+Seamless integration of web content is also maintained, as there is no need for user interaction or changes to the UI (Goal~2).
+Thus, in contrast to prior discussed mitigation strategies, this approach provides developers with a practical and enforceable way to render cross-app tracking infeasible.
 
-\section{Capability Token Structure}
-Each capability token encodes metadata defining the scope and permissions associated with a cookie.  
-The following fields form the basis of our design:
+% TODO: Write about our interpretation of capabilities here? -- how they enhance security/privacy explicity
 
-\begin{itemize}
-  \item \textbf{Cookie Name and Value:} Contain the actual cookie data managed by the browser.
-  \item \textbf{Signature:} Ensures the capability was issued by the browser and has not been modified.
-  \item \textbf{Package Name:} Identifies the app that owns the capability.  
-    This prevents implicit delegation—without it, a receiving app could reuse capabilities issued to another app.
-  \item \textbf{Domain:} Specifies the target web server.  
-    The browser enforces that cookies are only valid for this domain, preventing malicious libraries from reusing capabilities to store untrusted cookies in the global jar.
-  \item \textbf{App Version Number:} Allows the browser to detect outdated tokens after app updates.  
-    Whenever the app is updated, the installer retransmits the policy so the browser can issue new capabilities consistent with the new version.
-  \item \textbf{Rights:} Define the permitted actions—reading, writing, or both—on cookie data.  
-    These rights prevent tracking libraries from exploiting browser access to extract or misuse capability contents.
-  \item \textbf{Global Jar Flag:} Indicates whether the cookie belongs to the shared global jar or to the app-specific isolated jar.
-\end{itemize}
+To achieve this, a prototype framework named Byetrack was designed, implemented, and evaluated on Android.
+The framework consists of three main components: a custom installer for policy extraction, a helper library for application integration, and modifications to the Mozilla Fenix browser and its underlying GeckoView engine to enforce cookie isolation via capability tokens.
 
-\section{Capability Types}
-We distinguish between \textit{final}, \textit{wildcard}, and \textit{ambient} capabilities.
-
-\begin{itemize}
-  \item \textbf{Final Capabilities:} Fully specified tokens containing explicit cookie names and values.  
-    They represent concrete cookie instances and are used directly for cookie enforcement.
-  \item \textbf{Wildcard Capabilities:} Partially specified tokens that omit cookie names or values.  
-    They serve as templates from which final tokens are derived once cookies are received from a web server.
-  \item \textbf{Ambient Capabilities:} Represent the browser’s default behavior—storing all cookies in the shared global jar.  
-    These act as fallbacks when no explicit policy is provided and offer no privacy guarantees.
-\end{itemize}
-
-\section{Security and Enforcement Design}
-Byetrack makes browser state access explicit, app-aware, and scoped through the following principles:
-
-\begin{itemize}
-  \item \textbf{Explicit Cookie Isolation:} Cookies are stored only if a capability for the corresponding domain exists.  
-    Based on the capability’s global flag, cookies are either stored in the shared jar or returned to the app for isolated local storage.
-  \item \textbf{App-Aware Browser Context:} Each capability encodes the app’s identity and version, enabling the browser to enforce per-app cookie policies and invalidate outdated tokens.
-  \item \textbf{Capability-Scoped Access Control:} Third-party domains without valid capabilities cannot access shared state, thereby blocking cross-app tracking.  
-    Legitimate use cases such as Single Sign-On (SSO) remain supported by granting appropriate global capabilities.
-\end{itemize}
-
-\input{src/Chapters/threat_model.tex}
-
-\section{Methodology}
+% -----------------------Explain Methodology Flow Diagram Here ---------------------------
+\section{Lifecycle and Flow}
 \begin{figure}[h!]
   \centering
   \includegraphics[width=0.9\textwidth]{ByeTrack_Flow.pdf}
@@ -63,15 +28,14 @@ Byetrack makes browser state access explicit, app-aware, and scoped through the 
   \label{fig:byetrack_overview}
 \end{figure}
 
-\subsection{Developer Policy Flow}
-Developers define a JSON policy that specifies which domains may share browser state and, optionally, which cookies are expected from each domain.  
-This allows granular control beyond simple trusted/untrusted domain distinctions -- for example, isolating third-party cookies while permitting integration with a developer’s own authentication domain.
-
+\subsection{Developer Policy}
+Developers define a JSON policy that specifies which domains may share browser state and, optionally, which cookies are expected from each domain.
+This allows granular control beyond simple trusted/untrusted domain distinctions -- for example, isolating third-party cookies while permitting integration with a developer's own authentication domain or SSO provider.
 If no policy is provided, the browser falls back to ambient mode, where all cookies are stored in the shared jar for backwards compatibility.
 
 \subsection{Capability Initialization}
-During app installation, the installer extracts and transmits the policy to the browser.  
-Before issuing any capability tokens, the browser validates and sanitizes the policy to ensure minimal privilege, removing conflicting or ambiguous entries.  
+During app installation, the installer extracts and transmits the policy to the browser.
+The browser validates and sanitizes the policy to ensure minimal privilege, removing conflicting or ambiguous entries.  
 
 From the sanitized policy, the browser generates capability tokens as follows:
 \begin{itemize}
@@ -84,8 +48,8 @@ Each token is signed and encrypted before being sent to the app, which stores wi
 When the app is updated, the installer retransmits the policy so that the browser can reissue capabilities consistent with the new app version.
 
 \subsection{App–Browser Interaction}
-When an app opens a URL through a Custom Tab (CT) or Trusted Web Activity (TWA), the stored wildcard and (initially empty) final tokens are attached to the intent that launches the browser.  
-Upon receipt, the browser decrypts and validates each token by checking its signature, package name, version number, and target domain.  
+When an app opens a URL through a Custom Tab (CT) or Trusted Web Activity (TWA), the stored wildcard and (initially empty) final tokens are attached to the intent that launches the browser.
+Upon receipt, the browser decrypts and validates each token by checking its signature, package name, version number, and target domain.
 Invalid tokens are discarded.
 
 The browser then uses the valid capabilities to:
@@ -107,6 +71,8 @@ For every received cookie, the browser applies the following logic (in order of 
 
 \paragraph{Cookie Transmission.}  
 When constructing requests, the browser merges cookies derived from the app's valid final tokens with those from its global jar, ensuring that each request accurately reflects both app-specific and shared state according to the developer policy.
+
+% ---------------------------------------------------------------------------
 
 \subsection{Utility Interfaces}
 To improve transparency and developer control, the browser exposes limited utility functions that allow the app to:

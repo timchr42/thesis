@@ -44,8 +44,9 @@ Firefox's Total Cookie Protection (TCP)~\cite{mozillacookies} and Safari's Intel
 % --- Einschub Ende ---
 
 However, both approaches introduce significant drawbacks. 
-Browser state partitioning would allow each app to use its own cookie storage and hence prevent cross-app tracking.
-The seamless integration of web content remains intact, as no changes to the UI are necessary, but by completely removing the browser's shared state, benign uses like Single Sign-On (SSO) or ad personalization would be broken. 
+% ------------------Background ---------------------------
+% Browser state partitioning would allow each app to use its own cookie storage and hence prevent cross-app tracking.
+% The seamless integration of web content remains intact, as no changes to the UI are necessary, but by completely removing the browser's shared state, benign uses like Single Sign-On (SSO) or ad personalization would be broken. 
 % --Start--
 Google is actively working on a similar mechanism under the name CHIPS (Cookies Having Independent Partitioned State)~\cite{googlechips}.
 CHIPS allows third-party cookies to be partitioned by the top-level site with an optional \textit{Partitioned} flag, enabling legitimate services like SSO to maintain function while avoiding broad tracking vectors.
@@ -53,19 +54,22 @@ However, CHIPS is not applicable to Android's embedded web contents like CTs or 
 Our solution can be seen as extending this paradigm to the app level.
 % --End--
 
-In contrast, Forced User Interaction avoids these problems by allowing the browser to use its shared cookie storage.
-But this introduces a significant usability issue, as the user is forced to interact with the browser every time a web content is loaded, which not only degrades user experience but also breaks seamless integration of web content into the app.
-Furthermore, this approach hands control and responsibility to the user, which is not ideal from a security perspective, as the user might be unaware of the consequences of their actions and may inadvertently enable tracking by failing to interact with the browser as required.
-Other strategies, such as limiting CTs and TWAs to First-Party Domains or disabling them for specific domains via browser options ultimately reflect the aforementioned approaches, relying on either browser state partitioning or forced user interaction.
-Therefore, these are not effective countermeasures against HyTrack.
+% -----------------Background-------------------------
+%In contrast, Forced User Interaction avoids these problems by allowing the browser to use its shared cookie storage.
+%But this introduces a significant usability issue, as the user is forced to interact with the browser every time a web content is loaded, which not only degrades user experience but also breaks seamless integration of web content into the app.
+%Furthermore, this approach hands control and responsibility to the user, which is not ideal from a security perspective, as the user might be unaware of the consequences of their actions and may inadvertently enable tracking by failing to interact with the browser as required.
+
+%Other strategies, such as limiting CTs and TWAs to First-Party Domains or disabling them for specific domains via browser options ultimately reflect the aforementioned approaches, relying on either browser state partitioning or forced user interaction.
+%Therefore, these are not effective countermeasures against HyTrack.
+% ---------------------------------------------------
 
 % How it advances the state of the art
-This work addresses this gap by proposing a capability-based access control framework for Android applications using CTs and TWAs.
-By wrapping Cookies into fine-grained capability tokens -- created by the browser according to the app developer's policy --, the browser decides which cookies are stored in the shared cookie jar and which are stored in the app-specific storage, depending on a flag analogous to CHIPS' \textit{Partitioned} attribute.
-This ensures that there is no cross-app tracking possible for untrusted third-party libraries, as each app stores its own tracking cookie.
-As the shared cookie storage still exists for domains declared as first-party or trusted by the app developer, legitimate uses of the shared browser state (e.g. SSO) are preserved.
-Seamless integration of web content is also preserved, as there is no need for user interaction or changes to the UI.
-Thus, in contrast to prior discussed mitigation strategies, this approach provides developers with a practical and enforceable way to render cross-app tracking infeasible.
+%This work addresses this gap by proposing a capability-based access control framework for Android applications using CTs and TWAs.
+%By wrapping Cookies into fine-grained capability tokens -- created by the browser according to the app developer's policy --, the browser decides which cookies are stored in the shared cookie jar and which are stored in the app-specific storage, depending on a flag analogous to CHIPS' \textit{Partitioned} attribute.
+%This ensures that there is no cross-app tracking possible for untrusted third-party libraries, as each app stores its own tracking cookie.
+%As the shared cookie storage still exists for domains declared as first-party or trusted by the app developer, legitimate uses of the shared browser state (e.g. SSO) are preserved.
+%Seamless integration of web content is also preserved, as there is no need for user interaction or changes to the UI.
+%Thus, in contrast to prior discussed mitigation strategies, this approach provides developers with a practical and enforceable way to render cross-app tracking infeasible.
 
 % --------------------------JWT-Tokens-Relation--------------------------------
 Our interpretation of capability tokens is inspired by JSON Web Tokens (JWTs)~\cite{rfc7519}, which are widely used in web authentication to encode claims about a user or a session in a secure, verifiable manner.
