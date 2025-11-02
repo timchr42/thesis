@@ -8,16 +8,18 @@
 
 % (- Introduce Capabilities/Tokens?)
 
-\section{Capabilities}
+\section{Capabilities and Capability-based Security}
 %What are Capabilities?
-%how to classify our capabilities -> identity-based cryptographic
 
-Our system builds on the concept of capabilities -- unforgeable tokens that grant their holder specific rights to access a resource.
-Unlike traditional access control lists (ACLs), capabilities enable a decentralized and fine-grained access model, as the right to perform an operation is encoded directly within the token rather than managed by a central authority.  
-This means the browser can enforce cookie access based on the capabilities presented by the app, without maintaining a global permission mapping of app identities to cookies.
-Byetrack applies this principle to browser state management: cookies are encapsulated within capability tokens that control which domains retain access to the shared cookie jar and which are isolated per app.
-Therefore, we turn the browser into the Policy Enforcement Point (PEP), while the app, guided by a developer-provided policy, receives only the capabilities specified it present to the browser when opening a CT or TWA.
+% Capability defintion taken from my report
+A capability is an unforgeable and tamperproof token of authority that grants its holder specific access rights to a protected object.
+Unlike access-control lists (ACLs), which base decisions on user or process identity, capabilities combine an object reference with an associated permission set, thereby enabling object-centric and decentralized access control.
+A capability system enforces the principle of least privilege by ensuring that possession of a capability is both necessary and sufficient for performing an operation on the referenced object.
 
+Because the right to access is embodied in the token itself, capabilities can be transferred between processes when permitted by the system’s policy, allowing explicit and fine-grained delegation of authority without relying on a central policy check.
+Different implementations vary in how capabilities are stored, propagated, and revoked, but all provide stronger isolation guarantees than identity-based models.
+
+In the context of this thesis, capability-based control offers an elegant way to isolate shared browser state and restrict the propagation of cookies, ensuring that only entities explicitly possessing a valid capability may access a particular storage domain.
 
 \section{Custom Tabs and Trusted Web Activities on Android}
 

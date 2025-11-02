@@ -4,20 +4,25 @@
 \label{chap:method}
 
 \section{Research Approach}
-This thesis follows a design and implementation-oriented methodology aimed at developing and evaluating a privacy-preserving extension for Android applications using Custom Tabs (CTs) and Trusted Web Activities (TWA).
-The main research goal is to prevent HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by eliminating the fundamental weaknesses \autoref{sec:hytrack-weaknesses} that enable such tracking while confirming to the design goals \autoref{sec:hytrack-goals} outlined by Wessels et al. without sacrificing usability or compatibility -- unlike Browser State Partitioning or Forced User Interaction \autoref{sec:hytrack-mitigations}.
+This thesis follows a design- and implementation-oriented methodology aimed at developing and evaluating a privacy-preserving extension for Android applications that use Custom Tabs (CTs) and Trusted Web Activities (TWAs).
+The main research goal is to prevent HyTrack’s cross-app tracking attack \cite{USENIX:Wessels:2025} by addressing the underlying weaknesses identified in \autoref{sec:hytrack-weaknesses}, while adhering to the design goals defined by Wessels et al. in \autoref{sec:hytrack-goals}.
+Unlike previously discussed mitigation strategies such as Browser State Partitioning or Forced User Interaction (\autoref{sec:hytrack-mitigations}), the proposed approach aims to maintain usability and compatibility while providing strong privacy guarantees.
 
-We fill this gap by wrapping Cookies into fine-grained capability tokens -- created by the browser according to a policy defined by the app's developer --, the browser decides which cookies are stored in the shared cookie jar and which are stored in the app-specific storage, depending on a flag analogous to CHIPS' ~\cite{googlechips} \texttt{Partitioned} attribute.
-This ensures that there is no cross-app tracking possible for untrusted third-party libraries, as each app stores its own tracking cookie.
-As the shared cookie storage still exists for domains declared as first-party or trusted by the app developer, legitimate uses of the shared browser state (e.g. SSO) are preserved (Goal~3).
-Because the system operates purely at the app–browser interface and does not alter the browser's rendering engine, it preserves compatibility with all existing web platform features (Goal~1).
-Seamless integration of web content is also maintained, as there is no need for user interaction or changes to the UI (Goal~2).
-Thus, in contrast to prior discussed mitigation strategies, this approach provides developers with a practical and enforceable way to render cross-app tracking infeasible.
+To address this gap, this work develops and evaluates a privacy-preserving extension for Android applications that use Custom Tabs (CTs) and Trusted Web Activities (TWAs).
+The proposed framework prevents HyTrack’s cross-app tracking attack \cite{USENIX:Wessels:2025} by eliminating the architectural weaknesses identified in \autoref{sec:hytrack-weaknesses}, while adhering to the design goals of usability, compatibility, and controlled access to shared state \autoref{sec:hytrack-goals}.
 
-% TODO: Write about our interpretation of capabilities here? -- how they enhance security/privacy explicity
+The core idea is to encapsulate cookie access within fine-grained capability tokens, created and validated by the browser according to a developer-defined policy. Depending on the policy configuration, cookies are stored either in a shared global jar or in app-specific storage, analogous to the Partitioned attribute in CHIPS \cite{googlechips}.
+This design prevents unauthorized cross-app tracking while preserving legitimate use cases such as Single Sign-On and session continuity.
+Because the system operates solely at the app–browser boundary, it maintains full compatibility with existing web platform features and requires no changes to the browser UI.
 
-To achieve this, a prototype framework named Byetrack was designed, implemented, and evaluated on Android.
-The framework consists of three main components: a custom installer for policy extraction, a helper library for application integration, and modifications to the Mozilla Fenix browser and its underlying GeckoView engine to enforce cookie isolation via capability tokens.
+\section{Capability Tokens}
+Our interpretation of capability tokens is inspired by JSON Web Tokens (JWTs)~\cite{rfc7519}, which are widely used in web authentication to encode claims about a user or a session in a secure, verifiable manner.
+We do not want the local tokens be shared between apps, as we want to scope them to the app only.
+This contradicts to the natural feature of capabilities being delegatable.
+Therefore, we include the apps identity in the capability tokens, so that the browser can verify that the token is only used by the app it was issued to.
+Similar to JWTs, our tokens are signed to identify tampering attemtps.
+Due to the Thread Model assumptions {\autoref{sec:threat_model}}, we additionally need to encrypt the tokens, so that a malicious third-party library embedded in the app cannot read the token contents and echo them back to its web server to circumvent the mitigation.
+In conclusion, our capability tokens are identity-bound and cryptographically protected data structures that encapsulate cookie information and metadata, enabling fine-grained access control between Android apps and the browser.
 
 % -----------------------Explain Methodology Flow Diagram Here ---------------------------
 \section{Lifecycle and Flow}
@@ -27,6 +32,9 @@ The framework consists of three main components: a custom installer for policy e
   \caption{High-level overview of the Byetrack flow between installer, app, browser, and web servers.}
   \label{fig:byetrack_overview}
 \end{figure}
+
+To achieve this, a prototype framework named Byetrack was designed, implemented, and evaluated on Android.
+The framework consists of three main components: a custom installer for policy extraction, a helper library for application integration, and modifications to the Mozilla Fenix browser and its underlying GeckoView engine to enforce cookie isolation via capability tokens.
 
 \subsection{Developer Policy}
 Developers define a JSON policy that specifies which domains may share browser state and, optionally, which cookies are expected from each domain.
@@ -97,3 +105,33 @@ An alternative architecture would delegate capability generation to the installe
 This would simplify the browser's responsibilities to enforcement only, reducing its complexity and eliminating installer–browser communication for each app.  
 However, it would require shared cryptographic secrets between the installer and browser, thereby enlarging the trusted computing base and attack surface.  
 For these reasons, the proof-of-concept implementation designates the browser as the sole trusted component for capability generation and enforcement.
+
+
+%\subsection{Token Fields}
+%The following fields form the basis:
+%
+%\begin{itemize}
+%  \item \textbf{Cookie Name and Value:} Contain the actual cookie data managed by the browser.
+%  \item \textbf{Signature:} Ensures the capability was issued by the browser and has not been modified.
+%  \item \textbf{Package Name:} Identifies the app that owns the capability.  
+%    This prevents implicit delegation—without it, a receiving app could reuse capabilities issued to another app.
+%  \item \textbf{Domain:} Specifies the target web server.  
+%    The browser enforces that cookies are only valid for this domain, preventing malicious libraries from reusing capabilities to store untrusted cookies in the global jar.
+%  \item \textbf{App Version Number:} Allows the browser to detect outdated tokens after app updates.  
+%    Whenever the app is updated, the installer retransmits the policy so the browser can issue new capabilities consistent with the new version.
+%  \item \textbf{Rights:} Define the permitted actions—reading, writing, or both—on cookie data.  
+%    These rights prevent tracking libraries from exploiting browser access to extract or misuse capability contents.
+%  \item \textbf{Global Jar Flag:} Indicates whether the cookie belongs to the shared global jar or to the app-specific isolated jar.
+%\end{itemize}
+%
+%\subsection{Capability Types}
+%We distinguish between \texttt{final}, \texttt{wildcard}, and \texttt{ambient} capabilities.
+%
+%\begin{itemize}
+%  \item \textbf{Final Capabilities:} Fully specified tokens containing explicit cookie names and values.  
+%    They represent concrete cookie instances and are used directly for cookie enforcement.
+%  \item \textbf{Wildcard Capabilities:} Partially specified tokens that omit cookie names or values.  
+%    They serve as templates from which final tokens are derived once cookies are received from a web server.
+%  \item \textbf{Ambient Capabilities:} Represent the browser’s default behavior—storing all cookies in the shared global jar.  
+%    These act as fallbacks when no explicit policy is provided and offer no privacy guarantees.
+%\end{itemize}
