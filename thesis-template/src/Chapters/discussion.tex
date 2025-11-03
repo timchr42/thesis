@@ -62,6 +62,50 @@ End-users benefit from enhanced privacy without perceivable changes in app or br
 In practice, this simplicity makes the framework suitable for integration into existing Android ecosystems.
 A future version of the AndroidX Browser library could directly embed this logic, enabling widespread adoption without any additional setup effort by developers.
 
+\section{Performance Overhead}
+
+\begin{table}[h!]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lcc}
+\toprule
+Scope & Wildcard & Predefined \\ 
+\midrule
+Private & highest & high \\
+Public & lowest & low \\
+\bottomrule
+\end{tabular}
+\caption{Priority levels of Byetrack capability tokens based on their scope and definition type.}
+\label{tab:token-priority}
+\end{table}
+
+Letting the browser merely sign the tokens before transmitting them to the application does not provide sufficient security (see \autoref{sec:threat_model}).
+Therefore, our design requires the browser to both encrypt and decrypt capability tokens during issuance and validation.
+This approach ensures end-to-end integrity and confidentiality but inevitably introduces performance overhead due to the additional cryptographic operations.
+The magnitude of this overhead depends primarily on the number of cookies processed, the type of capability token employed, and the defined access scope (see \autoref{tab:token-priority}).
+
+\paragraph{Public wildcard.}
+If a domain is classified as trusted, the browser issues a single public wildcard token covering all cookies associated with that domain.
+As a result, the performance overhead is minimal: only one token must be decrypted and verified, regardless of the number of cookies.
+All cookies share the same access rights to the global cookie jar and therefore follow the browser’s native storage logic without additional isolation steps.
+
+\paragraph{Private wildcard.}
+If a domain is deemed untrusted, the browser issues one private wildcard token for all cookies originating from that domain.
+Again, only a single token must be decrypted for verification.
+However, unlike the public case, all cookies are stored in the app’s isolated jar.
+This increases overhead as the number of cookies grows, since each cookie must be individually wrapped in a capability and subsequently signed and encrypted by the browser for local storage.
+
+\paragraph{Public predefined.}
+If individual cookies from a trusted domain are explicitly marked as private, the browser generates separate public predefined tokens for each of them.
+This leads to higher overhead during issuance, as each cookie requires its own token to be signed and encrypted.
+During verification, each predefined token must also be decrypted and validated individually.
+Nevertheless, since these cookies remain in the shared jar, the recurring runtime cost for subsequent accesses is relatively low.
+
+\paragraph{Private predefined.}
+For untrusted domains where individual cookies are defined explicitly, the browser issues one private predefined token per cookie.
+This configuration incurs the highest overall cost: every token must be decrypted and validated separately, and each cookie must be re-encrypted and stored in the app’s private jar.
+While providing the strongest isolation guarantees, this mode also introduces the greatest cryptographic overhead.
+
 \section{Limitations}
 
 While our mitigation addresses HyTrack's cross-app tracking channel effectively, several limitations remain.
