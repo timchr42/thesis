@@ -3,5 +3,17 @@
 
 % Summarize the achieved goals, contributions, and what the results imply for Android privacy.
 
+Android's Custom Tabs (CT) and Trusted Web Activities (TWA) enable seamless integration of web content into Android applications while leveraging browser features such as cookies, storage, and Single Sign-On (SSO). 
+Although this enhances user experience, the shared browser state introduces privacy risks, as demonstrated by Wessel et~al.~\cite{USENIX:Wessels:2025} through the HyTrack attack, which enables persistent cross-app tracking across Android apps and the web.
 
+This thesis presents \textit{Byetrack}, a capability-based framework designed to mitigate such cross-app tracking attacks by introducing policy-based, per-application control over shared browser state.
+Application developers can define fine-grained policies that specify which domains are trusted to access shared browser data.
+During installation, the framework automatically generates cryptographically bound capability tokens for each application, which the browser verifies and enforces at runtime.
+Through this mechanism, Byetrack isolates cookies and related identifiers according to developer-defined trust boundaries, effectively limiting cross-app information leakage without breaking legitimate functionality.
 
+Byetrack extends the AndroidX Browser, Fenix, and GeckoView stacks to integrate policy enforcement directly into the Custom Tabs and Trusted Web Activity workflows.
+Developers can further benefit by designating first-party cookies as private or by predefining specific trusted cookie names, allowing precise control over shared browser state.
+Experimental evaluation confirmed that the framework prevents unauthorized cookie sharing between apps while preserving compatibility with intended Single Sign-On scenarios.
+
+In summary, this work demonstrates that capability-based access control provides a practical and effective foundation for mitigating cross-app tracking through shared browser state on Android. 
+Byetrack shows that stronger privacy guarantees can coexist with usability and interoperability, marking a step toward a more privacy-conscious mobile web ecosystem.
