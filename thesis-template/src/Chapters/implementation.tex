@@ -180,8 +180,35 @@ Launching a temporary runtime solely for token processing introduced instability
 Therefore, the two layers share a symmetric secret key to ensure coordinated behavior without direct cross-layer calls.
 
 \subsection{Token Generation}
-Before generating any capability tokens, the browser performs a policy downgrade step to sanitize the received policy.
-This step is implemented inside the TokenGenerator.generateCapabilityTokens() function and ensures that conflicting or overlapping entries are resolved according to a “minimal security” principle — meaning that private entries always take precedence over global ones, and predefined and wildcard rules remain independent.
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+
+\caption{Allowed combinations of global and private policy entries}
+\label{tab:policy-downgrade}
+\begin{tabular}{@{}lll p{6cm}@{}}
+
+\toprule
+Global & Private & Allowed & Reason \\ 
+\midrule
+predefined & wildcard & \checkmark & Specific trusted cookies can share a global jar, while all other cookies on the same domain remain isolated. \\[0.3em]
+predefined & predefined & $\times$ (take private) & Conflicting privilege definitions for the same domain or cookie. \\[0.3em]
+wildcard & wildcard & $\times$ (take private) & Both describe domain-wide scopes with different privileges \\[0.3em]
+wildcard & predefined & \checkmark & Allows broad global access to a domain while restricting specific sensitive cookies to private storage. \\[0.3em]
+predefined & predefined \tnote{1} & $\times$ (take private) & Same cookie appears under both privilege levels. \\
+\bottomrule
+\end{tabular}
+
+\begin{tablenotes}
+  \item[1] Only applies if the same cookie name is defined under both global and private for the same domain.
+\end{tablenotes}
+
+\end{threeparttable}
+\end{table}
+
+Before generating any capability tokens, the browser performs a policy downgrade step to sanitize the received policy (\autoref{tab:policy-downgrade}).
+This step is implemented inside the TokenGenerator.generateCapabilityTokens() function and ensures that conflicting or overlapping entries are resolved according to the principle of least privilige (PoLP) -- private entries always take precedence over global ones, and predefined and wildcard rules remain independent. %TODO: Cite PoLP?
 
 When the content provider receives a policy from the installer, it first parses the JSON structure into four collections directly corresponding to the four sections of the policy: predefined global, predefined private, wildcard global, and wildcard private.
 Each collection represents either a mapping from domains to explicit cookie names (for predefined entries), or a list of domains (for wildcard entries).
@@ -199,7 +226,7 @@ Importantly, predefined and wildcard rules are treated independently.
 The downgrade logic explicitly avoids removing entries across these two categories.
 This means that a domain can safely appear in both sections with different privilege levels. 
 This independence is reflected in the implementation by simply skipping cross-type downgrades
-An example can be found in the appendix \ref{appendix:policy}.
+An example can be found in \autoref{appendix:policy}.
 
 % Actual Generation Part
 Once all conflicts are resolved, the downgraded policy structures are passed into the token generation routines -- processing of the predefined map and wildcard list.
