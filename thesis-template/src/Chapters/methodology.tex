@@ -16,13 +16,11 @@ This design prevents unauthorized cross-app tracking while preserving legitimate
 Because the system operates solely at the app–browser boundary, it maintains full compatibility with existing web platform features and requires no changes to the browser UI.
 
 \section{Capability Tokens}
-Our interpretation of capability tokens is inspired by JSON Web Tokens (JWTs)~\cite{rfc7519}, which are widely used in web authentication to encode claims about a user or a session in a secure, verifiable manner.
-We do not want the local tokens be shared between apps, as we want to scope them to the app only.
-This contradicts to the natural feature of capabilities being delegatable.
+Against the natural feature of capabilities being delegatable, we need to bind them to the app identity to prevent cross-app tracking by simple token reuse.
 Therefore, we include the apps identity in the capability tokens, so that the browser can verify that the token is only used by the app it was issued to.
-Similar to JWTs, our tokens are signed to identify tampering attemtps.
+Similar to JWTs~\cite{rfc7519}, our tokens are signed to identify tampering attemtps.
 Due to the Thread Model assumptions {\autoref{sec:threat_model}}, we additionally need to encrypt the tokens, so that a malicious third-party library embedded in the app cannot read the token contents and echo them back to its web server to circumvent the mitigation.
-In conclusion, our capability tokens are identity-bound and cryptographically protected data structures that encapsulate cookie information and metadata, enabling fine-grained access control between Android apps and the browser.
+In conclusion, we design our capability tokens to be identity-bound and cryptographically protected data structures that encapsulate cookie information and metadata, enabling fine-grained access control between Android apps and the browser.
 
 % -----------------------Explain Methodology Flow Diagram Here ---------------------------
 \section{Lifecycle and Flow}

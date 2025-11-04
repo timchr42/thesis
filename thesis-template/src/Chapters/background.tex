@@ -113,7 +113,7 @@ Browser state partitioning would allow each app to use its own cookie storage an
 The seamless integration of web content remains intact, as no changes to the UI are necessary, but by completely removing the browser's shared state, benign uses like Single Sign-On (SSO) or ad personalization would be broken. 
 
 \paragraph{Forces User Interaction.}
-In contrast, Forced User Interaction avoids these problems by allowing the browser to use its shared cookie storage.
+In contrast, Forced User Interaction avoids this problem by explicitly requiring user consent before launching a CT or TWA.
 But this introduces a significant usability issue, as the user is forced to interact with the browser every time a web content is loaded, which not only degrades user experience but also breaks seamless integration of web content into the app.
 Furthermore, this approach hands control and responsibility to the user, which is not ideal from a security perspective, as the user might be unaware of the consequences of their actions and may inadvertently enable tracking by failing to interact with the browser as required.
 
