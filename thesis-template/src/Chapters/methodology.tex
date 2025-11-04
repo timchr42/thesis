@@ -5,13 +5,14 @@
 
 \section{Research Approach}
 This thesis follows a design- and implementation-oriented methodology aimed at developing and evaluating a privacy-preserving extension for Android applications that use Custom Tabs (CTs) and Trusted Web Activities (TWAs).
-The main research goal is to prevent HyTrack’s cross-app tracking attack \cite{USENIX:Wessels:2025} by addressing the underlying weaknesses identified in \autoref{sec:hytrack-weaknesses}, while adhering to the design goals defined by Wessels et al. in \autoref{sec:hytrack-goals}.
+The main research goal is to prevent HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by addressing the underlying weaknesses identified in \autoref{sec:hytrack-weaknesses}, while adhering to the design goals defined by Wessels et al. in \autoref{sec:hytrack-goals}.
 Unlike previously discussed mitigation strategies such as Browser State Partitioning or Forced User Interaction (\autoref{sec:hytrack-mitigations}), the proposed approach aims to maintain usability and compatibility while providing strong privacy guarantees.
 
 To address this gap, this work develops and evaluates a privacy-preserving extension for Android applications that use Custom Tabs (CTs) and Trusted Web Activities (TWAs).
 The proposed framework prevents HyTrack’s cross-app tracking attack \cite{USENIX:Wessels:2025} by eliminating the architectural weaknesses identified in \autoref{sec:hytrack-weaknesses}, while adhering to the design goals of usability, compatibility, and controlled access to shared state \autoref{sec:hytrack-goals}.
 
-The core idea is to encapsulate cookie access within fine-grained capability tokens, created and validated by the browser according to a developer-defined policy. Depending on the policy configuration, cookies are stored either in a shared global jar or in app-specific storage, analogous to the Partitioned attribute in CHIPS \cite{googlechips}.
+The core idea is to encapsulate cookie access within fine-grained capability tokens, created and validated by the browser according to a developer-defined policy.
+Depending on the policy configuration, cookies are stored either in a shared global jar or in app-specific storage, analogous to the Partitioned attribute in CHIPS \cite{googlechips}.
 This design prevents unauthorized cross-app tracking while preserving legitimate use cases such as Single Sign-On and session continuity.
 Because the system operates solely at the app–browser boundary, it maintains full compatibility with existing web platform features and requires no changes to the browser UI.
 
