@@ -49,6 +49,14 @@ Yet, the same integration that improves usability also blurs traditional securit
 
 \section{HyTrack Attack Overview}
 \label{sec:hytrack}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.9\textwidth]{hytrack_Flow_colored.pdf}
+  \caption{High-level Overview of the HyTrack Attack Flow.}
+  \label{fig:hytrack_overview}
+\end{figure}
+
 HyTrack, introduced by Wessels et al. \cite{USENIX:Wessels:2025}, exposes a fundamental privacy flaw in this shared-state model.
 It demonstrates that third-party libraries embedded in multiple apps can exploit the browser's global cookie storage to identify and track users across applications and even into their normal web browsing sessions.
 By leveraging standard Android features—rather than any explicit vulnerability—HyTrack highlights how the very mechanisms designed to make CTs and TWAs seamless for users can also undermine Android's app isolation guarantees.

@@ -90,7 +90,7 @@ To improve transparency and developer control, the browser exposes limited utili
 \end{enumerate}
 Access to these utilities is strictly controlled through capability rights: read operations require read rights, and modifications require write rights.
 
-\section{Design Advantages}
+\section{Design Advantages} % move this to another section?
 Beyond preventing cross-app tracking, Byetrack offers several key benefits:
 \begin{enumerate}[label=B\arabic*)]
   \item \textbf{Fine-Grained Control:} Developers can precisely specify which cookies are shared or isolated.
@@ -101,9 +101,12 @@ Beyond preventing cross-app tracking, Byetrack offers several key benefits:
 
 \section{Alternative Design Considerations}
 An alternative architecture would delegate capability generation to the installer rather than the browser.  
-This would simplify the browser's responsibilities to enforcement only, reducing its complexity and eliminating installer–browser communication for each app.  
+This would simplify the browser's responsibilities to enforcement only, reducing its complexity and eliminating installer–browser communication for each app.
+It would also solve the bootstrapping problem of generating the initial capabiltities the current design faces: if an app is installed on a device, the installer notifies the browser of the new app and its policy so the browser can generate capabilities accordingly.
+If this browser is not installed yet, the app cannot receive capabilities until the browser is installed and the app is reinstalled or updated.
+Having the installer generate capabilities would allow the app to receive them immediately upon installation, regardless of the browser's presence and whether it even supports the framework or not.
 However, it would require shared cryptographic secrets between the installer and browser, thereby enlarging the trusted computing base and attack surface.  
-For these reasons, the proof-of-concept implementation designates the browser as the sole trusted component for capability generation and enforcement.
+For this and simplicitly reasons, the proof-of-concept implementation designates the browser as the sole trusted component for capability generation and enforcement and assumes the browser is present before app installation.
 
 
 %\subsection{Token Fields}

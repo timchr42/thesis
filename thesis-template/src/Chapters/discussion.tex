@@ -109,11 +109,8 @@ While providing the strongest isolation guarantees, this mode also introduces th
 \section{Limitations}
 
 While our mitigation addresses HyTrack's cross-app tracking channel effectively, several limitations remain.
-First, our framework depends on cooperation from the browser and installer components.
-Without these trusted components, capability issuance and enforcement cannot be guaranteed.
-Second, the system relies on correctly defined policies; incomplete or misconfigured policies may lead to under- or over-isolation, affecting usability or privacy respectively.
-Third, integrating the approach on the application side is straightforward by just replacing the browser library dependency, but extending the approach to other browsers would require their cooperation and modification, as network layers differ throughout browsers.
-Third, our current prototype targets Android and Firefox, and extending support to other platforms or browsers would require additional adaptation work.
+First, the system relies on correctly defined policies; incomplete or misconfigured policies may lead to under- or over-isolation, affecting usability or privacy respectively.
+Second, integrating the approach on the application side is straightforward by just replacing the browser library dependency, but extending the approach to other browsers would require their cooperation and modification, as browsers use different engines and theirfore have different cookie management mechanisms.
 
 Moreover, our threat model assumes non-malicious developers.
 If an app developer intentionally collaborates with a tracking library or exfiltrates tokens, the current design cannot prevent data leakage.

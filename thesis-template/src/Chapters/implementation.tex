@@ -524,9 +524,19 @@ The app must perform two separate actions (commit and reveal), and any other app
 A more practical alternative was to leverage Android’s \texttt{PendingIntent} mechanism~\cite{android:pendingintents}.  
 In this approach, the Custom Tab intent is wrapped into a \texttt{PendingIntent} marked as \texttt{FLAG\_IMMUTABLE}, and capability tokens are attached as extras.  
 The browser can then obtain the caller identity securely via \texttt{getCreatorPackage()} or \texttt{getCreatorUid()} and invoke the PendingIntent on behalf of the app.  
+Even if another app gains access to this PendingIntent, it cannot alter its content or spoof the original app's identity.  
+This method therefore provides a viable balance between security and usability
 
-Even if another app gains access to this PendingIntent, it cannot alter its content or spoof the original app’s identity.  
-This method therefore provides a viable balance between security and usability without requiring major architectural changes to the Custom Tab launch flow.
+A major downside both the pending intent solution and commitment scheme face is the requirement to modify how Custom Tabs are launched under the hood.
+Consequently, our browser modifications are incompatible with existing apps that use the standard AndroidX Browser library for Custom Tab launches, breaking backwards compatibility.
+
+\paragraph{Custom Android SDK}
+To maintain compatibility with existing apps, we ultimately opted for a solution that allows the app to launch Custom Tabs using standard intents while still securely conveying the caller's identity.
+This is achieved by making the Intent carry the creator uid, a functionality that for some reason is not exposed in the standard Android SDK, event though the Intent class is a core part of Androids IPC mechanism.
+We therefore include a field \texttt{creator\_uid} in the intent class, which the ActivityManagerService populates when processing the intent and hands it over to the requested browser.
+
+This way, the browser can securely retrieve the calling application's UID from the intent itself without relying on potentially spoofable extras while providing full backwards compatibility.
+On the other hand, app developers must ensure that they use our modified Android SDK to compile their apps, which may limit adoption and deployment in practice.
 
 \subsection{Bridging Between Java and Native Layers}
 \label{subsec:jni_bridging}
