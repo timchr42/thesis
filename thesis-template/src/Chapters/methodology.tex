@@ -41,6 +41,14 @@ This allows granular control beyond simple trusted/untrusted domain distinctions
 If no policy is provided, the browser falls back to ambient mode, where all cookies are stored in the shared jar for backwards compatibility.
 
 \subsection{Capability Initialization}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.9\textwidth]{InitTokenFlowChart.drawio.pdf}
+  \caption{Flow of capability initialization during app installation.}
+  \label{fig:initialization_flow}
+\end{figure}
+
 During app installation, the installer extracts and transmits the policy to the browser.
 The browser validates and sanitizes the policy to ensure minimal privilege, removing conflicting or ambiguous entries.  
 
@@ -55,6 +63,14 @@ Each token is signed and encrypted before being sent to the app, which stores wi
 When the app is updated, the installer retransmits the policy so that the browser can reissue capabilities consistent with the new app version.
 
 \subsection{App–Browser Interaction}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.9\textwidth]{byetrack_Flow_Flowchart_colored.pdf}
+  \caption{Flow of app–browser-server interaction regarding cookie isolation during URL launches.}
+  \label{fig:app_browser_interaction}
+\end{figure}
+
 When an app opens a URL through a Custom Tab (CT) or Trusted Web Activity (TWA), the stored wildcard and (initially empty) final tokens are attached to the intent that launches the browser.
 Upon receipt, the browser decrypts and validates each token by checking its signature, package name, version number, and target domain.
 Invalid tokens are discarded.
