@@ -4,14 +4,14 @@
 \label{chap:method}
 
 \section{Research Approach}
-This thesis follows a design- and implementation-oriented methodology aimed at developing and evaluating a privacy-preserving extension for Android applications that use Custom Tabs (CTs) and Trusted Web Activities (TWAs).
-The main research goal is to prevent HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by addressing the underlying weaknesses identified in \autoref{sec:hytrack-weaknesses}, while adhering to the design goals defined by Wessels et al. in \autoref{sec:hytrack-goals}.
+%This thesis follows a design- and implementation-oriented methodology aimed at developing and evaluating a privacy-preserving extension for Android applications that use Custom Tabs (CTs) and Trusted Web Activities (TWAs).
+\paragraph{Main Goal.} The main research goal is to prevent HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by addressing the underlying weaknesses of CustomTabs (CTs) and TrustedWebActivities(TWAs) identified in \autoref{sec:hytrack-weaknesses}, while adhering to the design goals defined by Wessels et al. in \autoref{sec:hytrack-goals}.
 Unlike previously discussed mitigation strategies such as Browser State Partitioning or Forced User Interaction (\autoref{sec:hytrack-mitigations}), the proposed approach aims to maintain usability and compatibility while providing strong privacy guarantees.
 
 To address this gap, this work develops and evaluates a privacy-preserving extension for Android applications that use Custom Tabs (CTs) and Trusted Web Activities (TWAs).
-The proposed framework prevents HyTrack’s cross-app tracking attack \cite{USENIX:Wessels:2025} by eliminating the architectural weaknesses identified in \autoref{sec:hytrack-weaknesses}, while adhering to the design goals of usability, compatibility, and controlled access to shared state \autoref{sec:hytrack-goals}.
+The proposed framework prevents HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by eliminating the architectural weaknesses identified in \autoref{sec:hytrack-weaknesses}, while adhering to the design goals of usability, compatibility, and controlled access to shared state \autoref{sec:hytrack-goals}.
 
-The core idea is to encapsulate cookie access within fine-grained capability tokens, created and validated by the browser according to a developer-defined policy.
+\paragraph{Core Idea.} The core idea is to encapsulate cookie access within fine-grained capability tokens, created and validated by the browser according to a developer-defined policy.
 Depending on the policy configuration, cookies are stored either in a shared global jar or in app-specific storage, analogous to the Partitioned attribute in CHIPS \cite{googlechips}.
 This design prevents unauthorized cross-app tracking while preserving legitimate use cases such as Single Sign-On and session continuity.
 Because the system operates solely at the app–browser boundary, it maintains full compatibility with existing web platform features and requires no changes to the browser UI.
@@ -19,18 +19,27 @@ Because the system operates solely at the app–browser boundary, it maintains f
 \section{Capability Tokens}
 Against the natural feature of capabilities being delegatable, we need to bind them to the app identity to prevent cross-app tracking by simple token reuse.
 Therefore, we include the apps identity in the capability tokens, so that the browser can verify that the token is only used by the app it was issued to.
+A global jar flag indicates whether the cookie belongs to the shared global jar or to the app-specific isolated jar.
+The cookie data itself -- name and value -- is encapsulated in the token, along with rights defining the permitted actions (reading, writing, or both) on the cookie data later on.
 Similar to JWTs~\cite{rfc7519}, our tokens are signed to identify tampering attemtps.
 Due to the Thread Model assumptions {\autoref{sec:threat_model}}, we additionally need to encrypt the tokens, so that a malicious third-party library embedded in the app cannot read the token contents and echo them back to its web server to circumvent the mitigation.
+
+\paragraph{Types.}
+We distinguish between \texttt{final}, \texttt{wildcard}, and \texttt{ambient} capabilities.
+
+\begin{itemize}
+  \item \textbf{Final Capabilities:} Fully specified tokens containing explicit cookie names and values.  
+    They represent concrete cookie instances and are used directly for cookie enforcement.
+  \item \textbf{Wildcard Capabilities:} Partially specified tokens that omit cookie names or values.  
+    They serve as templates from which final tokens are derived once cookies are received from a web server.
+  \item \textbf{Ambient Capabilities:} Represent the browser’s default behavior—storing all cookies in the shared global jar.  
+    These act as fallbacks when no explicit policy is provided and offer no privacy guarantees.
+\end{itemize}
+
 In conclusion, we design our capability tokens to be identity-bound and cryptographically protected data structures that encapsulate cookie information and metadata, enabling fine-grained access control between Android apps and the browser.
 
 % -----------------------Explain Methodology Flow Diagram Here ---------------------------
-\section{Lifecycle and Flow}
-\begin{figure}[h!]
-  \centering
-  \includegraphics[width=0.9\textwidth]{ByeTrack_Flow.pdf}
-  \caption{High-level overview of the Byetrack flow between installer, app, browser, and web servers.}
-  \label{fig:byetrack_overview}
-\end{figure}
+\section{Capability-Based Cookie Isolation Flow}
 
 To achieve this, a prototype framework named Byetrack was designed, implemented, and evaluated on Android.
 The framework consists of three main components: a custom installer for policy extraction, a helper library for application integration, and modifications to the Mozilla Fenix browser and its underlying GeckoView engine to enforce cookie isolation via capability tokens.
@@ -38,11 +47,11 @@ The framework consists of three main components: a custom installer for policy e
 \subsection{Developer Policy}
 Developers define a JSON policy that specifies which domains may share browser state and, optionally, which cookies are expected from each domain.
 This allows granular control beyond simple trusted/untrusted domain distinctions -- for example, isolating third-party cookies while permitting integration with a developer's own authentication domain or SSO provider.
-If no policy is provided, the browser falls back to ambient mode, where all cookies are stored in the shared jar for backwards compatibility.
+If no policy is provided, the browser falls back to "ambient mode", where all cookies are stored in the shared jar for backwards compatibility.
 
 \subsection{Capability Initialization}
 
-\begin{figure}[h!]
+\begin{figure}[h]
   \centering
   \includegraphics[width=0.9\textwidth]{InitTokenFlowChart.drawio.pdf}
   \caption{Flow of capability initialization during app installation.}
@@ -51,7 +60,6 @@ If no policy is provided, the browser falls back to ambient mode, where all cook
 
 During app installation, the installer extracts and transmits the policy to the browser.
 The browser validates and sanitizes the policy to ensure minimal privilege, removing conflicting or ambiguous entries.  
-
 From the sanitized policy, the browser generates capability tokens as follows:
 \begin{itemize}
   \item For predefined cookie entries, the browser creates corresponding predefined capability tokens.
@@ -64,10 +72,10 @@ When the app is updated, the installer retransmits the policy so that the browse
 
 \subsection{App–Browser Interaction}
 
-\begin{figure}[h!]
+\begin{figure}[h]
   \centering
-  \includegraphics[width=0.9\textwidth]{byetrack_Flow_Flowchart_colored.pdf}
-  \caption{Flow of app–browser-server interaction regarding cookie isolation during URL launches.}
+  \includegraphics[width=1\textwidth]{byetrack_Flow_Flowchart_colored.pdf}
+  \caption{High-level overview of flow between app, browser and installer.}
   \label{fig:app_browser_interaction}
 \end{figure}
 
@@ -107,19 +115,25 @@ To improve transparency and developer control, the browser exposes limited utili
 Access to these utilities is strictly controlled through capability rights: read operations require read rights, and modifications require write rights.
 
 \section{Design Advantages} % move this to another section?
-Beyond preventing cross-app tracking, Byetrack offers several key benefits:
-\begin{enumerate}[label=B\arabic*)]
-  \item \textbf{Fine-Grained Control:} Developers can precisely specify which cookies are shared or isolated.
-  \item \textbf{Stateless Browser Design:} The browser remains stateless with respect to app-specific data, as apps retain and transmit their own tokens.
-  \item \textbf{No Web Server Changes:} Web servers operate unmodified—the browser transparently enforces the capability model.
-  \item \textbf{Backwards Compatibility:} Apps without a policy fall back to the standard shared cookie behavior, ensuring compatibility with existing systems.
-\end{enumerate}
+Beyond preventing cross-app tracking, our design offers several key benefits:
+\begin{itemize}
+  \item
+    \textbf{Fine-Grained Control:} Developers can precisely specify which cookies are shared or isolated.
+  \item
+    \textbf{Stateless Browser Design:} The browser remains stateless with respect to app-specific data, as apps retain and transmit their own tokens. The browser only needs to hold on to them temporarily during a session.
+  \item
+  \textbf{No Web Server Changes:} Web servers operate unmodified. The browser transparently enforces the capability model according to the app's policy it initially received.
+  \item
+  \textbf{Backwards Compatibility:} Apps without a policy fall back to the standard shared cookie behavior, ensuring compatibility with existing systems. Also unmodified browsers continue to function correctly with apps using the framework, as unrecognized capabilities are ignored.
+\end{itemize}
 
 \section{Alternative Design Considerations}
 An alternative architecture would delegate capability generation to the installer rather than the browser.  
 This would simplify the browser's responsibilities to enforcement only, reducing its complexity and eliminating installer–browser communication for each app.
+
 It would also solve the bootstrapping problem of generating the initial capabiltities the current design faces: if an app is installed on a device, the installer notifies the browser of the new app and its policy so the browser can generate capabilities accordingly.
 If this browser is not installed yet, the app cannot receive capabilities until the browser is installed and the app is reinstalled or updated.
+
 Having the installer generate capabilities would allow the app to receive them immediately upon installation, regardless of the browser's presence and whether it even supports the framework or not.
 However, it would require shared cryptographic secrets between the installer and browser, thereby enlarging the trusted computing base and attack surface.  
 For this and simplicitly reasons, the proof-of-concept implementation designates the browser as the sole trusted component for capability generation and enforcement and assumes the browser is present before app installation.

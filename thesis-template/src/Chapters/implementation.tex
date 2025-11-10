@@ -109,26 +109,29 @@ Each section further distinguishes between two isolation scopes:
   \item private -- referring to tokens restricted to the local application or site context (e.g. third-party trackers like the authors of HyTrack describe).
 \end{itemize}
 
-\textbf{Predefined Section:} The predefined section specifies explicit capability bindings between domains ad the cookies that are allowed to be associated with them.
+\paragraph{Predefined Section.} The predefined section specifies explicit capability bindings between domains ad the cookies that are allowed to be associated with them.
 These entries define exactly which cookie names are permitted for which domains.
 Each key corresponds to a domain, and the associated list defines cookie names that are explicitly authorized for that domain.
 The distinction between global and private in the predefined section allows a domain to hold both a global token  and a private token.
 The two scopes are treated independently and can coexist safely. %TODO Put this in Design rather?
 
-\textbf{Wildcard Section:} The wildcard section defines simplified or implicit rules for domains where explicit cookie level definitions are not necessary.
+\paragraph{Wildcard Section.} The wildcard section defines simplified or implicit rules for domains where explicit cookie level definitions are not necessary.
 Instead of listing cookie names, the wildcard policy only specifies domains that shall receive capability tokens defined by the isolation scope.
 
-The wildcard and predefined entries operate independently -- a domain can appear in both lists if necessary. For example, a domain may have a global predefined token for a specific cookie and a private wildcard token for general use. This allows flexible, layered control over cookie behavior. %TODO put this in Design?
-
+The wildcard and predefined entries operate independently -- a domain can appear in both lists if necessary.
+For example, a domain may have a global predefined token for a specific cookie and a private wildcard token for general use.
+This allows flexible, layered control over cookie behavior. %TODO put this in Design?
 An example policy with explanaition can be found in the appendix \autoref{appendix:policy}.
 
 \section{Capability Token Structure}
 \label{sec:token}
+
 Each capability token encodes metadata defining the scope and permissions associated with a cookie.  
+%\subsection{Token Fields}
+The token is represented as a JSON object ~\cite{jsonobject}, as Firefox aready provides helper utility for JSON parsing and serialization in the C++ layer to minimize implementation effort.
+Furthermore, JSON is a widely adopted format in web development, making it familiar to developers and easy to integrate with existing systems.
 
-\subsection{Token Fields}
-The following fields form the basis:
-
+The object stores the following fields:
 \begin{itemize}
   \item \texttt{cookie\_name}, \texttt{cookie\_value}: The name and value of the cookie represented by this token.
   \item \texttt{domain}: The associated web domain this capability applies to.
@@ -138,19 +141,26 @@ The following fields form the basis:
   \item \texttt{global\_jar}: Boolean flag indicating whether the cookie belongs to the shared or private cookie jar.
 \end{itemize}
 
-\subsection{Capability Types}
-We distinguish between \texttt{final}, \texttt{wildcard}, and \texttt{ambient} capabilities.
-
-\begin{itemize}
-  \item \textbf{Final Capabilities:} Fully specified tokens containing explicit cookie names and values.  
-    They represent concrete cookie instances and are used directly for cookie enforcement.
-  \item \textbf{Wildcard Capabilities:} Partially specified tokens that omit cookie names or values.  
-    They serve as templates from which final tokens are derived once cookies are received from a web server.
-  \item \textbf{Ambient Capabilities:} Represent the browser’s default behavior—storing all cookies in the shared global jar.  
-    These act as fallbacks when no explicit policy is provided and offer no privacy guarantees.
-\end{itemize}
+%\subsection{Capability Types}
+%We distinguish between \texttt{final}, \texttt{wildcard}, and \texttt{ambient} capabilities.
+%
+%\begin{itemize}
+%  \item \textbf{Final Capabilities:} Fully specified tokens containing explicit cookie names and values.  
+%    They represent concrete cookie instances and are used directly for cookie enforcement.
+%  \item \textbf{Wildcard Capabilities:} Partially specified tokens that omit cookie names or values.  
+%    They serve as templates from which final tokens are derived once cookies are received from a web server.
+%  \item \textbf{Ambient Capabilities:} Represent the browser’s default behavior—storing all cookies in the shared global jar.  
+%    These act as fallbacks when no explicit policy is provided and offer no privacy guarantees.
+%\end{itemize}
 
 \section{Custom Installer}
+% Maybe include more detailed Sequence Diagram here?
+%\begin{figure}[h!]
+%  \centering
+%  \includegraphics[width=0.9\textwidth]{ByeTrack_Flow.pdf}
+%  \caption{}
+%  \label{fig:byetrack_overview}
+%\end{figure}
 
 The installer application packages the proof-of-concept apps as APKs within its \texttt{assets/} directory. 
 Since this directory is read-only at runtime, the APKs are first copied into the app’s private storage before installation.
