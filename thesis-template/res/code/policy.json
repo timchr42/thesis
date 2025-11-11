@@ -1,0 +1,20 @@
+{
+  "predefined": {
+    "global": {
+      "<domain>": ["<cookie_name_1>", "<cookie_name_2>", ...],
+      ...
+    },
+    "private": {
+      "<domain>": ["<cookie_name_1>", "<cookie_name_2>", ...],
+      ...
+    }
+  },
+  "wildcard": {
+    "global": [
+      "<domain_1>", "<domain_2>", ...
+    ],
+    "private": [
+      "<domain_1>", "<domain_2>", ...
+    ]
+  }
+}

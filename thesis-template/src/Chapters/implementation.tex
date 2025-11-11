@@ -21,62 +21,60 @@
 
 % -----------------------------Implementation---------------------------
 
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[
-  node distance=1.3cm,
-  every node/.style={rectangle, draw=black, rounded corners=2pt, align=center, text width=8cm, font=\small, fill=gray!5},
-  arrow/.style={->, thick, >=stealth}
-]
-
-\node (cookie) {
-\textbf{1. CookieService (C++)}\\[2pt]
-Processes \texttt{Set-Cookie} headers\\
-Decides action via \texttt{DecideCookieAction()}\\
-Captures private tokens via \texttt{StageTokenForReturn()}
-};
-
-\node (httpbase) [below=of cookie] {
-\textbf{2. HttpBaseChannel (C++)}\\[2pt]
-Collects staged tokens in \texttt{mByetrackTokensToReturn}\\
-Serializes domain→token map to JSON\\
-Emits observer topic \texttt{"byetrack-final-tokens"}
-};
-
-\node (gvnav) [below=of httpbase] {
-\textbf{3. GeckoViewNavigation (JS)}\\[2pt]
-Receives observer notification\\
-Deduplicates by \texttt{bcId:batchId}\\
-Dispatches event \texttt{"GeckoView:ByetrackFinalTokens"}\\
-with JSON + package name
-};
-
-\node (gvsess) [below=of gvnav] {
-\textbf{4. GeckoSession (Java)}\\[2pt]
-Handles event from GeckoView\\
-Builds \texttt{ContentValues} with token JSON\\
-Calls \texttt{ContentResolver.insert()} on\\
-\texttt{content://<package>.tokens}
-};
-
-\node (app) [below=of gvsess] {
-\textbf{5. Byetrack App (Android)}\\[2pt]
-Receives inserted tokens via \texttt{ContentProvider}\\
-Merges them into the local capability store
-};
-
-% Arrows
-\draw[arrow] (cookie) -- (httpbase);
-\draw[arrow] (httpbase) -- (gvnav);
-\draw[arrow] (gvnav) -- (gvsess);
-\draw[arrow] (gvsess) -- (app);
-
-\end{tikzpicture}
-\caption{Flow of captured Byetrack tokens from Gecko’s network layer to the application layer.}
-\label{fig:byetrack-token-flow}
-\end{figure}
-
-\section{Overview}
+%\begin{figure}[H]
+%\centering
+%\begin{tikzpicture}[
+%  node distance=1.3cm,
+%  every node/.style={rectangle, draw=black, rounded corners=2pt, align=center, text width=8cm, font=\small, fill=gray!5},
+%  arrow/.style={->, thick, >=stealth}
+%]
+%
+%\node (cookie) {
+%\textbf{1. CookieService (C++)}\\[2pt]
+%Processes \texttt{Set-Cookie} headers\\
+%Decides action via \texttt{DecideCookieAction()}\\
+%Captures private tokens via \texttt{StageTokenForReturn()}
+%};
+%
+%\node (httpbase) [below=of cookie] {
+%\textbf{2. HttpBaseChannel (C++)}\\[2pt]
+%Collects staged tokens in \texttt{mByetrackTokensToReturn}\\
+%Serializes domain→token map to JSON\\
+%Emits observer topic \texttt{"byetrack-final-tokens"}
+%};
+%
+%\node (gvnav) [below=of httpbase] {
+%\textbf{3. GeckoViewNavigation (JS)}\\[2pt]
+%Receives observer notification\\
+%Deduplicates by \texttt{bcId:batchId}\\
+%Dispatches event \texttt{"GeckoView:ByetrackFinalTokens"}\\
+%with JSON + package name
+%};
+%
+%\node (gvsess) [below=of gvnav] {
+%\textbf{4. GeckoSession (Java)}\\[2pt]
+%Handles event from GeckoView\\
+%Builds \texttt{ContentValues} with token JSON\\
+%Calls \texttt{ContentResolver.insert()} on\\
+%\texttt{content://<package>.tokens}
+%};
+%
+%\node (app) [below=of gvsess] {
+%\textbf{5. Byetrack App (Android)}\\[2pt]
+%Receives inserted tokens via \texttt{ContentProvider}\\
+%Merges them into the local capability store
+%};
+%
+%% Arrows
+%\draw[arrow] (cookie) -- (httpbase);
+%\draw[arrow] (httpbase) -- (gvnav);
+%\draw[arrow] (gvnav) -- (gvsess);
+%\draw[arrow] (gvsess) -- (app);
+%
+%\end{tikzpicture}
+%\caption{Flow of captured Byetrack tokens from Gecko’s network layer to the application layer.}
+%\label{fig:byetrack-token-flow}
+%\end{figure}
 
 This chapter details the implementation of our proof-of-concept prototype that realizes the Byetrack mitigation described in the previous chapter.
 The prototype consists of three main components that together cover policy distribution, capability token generation, and enforcement within the browser:
@@ -92,7 +90,8 @@ Byetrack Helper Library -- a reusable client-side library that manages capabilit
 Modified AndroidX Browser Library -- a drop-in replacement for the standard AndroidX Browser module that automatically integrates Byetrack logic into every Custom Tab (CT) and Trusted Web Activity (TWA) invocation.
 
 \end{itemize}
-For the enforcement component, we selected Mozilla Firefox for Android (Fenix) as the browser base due to its open architecture and direct access to the GeckoView engine.
+
+We selected Mozilla Firefox for Android (Fenix) as the browser base due to its open architecture and direct access to the GeckoView engine.
 Within Fenix, Byetrack is implemented across two layers:
 a Java layer that handles policy ingestion and token generation, and
 a native C++ layer within Gecko responsible for enforcing cookie isolation and network-level restrictions.
@@ -128,7 +127,7 @@ An example policy with explanaition can be found in the appendix \autoref{append
 
 Each capability token encodes metadata defining the scope and permissions associated with a cookie.  
 %\subsection{Token Fields}
-The token is represented as a JSON object ~\cite{jsonobject}, as Firefox aready provides helper utility for JSON parsing and serialization in the C++ layer to minimize implementation effort.
+The token is represented as a JSON object ~\cite{android:jsonobject}, as Firefox aready provides helper utility for JSON parsing and serialization in the C++ layer to minimize implementation effort.
 Furthermore, JSON is a widely adopted format in web development, making it familiar to developers and easy to integrate with existing systems.
 
 The object stores the following fields:
@@ -162,34 +161,48 @@ The object stores the following fields:
 %  \label{fig:byetrack_overview}
 %\end{figure}
 
-The installer application packages the proof-of-concept apps as APKs within its \texttt{assets/} directory. 
-Since this directory is read-only at runtime, the APKs are first copied into the app’s private storage before installation.
-Each installation is initiated through an intent pointing to the local APK URI.
+Next to performing standard application installations, our custom installer is responsible for extracting each app's policy file and delivering it to the browser for token generation.
+To simplify deployment, the apps to be installed are bundled with the installer itself as APK files stored under its \texttt{assets/} directory.
+Alternative locations such as the \texttt{res/} folder are unsuitable, as resources are compiled into a binary format that cannot be directly accessed at runtime.
+Hosting the APKs remotely and downloading them on demand would also have been possible, but this would introduce unnecessary network dependencies and complicate reproducibility for our proof-of-concept.
 
-Once installation completes, the installer immediately proceeds to read the policy file from the newly installed app’s assets using the \texttt{AssetManager}. 
-To avoid polling for completion, the process is implemented via \texttt{ActivityForResult}, allowing direct continuation after installation finishes.
+Because the assets directory is read-only at runtime, each APK must first be copied into the installer's private file storage before it can be installed.
+The installation is then triggered by constructing an explicit Intent ~\cite{android:intent} that references the local file's Uri ~\cite{android:uri}, sets its MIME type to
+\texttt{application/vnd.android.package-archive} \cite{android:intent.setdataandtype}, and grants temporary read permissions via
+\texttt{Intent.FLAG\_GRANT\_READ\_URI\_PERMISSION}.
+This intent is launched through a custom ActivityResultLauncher ~\cite{android:activityresultlauncher}, which encapsulates Android's modern
+\texttt{ActivityResultContracts.StartActivityForResult} ~\cite{android:activityresultcontracts.startactivityforresult} mechanism.
 
-After parsing the policy JSON into a string, the installer transmits it to the browser—along with the package name and version obtained via the \texttt{PackageManager}—through a designated \texttt{ContentProvider} exposed by the browser.
-We selected a content provider for inter-process communication because it is simple to implement, automatically conveys the caller’s identity, and provides structured data exchange via Bundles.
+This construct allows the installer to be notified directly when the installation flow finishes, without requiring any form of polling or background monitoring.
+Upon receiving a successful result code, the installer immediately proceeds to locate and read the policy file contained within the newly installed app's assets directory, using Android's AssetManager ~\cite{android:assetmanager}.
+The extracted JSON policy is parsed and forwarded to the browser, together with the app's package name and version information obtained via the PackageManager ~\cite{android:packagemanager}.
+For this to work, the package names of the apps to be installed must be registered in the Android Manifest under the \texttt{queries} element ~\cite{android:manifest.queries}. 
 
-Although recent Android versions introduce mechanisms to derive the calling package of a broadcast intent, we found this approach unreliable in practice (often returning \texttt{null}). 
-Wrapping the intent in a \texttt{PendingIntent} is a possible workaround but susceptible to spoofing if a malicious library creates and dispatches its own fake pending intent.
-A bound service could also serve as an IPC channel but would require the browser process to be active and significantly increase implementation complexity.
+For inter-process communication, we employ a ContentProvider ~\cite{android:contentprovider} exposed by the browser.
+This IPC mechanism was chosen because it offers a straightforward implementation, automatically conveys the caller's UID (enabling reliable authentication of the requesting app), and supports structured data transfer via Bundle objects ~\cite{android:bundle}.
 
+Although Android provides functionality to determine the sender of a broadcast intent since API level 34 ~\cite{android:getsentfrompackage}, we found these to be unreliable in practice -- returning null for dynamically sent intents in our case.
+Using a \texttt{PendingIntent} ~\cite{android:pendingintent} as a workaround would still be susceptible to spoofing, since a malicious app could craft and dispatch its own fake pending intent.
+A bound service ~\cite{android:boundservice} could also have served as a communication channel but would require the browser process to be running at the time of transmission and would considerably increase implementation complexity.
+Thus, the content provider offered the most reliable and maintainable IPC solution for pushing the applications policy file to the browser.
 
 \section{Browser (Fenix)}
-% State why the browser generates token and not the installer (one trusted component needs to be chosen)
 The browser serves as the policy enforcement point in our architecture. 
-Its modifications fall into two distinct components:
-(1) a Java layer responsible for token generation and management, and
-(2) a native C++ layer responsible for enforcement within Gecko’s cookie and networking subsystems.
+Its modifications fall into two main categories:
+(1) token generation and transmitting in \texttt{GeckoView} -- Mozilla's WebView like Java library for Android that exposes the Gecko engine's functionality --, and
+(2) the actual cookie enforcement within the C++ back-end of \texttt{Gecko} -- the engine that powers the web browser ~\cite{firefox:frontbackend, firefox:gecko}. %TODO: Continue here
 
 This separation maintains a clear trust boundary between high-level policy logic and low-level enforcement. 
-Although their responsibilities overlap conceptually, direct invocation across these layers proved impractical, as the browser may receive policies before its \texttt{GeckoRuntime} is initialized. 
+Although their responsibilities overlap conceptually -- especially cryptographic operations on the tokens -- , direct invocation across these layers proved impractical, despite the possibility for GeckoView code to communicate between Java and C++ via the Java Native Interface (JNI) ~\cite{android:jni}.
+This is due to the fact that the JNI requires a active runtime instance to perform these calls, which is not the case during token generation.
+The browser is passive at this point, only responding to the installer's content provider requests.
+
 Launching a temporary runtime solely for token processing introduced instability and race conditions. 
 Therefore, the two layers share a symmetric secret key to ensure coordinated behavior without direct cross-layer calls.
 
 \subsection{Token Generation}
+
+% --------------------------------Table----------------------------
 
 \begin{table}[h]
 \centering
@@ -217,8 +230,10 @@ predefined & predefined \tnote{1} & $\times$ (take private) & Same cookie appear
 \end{threeparttable}
 \end{table}
 
+% ---------------------------------------------
+
 Before generating any capability tokens, the browser performs a policy downgrade step to sanitize the received policy (\autoref{tab:policy-downgrade}).
-This step is implemented inside the TokenGenerator.generateCapabilityTokens() function and ensures that conflicting or overlapping entries are resolved according to the principle of least privilige (PoLP) -- private entries always take precedence over global ones, and predefined and wildcard rules remain independent. %TODO: Cite PoLP?
+This step ensures that conflicting or overlapping entries are resolved according to the principle of least privilige (PoLP): private entries always take precedence over their global counterpart.
 
 When the content provider receives a policy from the installer, it first parses the JSON structure into four collections directly corresponding to the four sections of the policy: predefined global, predefined private, wildcard global, and wildcard private.
 Each collection represents either a mapping from domains to explicit cookie names (for predefined entries), or a list of domains (for wildcard entries).
@@ -243,7 +258,7 @@ Once all conflicts are resolved, the downgraded policy structures are passed int
 These functions iterate over the filtered domain and cookie lists, creating one encrypted capability token per entry using \textsc{generateSingleToken(domain, cookieName, "*", globalJar, packageName, versionName, rights)}.
 As a result, only conflict-free and least-privilege token objects of the format described in \autoref{sec:token} are generated:
 
-Note that the classic wildcard tokens omit the \texttt{cookie\_name} and \texttt{cookie\_value} fields, using "\texttt{*}" as placeholder value to indicate that they apply to all cookies for the given domain.
+Note that the classic wildcard tokens omit the \texttt{cookie\_name} and \texttt{cookie\_value} fields, using \texttt{"*"} as placeholder value to indicate that they apply to all cookies for the given domain.
 Ambient tokens extend this paradigm further by also omitting the \texttt{domain} field, effectively applying to all domains.
 For wildcard tokens, the rights filed is set to \texttt{NONE} by default.
 This is due to the reason that wildcard tokens stay the way they are and are used as a blueprint for the browser to generate final tokens when cookies are actually received from the network and hence we do not want developers to accidentally overwrite the cookie value and thereby break the system.
@@ -252,9 +267,9 @@ Each token object is then encoded as a compact JSON object and serialized into a
 Finally, the encoded string is signed using hmacSHA256 and the signature attached to the token object separated with a dot, similar to JWTs ~\cite{rfc7519}, before encrypting it using AES-CBC with a random IV using the browsers secret key.
 This makes the tokens tamper-evident and ensures that only the browser can generate valid tokens.
 
-Once generated, tokens are send to the app in a map from String (domain) to JSON array via the same content provider that received the policy so that the app can persist them locally (\autoref{sec:byetracklib}).
+Once generated, tokens are send to the app in a map from domain to the String representation of the JSON array via the same content provider that received the policy so that the app can persist them locally (\autoref{sec:byetracklib}).
 
-\subsection{Launching Custom Tabs / TWAs with Tokens}
+\subsection{Launching Custom Tabs \& TWAs with Tokens}
 The browser performs this process in two stages: (1) threading capability data from the Android layer down into the Gecko engine, and (2) enforcing cookie isolation inside Gecko's networking stack.
 
 \paragraph{Stage 1 – Threading of Capability Data.}

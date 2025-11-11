@@ -22,19 +22,20 @@ Therefore, we include the apps identity in the capability tokens, so that the br
 A global jar flag indicates whether the cookie belongs to the shared global jar or to the app-specific isolated jar.
 The cookie data itself -- name and value -- is encapsulated in the token, along with rights defining the permitted actions (reading, writing, or both) on the cookie data later on.
 Similar to JWTs~\cite{rfc7519}, our tokens are signed to identify tampering attemtps.
-Due to the Thread Model assumptions {\autoref{sec:threat_model}}, we additionally need to encrypt the tokens, so that a malicious third-party library embedded in the app cannot read the token contents and echo them back to its web server to circumvent the mitigation.
+Due to the Thread Model assumptions (\autoref{sec:threat_model}), we additionally need to encrypt the tokens, so that a malicious third-party library embedded in the app cannot read the token contents and echo them back to its web server to circumvent the mitigation.
 
 \paragraph{Types.}
-We distinguish between \texttt{final}, \texttt{wildcard}, and \texttt{ambient} capabilities.
+We distinguish between \texttt{Wildcard} and \texttt{Final} capability tokens.
 
-\begin{itemize}
-  \item \textbf{Final Capabilities:} Fully specified tokens containing explicit cookie names and values.  
-    They represent concrete cookie instances and are used directly for cookie enforcement.
-  \item \textbf{Wildcard Capabilities:} Partially specified tokens that omit cookie names or values.  
-    They serve as templates from which final tokens are derived once cookies are received from a web server.
-  \item \textbf{Ambient Capabilities:} Represent the browser’s default behavior—storing all cookies in the shared global jar.  
-    These act as fallbacks when no explicit policy is provided and offer no privacy guarantees.
-\end{itemize}
+Final capabilities are fully specified tokens containing explicit cookie names and values.
+They stem from wildcard tokens and represent concrete cookie instances that are used directly for cookie enforcement.
+
+The wildcard tokens can be divided into three subtypes: Classic Wildcard Capabilities, Predefined Capabilities and Ambient Capabilities.
+
+The classic wildcard capabilities are partially specified tokens that omit cookie names and values.
+Predefined capabilities are wildcard tokens that specify cookie names but omit values, providing more granular control over individual cookies.
+The ambent capability represents the browser's default behavior -- storing all cookies in the shared global jar -- that is received when no explicit policy is provided by the developer.
+Essentially, the wildcard tokens serve as templates from which final tokens are derived once cookies are received from a web server.
 
 In conclusion, we design our capability tokens to be identity-bound and cryptographically protected data structures that encapsulate cookie information and metadata, enabling fine-grained access control between Android apps and the browser.
 
@@ -74,7 +75,7 @@ When the app is updated, the installer retransmits the policy so that the browse
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=1\textwidth]{byetrack_Flow_Flowchart_colored.pdf}
+  \includegraphics[width=1\textwidth]{byetrack_Flow_Flowchart_New.pdf}
   \caption{High-level overview of flow between app, browser and installer.}
   \label{fig:app_browser_interaction}
 \end{figure}
