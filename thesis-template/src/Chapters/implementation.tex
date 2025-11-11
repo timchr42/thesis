@@ -118,15 +118,15 @@ Each section further distinguishes between two isolation scopes:
 \paragraph{Predefined Section.} The predefined section specifies explicit capability bindings between domains ad the cookies that are allowed to be associated with them.
 These entries define exactly which cookie names are permitted for which domains.
 Each key corresponds to a domain, and the associated list defines cookie names that are explicitly authorized for that domain.
-The distinction between global and private in the predefined section allows a domain to hold both a global token  and a private token.
-The two scopes are treated independently and can coexist safely. %TODO Put this in Design rather?
+The distinction between global and private in the predefined section allows a domain to hold both a global token and a private token.
+The two scopes are treated independently and can coexist safely.
 
 \paragraph{Wildcard Section.} The wildcard section defines simplified or implicit rules for domains where explicit cookie level definitions are not necessary.
 Instead of listing cookie names, the wildcard policy only specifies domains that shall receive capability tokens defined by the isolation scope.
 
 The wildcard and predefined entries operate independently -- a domain can appear in both lists if necessary.
 For example, a domain may have a global predefined token for a specific cookie and a private wildcard token for general use.
-This allows flexible, layered control over cookie behavior. %TODO put this in Design?
+This allows flexible, layered control over cookie behavior.
 An example policy with explanaition can be found in the appendix \autoref{appendix:policy}.
 
 \section{Capability Token Structure}
@@ -175,14 +175,13 @@ Hosting the APKs remotely and downloading them on demand would also have been po
 
 Because the assets directory is read-only at runtime, each APK must first be copied into the installer's private file storage before it can be installed.
 The installation is then triggered by constructing an explicit Intent ~\cite{android:intent} that references the local file's Uri ~\cite{android:uri}, sets its MIME type to
-\texttt{application/vnd.android.package-archive} \cite{android:intent.setdataandtype}, and grants temporary read permissions via
-\texttt{Intent.FLAG\_GRANT\_READ\_URI\_PERMISSION}.
+\texttt{application/vnd.android.package-archive} \cite{android:intent.setdataandtype}, and grants temporary read permissions via \texttt{Intent.FLAG\_GRANT\_READ\_URI\_PERMISSION}.
 This intent is launched through a custom ActivityResultLauncher ~\cite{android:activityresultlauncher}, which encapsulates Android's modern
 \texttt{ActivityResultContracts.StartActivityForResult} ~\cite{android:activityresultcontracts.startactivityforresult} mechanism.
 
 This construct allows the installer to be notified directly when the installation flow finishes, without requiring any form of polling or background monitoring.
-Upon receiving a successful result code, the installer immediately proceeds to locate and read the policy file contained within the newly installed app's assets directory, using Android's AssetManager ~\cite{android:assetmanager}.
-The extracted JSON policy is parsed and forwarded to the browser, together with the app's package name and version information obtained via the PackageManager ~\cite{android:packagemanager}.
+Upon receiving a successful result code, the installer immediately proceeds to locate and read the policy file contained within the newly installed app's assets directory, using Android's \texttt{AssetManager} ~\cite{android:assetmanager}.
+The extracted JSON policy is parsed and forwarded to the browser, together with the app's package name and version information obtained via the \texttt{PackageManager} ~\cite{android:packagemanager}.
 For this to work, the package names of the apps to be installed must be registered in the Android Manifest under the \texttt{queries} element ~\cite{android:manifest.queries}. 
 
 For inter-process communication, we employ a ContentProvider ~\cite{android:contentprovider} exposed by the browser.
@@ -282,16 +281,16 @@ The browser performs this process in two stages: (1) threading capability data f
 \paragraph{Stage 1 – Threading of Capability Data.}
 The threading mechanism ensures that all capability-related data (tokens and caller information) are propagated consistently through the Android and GeckoView layers until they reach the browser engine.
 
-In Firefox for Android (Fenix), all incoming intents that trigger a Custom Tab (CT) launch are handled by the CustomTabsIntentProcessor class, which resides in the Android Components library—Mozilla’s reusable collection of browser building blocks.
-Since Fenix currently does not support Trusted Web Activities (TWAs), any incoming TWA intent is downgraded to a standard Custom Tab intent and handled by the same processor.
+In Fenix, all incoming intents that trigger a custom tab launch are handled by the \texttt{CustomTabsIntentProcessor} class, which resides in the Android Components library -- Mozilla's reusable collection of browser building blocks.
+Since Fenix currently does not support Trusted Web Activities (TWAs), any incoming TWA intent is downgraded to a standard custom tab intent and hence handled by the same processor.
 
-Analogous to the existing getAdditionalHeaders() function -- used to retrieve and attach custom HTTP headers to CT or TWA requests -- we introduced a dedicated function that collects and returns all Byetrack-specific context data.
-This function retrieves the final and wildcard capability tokens, the UID of the calling application, a flag "true" and returns them as a structured map.
+Analogous to the existing \textsc{getAdditionalHeaders()} function -- used to retrieve and attach custom HTTP headers to CT or TWA requests -- we introduce a dedicated function that collects and returns all Byetrack-specific context data.
+This function retrieves the final and wildcard capability tokens, the UID of the calling application, a boolean flag and returns them as a structured map.
 We need the flag to distinguish between normal website launches initiated by the user and launches initiated by an app via Custom Tabs or TWAs, as only the latter should enforce Byetrack logic.
 Otherwise, the normal browsing experience would be affected as no cookies would be stored for normal website visits as the browser would not receive any tokens, and hence drop all cookies.
 
 This map is then threaded through several layers of the Android Components architecture.
-Starting from the initial intent processing, it follows the Custom Tab launch path until it reaches the GeckoEngineSession class.
+Starting from the initial intent processing, it follows the custom tab launch path until it reaches the \texttt{GeckoEngineSession} class.
 GeckoEngineSession acts as a bridge between Android Components (where the Custom Tabs logic resides) and GeckoView, Mozilla’s Android library that exposes the Gecko browser engine APIs.
 
 Within GeckoEngineSession, the data are handed over to the GeckoSession loader -- the central entry point responsible for initiating page loads in GeckoView.
