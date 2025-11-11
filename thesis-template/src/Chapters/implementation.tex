@@ -99,6 +99,13 @@ Both layers communicate through structured JNI bindings and share a common crypt
 
 \section{Policy Format}
 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.9\textwidth]{policySchema.pdf}
+  \caption{Policy file schema defining capability bindings for domains and cookies.}
+  \label{fig:policy_schema}
+\end{figure}
+
 The Byetrack policy defines the configuration of capability tokens, specifying which domains may receive them and under which isolation context (global or private). 
 It is expressed as a structured JSON object divided into two top-level sections: \textit{predefined} and \textit{wildcard}.
 
