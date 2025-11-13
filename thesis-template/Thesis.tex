@@ -56,6 +56,16 @@
 \usepackage{sectsty}     % section titles in specified font face
 %\usepackage{listings}
 \usepackage{listingsutf8}
+\lstset{
+  language=Java,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{orange},
+  basicstyle=\ttfamily\small,
+  numbers=left,
+  numberstyle=\tiny,
+  breaklines=true,
+}
 \usepackage{caption}
 \usepackage[pdftex,dvipsnames]{xcolor}
 
@@ -106,7 +116,7 @@
 \department{\texorpdfstring{\href{https://saarland-informatics-campus.de/}
             {Department of Computer Science}}
             {Department of Computer Science}}
-\reviewers{Dr. Sven Bugiel}{Noah Mauthe}
+\reviewers{Dr. Sven Bugiel}{Prof. Dr. Andreas Zeller}
 \date       {\today}
 \subject    {}
 \keywords   {}
@@ -135,9 +145,9 @@
 \input{src/Presections/declaration}
 %% ----------------------------------------------------------------
 % The "Dedication Page"
-\pagestyle{empty}  % No headers or footers for the following pages
+%\pagestyle{empty}  % No headers or footers for the following pages
 
-\input{src/Presections/dedication}
+%\input{src/Presections/dedication}
 
 %% ----------------------------------------------------------------
 \pagestyle{empty}
