@@ -566,21 +566,38 @@ The browser can then obtain the caller identity securely via \textsc{getCreatorP
 Even if another app gains access to this \texttt{PendingIntent}, it cannot alter its content or spoof the original app's identity.  
 This method therefore provides a viable balance between security and usability
 
-\paragraph{Modifying Custom Tab Launch Internals.}
+\paragraph{TWA-like Launch Modifications.}
 \label{par:modifying_ct_launch}
-... Approach forcing modification how CTs are launched (force session like TWA does it natively so that caller identity is known securely).
+Another potential approach was to redesign the Custom Tab launch mechanism to more closely resemble the session-based launch flow used by Trusted Web Activities (TWAs).
+In a TWA launch, the application must first bind to the browser's \texttt{CustomTabsService} ~\cite{android:customtabsservice} and establish a verified session.
+This binding step inherently conveys the caller's identity to the browser because it relies on an authenticated Binder IPC connection rather than opaque intent extras etc.
+Therefore, one possible solution would have been to require all CT launches to follow the same pattern: before opening a URL, the app would be forced to bind to the \texttt{CustomTabsService}, obtain a validated session, and pass that session token to the browser when launching the Custom Tab.
 
 A major downside both the pending intent solution and commitment scheme face is the requirement to modify how Custom Tabs are launched under the hood.
 Consequently, our browser modifications are incompatible with existing apps that use the standard \texttt{AndroidX Browser} library for Custom Tab launches, breaking backwards compatibility.
 
-\paragraph{Custom Android SDK}
-To maintain compatibility with existing apps, we ultimately opted for a solution that allows the app to launch Custom Tabs using standard intents while still securely conveying the caller's identity.
-This is achieved by making the Intent carry the creator uid, a functionality that for some reason is not exposed in the standard Android SDK, event though the Intent class is a core part of Androids IPC mechanism.
-We therefore include a field \texttt{creator\_uid} in the intent class, which the \texttt{ActivityManagerService} ~\cite{android:activitymanagerservice} populates when processing the intent and hands it over to the requested browser.
+\paragraph{Compatibility Considerations.}
+Across all of these alternatives, a common issue emerges: each requires modifying how applications launch Custom Tabs.
+Whether through a two-phase commit–reveal sequence, wrapping the launch intent in an immutable \texttt{PendingIntent}, or enforcing a TWA-style session-binding flow, all approaches deviate from the standard \texttt{AndroidX Browser} contract.
+As a result, any solution along these lines would break backwards compatibility with existing applications that rely on the conventional intent-based Custom Tab launch mechanism.
+For this reason, although these designs provide interesting security properties, they were ultimately not pursued.
 
-This way, the browser can securely retrieve the calling application's UID from the intent itself without relying on potentially spoofable extras while providing full backwards compatibility.
-On the other hand, app developers must ensure that they use our modified Android SDK to compile their apps, which may limit adoption and deployment in practice.
-Optimally, Android would natively expose the caller identity in the Intent class -- as demonstrated with our SDK --, allowing all apps to benefit from this security enhancement without requiring custom SDKs.
+\paragraph{Custom Android SDK Extension for Secure Caller Identity Propagation}
+To maintain compatibility with existing apps, we ultimately opted for a solution that allows the app to launch Custom Tabs using the standard API while still securely conveying the caller's identity.
+While the \texttt{ActivityTaskManagerService} ~\cite{android:activitytaskmanagerservice} internally tracks the calling UID for permission checks and task management, this information is not encoded in the Intent object itself and therefore becomes inaccessible to the receiving application.
+To address this, we extended the Android framework with a custom, SDK-level enhancement that embeds the caller's UID directly into the Intent object.
+We introduced a new field \texttt{mRealCallingUid} along with a dedicated getter and setter.
+To ensure the field survives all typical Intent operations, including activity launches, redirections, and cross-process transmissions, we extended the intents copy-constructor, such as the parcel serialization and deserialization methods to handle this new field appropriately.
+
+The next step was to ensure that the field is populated with the correct value inside the system server.
+We extended \texttt{ActivityStarter.startActivityInner()} ~\cite{android:activitystarter}, which is invoked during activity launches after the ActivityManagerServer ~\cite{android:activitymanagerservice} has fully resolved the activity and determined the real calling UID.
+Here, the realCallingUid is injected into the intent immediately before the system hands control to the target application (e.g., the browser).
+Since the field is part of the intent's serialized state, the target browser process reliably receives it without modification or interference.
+
+This approach provides a trustworthy, non-spoofable channel for conveying the caller's identity to the receiving browser, enabling capability-based cookie isolation without breaking compatibility with existing app behavior.
+However, this solution requires applications to compile against our customized Android SDK, since the new accessor for \texttt{mRealCallingUid} is not part of the standard API.
+This may limit adoption in practice.
+Ideally, Android would natively expose the verified caller identity within \texttt{Intent}, which would eliminate the need for a custom SDK while retaining the security properties demonstrated by our implementation.
 
 \subsection{Bridging Between Java and Native Layers}
 \label{subsec:jni_bridging}
