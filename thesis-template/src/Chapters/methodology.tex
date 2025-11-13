@@ -25,11 +25,9 @@ Similar to JWTs~\cite{rfc7519}, our tokens are signed to identify tampering atte
 Due to the Thread Model assumptions (\autoref{sec:threat_model}), we additionally need to encrypt the tokens, so that a malicious third-party library embedded in the app cannot read the token contents and echo them back to its web server to circumvent the mitigation.
 
 \paragraph{Types.}
-We distinguish between \texttt{Wildcard} and \texttt{Final} capability tokens.
-
+We distinguish between \emph{Wildcard} and \emph{Final} capability tokens.
 Final capabilities are fully specified tokens containing explicit cookie names and values.
 They stem from wildcard tokens and represent concrete cookie instances that are used directly for cookie enforcement.
-
 The wildcard tokens can be divided into three subtypes: Classic Wildcard Capabilities, Predefined Capabilities and Ambient Capabilities.
 
 The classic wildcard capabilities are partially specified tokens that omit cookie names and values.

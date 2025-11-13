@@ -16,10 +16,12 @@ However, as demonstrated by HyTrack, this integration also introduces severe pri
 % How it has been handled/solved/measured?
 In this work, we propose Byetrack, a novel mitigation framework that applies capability-based access control to browser cookie handling.
 Cookie access is encapsulated in fine-grained, identity-bound capabilities, ensuring that only trusted first-party or explicitly authorized third-party web servers -- defined by a developer-controlled policy -- can access the shared browser state.
-All other untrusted third-party domains are confined to isolated, in-app cookie jars.
-This empowers well-meaning developers to continue leveraging third-party libraries while preventing them from performing unauthorized cross-app tracking.
-At the same time, essential features such as Single Sign-On and personalized content delivery remain fully functional.
-Our approach thus balances privacy and usability, allowing tracking-resistant web-app integration without degrading the user experience.
+All other untrusted third-party domains are confined to isolated, app-local cookie jars.
+Importantly, these isolated cookie jars are not only used internally to confine untrusted domains but are also exposed as a stable, developer-usable storage mechanism for domains that are intentionally scoped to the application.
+
+Byetrack is designed to be fully backwards compatible with legacy applications: apps that do not provide a policy automatically retain the standard CT/TWA behavior without requiring any modifications.
+At the same time, developers who opt in gain precise control over how cookie state is shared across the app–web boundary, enabling improved privacy guarantees without requiring changes to existing web content.
+Our approach thus balances privacy and usability, enabling tracking-resistant web–app integration while preserving essential features such as Single Sign-On, personalized content delivery, and compatibility with existing Android applications.
 
 % \todo[inline]{Add results later for thesis}
 % % What are the results?

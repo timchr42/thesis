@@ -91,7 +91,7 @@ Modified AndroidX Browser Library -- a drop-in replacement for the standard Andr
 
 \end{itemize}
 
-We selected Mozilla Firefox for Android (Fenix) as the browser base due to its open architecture and direct access to the GeckoView engine.
+We selected Mozilla Firefox for Android (Fenix) as the browser base due to its open architecture and direct access to the \texttt{GeckoView} engine.
 Within Fenix, Byetrack is implemented across two layers:
 a Java layer that handles policy ingestion and token generation, and
 a native C++ layer within Gecko responsible for enforcing cookie isolation and network-level restrictions.
@@ -210,26 +210,25 @@ Although their responsibilities overlap conceptually -- especially cryptographic
 \centering
 \begin{threeparttable}
 
-\caption{Allowed combinations of global and private policy entries}
-\label{tab:policy-downgrade}
-\begin{tabular}{@{}lll p{6cm}@{}}
+\begin{tabular}{@{}lll @{}}
 
 \toprule
-Global & Private & Allowed & Reason \\ 
+Global & Private & Allowed \\ 
 \midrule
-predefined & wildcard & \checkmark & Specific trusted cookies can share a global jar, while all other cookies on the same domain remain isolated. \\[0.3em]
-predefined & predefined & $\times$ (take private) & Conflicting privilege definitions for the same domain or cookie. \\[0.3em]
-wildcard & wildcard & $\times$ (take private) & Both describe domain-wide scopes with different privileges \\[0.3em]
-wildcard & predefined & \checkmark & Allows broad global access to a domain while restricting specific sensitive cookies to private storage. \\[0.3em]
-predefined & predefined \tnote{1} & $\times$ (take private) & Same cookie appears under both privilege levels. \\
+predefined & wildcard & \checkmark \\
+wildcard & wildcard & $\times$ (take private) \\
+wildcard & predefined & \checkmark \\
+predefined & predefined & $\times$ (take private)\tnote{1} \\
 \bottomrule
 \end{tabular}
 
 \begin{tablenotes}
-  \item[1] Only applies if the same cookie name is defined under both global and private for the same domain.
+  \item[1] \textit{Note: Conflict if domain and cookie name match.}
 \end{tablenotes}
 
 \end{threeparttable}
+\caption{Allowed combinations of global and private policy entries}
+\label{tab:policy-downgrade}
 \end{table}
 
 % ---------------------------------------------
