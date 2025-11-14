@@ -115,7 +115,7 @@ Each section further distinguishes between two isolation scopes:
   \item private -- referring to tokens restricted to the local application or site context (e.g. third-party trackers like the authors of HyTrack describe).
 \end{itemize}
 
-\paragraph{Predefined Section.} The predefined section specifies explicit capability bindings between domains ad the cookies that are allowed to be associated with them.
+\paragraph{Predefined Section.} The predefined section specifies explicit capability bindings between domains and the cookies that are allowed to be associated with them.
 These entries define exactly which cookie names are permitted for which domains.
 Each key corresponds to a domain, and the associated list defines cookie names that are explicitly authorized for that domain.
 The distinction between global and private in the predefined section allows a domain to hold both a global token and a private token.
@@ -142,7 +142,7 @@ The object stores the following fields:
   \item \texttt{cookie\_name}, \texttt{cookie\_value}: The name and value of the cookie represented by this token.
   \item \texttt{domain}: The associated web domain this capability applies to.
   \item \texttt{application\_id}: The package name of the application that owns the token.
-  \item \texttt{app\_version}: The version name of the issuing application, used for version consistency checks.
+  \item \texttt{app\_version}: The version name of the application, used for version consistency checks.
   \item \texttt{rights}: The encoded access permissions (read, write, or none) granted for the cookie value.
   \item \texttt{global\_jar}: Boolean flag indicating whether the cookie belongs to the shared or private cookie jar.
 \end{itemize}
@@ -268,7 +268,7 @@ Each token object is then encoded as a compact JSON object and serialized into a
 Finally, the encoded string is signed using hmacSHA256 and the signature attached to the token object separated with a dot, similar to JWTs ~\cite{rfc7519}, before encrypting it using AES-CBC with a random IV using the browsers secret key.
 This makes the tokens tamper-evident and ensures that only the browser can generate valid tokens.
 
-Once generated, tokens are send to the app in a map from domain to the String representation of the JSON array via the same content provider that received the policy so that the app can persist them locally (\autoref{sec:byetracklib}).
+Once generated, tokens are sent to the app in a map from domain to the String representation of the JSON array via the same content provider that received the policy so that the app can persist them locally (\autoref{sec:byetracklib}).
 
 \subsection{Launching Custom Tabs \& TWAs with Tokens}
 The browser performs this process in two stages: (1) threading capability data from the Android layer down into the Gecko engine, and (2) enforcing cookie isolation inside Gecko's networking stack.
@@ -299,10 +299,9 @@ When this message is processed, the loader extracts the previously stored Byetra
 The parameters of this function are registered in the \texttt{LoadURIOptions} dictionary which holds load arguments for \texttt{docshell} loads.
 The docshell load parameters are initialized in the \texttt{DocShellLoadState} structure and carries functionality to get and set various load options we use in the Gecko's \texttt{DocumentLoadListener}.
 
-Gecko's \texttt{DocumentLoadListener} is responsible for managing the lifecycle of document loads, and therefore the ideal place to give the threaded opaque data meaning by parsing them back into usable tokens.
-
+Gecko's \texttt{DocumentLoadListener} is responsible for managing the lifecycle of document loads and connecting network responses with them, and therefore the ideal place to give the threaded opaque data meaning by parsing them back into usable tokens.
 During the document loading process, the Byetrack integration hooks into the \texttt{DocumentLoadListener} to process and apply capability tokens associated with a given navigation.
-The first step is carried out by the function \textsc{ProcessTokenBlob}, which transforms an incoming serialized token blob into validated ByetrackToken objects.
+The first step is carried out by the function \textsc{ProcessTokenBlob}, which transforms an incoming serialized token blob into validated \texttt{ByetrackToken} objects.
 Each blob is first parsed into its individual encrypted token strings, which are then decrypted into their JSON form.
 These JSON representations are deserialized into structured token objects and subsequently validated against the current application identity, consisting of the package name and app version.
 Tokens that fail to meet these validation criteria are discarded, ensuring that only authentic and context-appropriate capability tokens are propagated further in the loading process.
@@ -367,9 +366,8 @@ This preserves default browser functionality for legitimate cases, such as cooki
 
   \item
     \textbf{CapturePredefined:}
-For cookies explicitly defined in the policy as private (e.g., session identifiers that must not leak cross-site), the cookie's value is embedded into the associated token by updating the token's value field.
-The token's access rights are updated to \texttt{READ\_WRITE}, reflecting that it now carries an active cookie value -- essentially turning it into a final token.
-We do this for the reason how the additional utility on our tokens work (\autoref{sec:utility}).
+For cookies explicitly defined in the policy as private (e.g., session identifiers that must not leak cross-site), the cookie's value is embedded into the associated token by updating the token's value field -- essentially turning it into a final token.
+In addition, the token's access rights are updated to m\texttt{READ\_WRITE}, making the cookie name and value accessible to the application by the additional utility Byetrack provides (\autoref{sec:utility}).
 Instead of being stored in the browser's global jar, this updated token is forwarded to \textsc{StageTokenForReturn()}, a helper routine that serializes the token information and stages it for return to the application the CT launch originated from.
 
   \item
@@ -403,7 +401,7 @@ Note that at this point, our subsystem has already collected any filled in token
 
 The \textsc{EmitByetrackTokensToGeckoView()} helper serializes this in-memory map into a compact JSON structure and forwards it through \texttt{Gecko}'s observer service.
 Before emitting, the function checks a boolean flag and a unique batch identifier to prevent re-emitting the same batch of tokens multiple times for a single channel instance.
-Using mozillas JSON writer utility, the function iterate voer the map entries, associating each domain with an array of token strings.
+Using mozillas JSON writer utility, the function iterates over the map entries, associating each domain with an array of token strings.
 The output of the JSON follows the same structure as the one used during token generation, ensuring consistency between the two processes and thereby simplifying parsing on the receiving end.
 The function uses the global \texttt{nsIObserverService} to broadcast a notification with the topic "byetrack-final-tokens".
 This effectively acts as an IPC bridge between the networking layer in C++ and JavaScript/Java.

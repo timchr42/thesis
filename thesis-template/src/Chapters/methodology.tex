@@ -3,13 +3,12 @@
 \chapter{Methodology}
 \label{chap:method}
 
-\section{Research Approach}
-%This thesis follows a design- and implementation-oriented methodology aimed at developing and evaluating a privacy-preserving extension for Android applications that use Custom Tabs (CTs) and Trusted Web Activities (TWAs).
-\paragraph{Main Goal.} The main research goal is to prevent HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by addressing the underlying weaknesses of CustomTabs (CTs) and TrustedWebActivities(TWAs) identified in \autoref{sec:hytrack-weaknesses}, while adhering to the design goals defined by Wessels et al. in \autoref{sec:hytrack-goals}.
+\paragraph{Main Goal.} The main research goal is to prevent HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by addressing the underlying weaknesses of CustomTabs (CTs) and TrustedWebActivities(TWAs) (\autoref{sec:hytrack-weaknesses}), while adhering to the design goals defined by Wessels et al. (\autoref{sec:hytrack-goals}).
 Unlike previously discussed mitigation strategies such as Browser State Partitioning or Forced User Interaction (\autoref{sec:hytrack-mitigations}), the proposed approach aims to maintain usability and compatibility while providing strong privacy guarantees.
 
-To address this gap, this work develops and evaluates a privacy-preserving extension for Android applications that use Custom Tabs (CTs) and Trusted Web Activities (TWAs).
-The proposed framework prevents HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by eliminating the architectural weaknesses identified in \autoref{sec:hytrack-weaknesses}, while adhering to the design goals of usability, compatibility, and controlled access to shared state \autoref{sec:hytrack-goals}.
+% DUPLICATE from above therefore commented out
+%To address this gap, this work develops and evaluates a privacy-preserving extension for Android applications that use Custom Tabs (CTs) and Trusted Web Activities (TWAs).
+%The proposed framework prevents HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by eliminating the architectural weaknesses identified in \autoref{sec:hytrack-weaknesses}, while adhering to the design goals of usability, compatibility, and controlled access to shared state (see \autoref{sec:hytrack-goals}).
 
 \paragraph{Core Idea.} The core idea is to encapsulate cookie access within fine-grained capability tokens, created and validated by the browser according to a developer-defined policy.
 Depending on the policy configuration, cookies are stored either in a shared global jar or in app-specific storage, analogous to the Partitioned attribute in CHIPS \cite{googlechips}.
@@ -17,12 +16,12 @@ This design prevents unauthorized cross-app tracking while preserving legitimate
 Because the system operates solely at the app–browser boundary, it maintains full compatibility with existing web platform features and requires no changes to the browser UI.
 
 \section{Capability Tokens}
-Against the natural feature of capabilities being delegatable, we need to bind them to the app identity to prevent cross-app tracking by simple token reuse.
-Therefore, we include the apps identity in the capability tokens, so that the browser can verify that the token is only used by the app it was issued to.
+Against the natural feature of capabilities being delegatable, we need to bind them to the app identity to prevent malicious third-party libraries from using capabilities from other apps that were granted more privileges, thus circumventing the mitigation.
+Therefore, we include the app's unique package name in the capability tokens, so that the browser can verify that the token is only used by the app it was issued to.
 A global jar flag indicates whether the cookie belongs to the shared global jar or to the app-specific isolated jar.
 The cookie data itself -- name and value -- is encapsulated in the token, along with rights defining the permitted actions (reading, writing, or both) on the cookie data later on.
 Similar to JWTs~\cite{rfc7519}, our tokens are signed to identify tampering attemtps.
-Due to the Thread Model assumptions (\autoref{sec:threat_model}), we additionally need to encrypt the tokens, so that a malicious third-party library embedded in the app cannot read the token contents and echo them back to its web server to circumvent the mitigation.
+Due to the threat model assumptions (\autoref{sec:threat_model}), we additionally need to encrypt the tokens, so that a malicious third-party library embedded in the app cannot read the token contents and echo them back to its web server to circumvent the mitigation.
 
 \paragraph{Types.}
 We distinguish between \emph{Wildcard} and \emph{Final} capability tokens.
@@ -102,7 +101,7 @@ For every received cookie, the browser applies the following logic (in order of 
 \end{enumerate}
 
 \paragraph{Cookie Transmission.}  
-When constructing requests, the browser merges cookies derived from the app's valid final tokens with those from its global jar, ensuring that each request accurately reflects both app-specific and shared state according to the developer policy.
+When constructing requests, the browser attaches the cookies encapsulated in final capabilities to the regular cookies from the global jar, ensuring that each request accurately reflects both app-specific and shared state according to the developer policy.
 
 % ---------------------------------------------------------------------------
 

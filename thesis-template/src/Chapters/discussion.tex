@@ -110,7 +110,7 @@ While providing the strongest isolation guarantees, this mode also introduces th
 
 While our mitigation addresses HyTrack's cross-app tracking channel effectively, several limitations remain.
 First, the system relies on correctly defined policies; incomplete or misconfigured policies may lead to under- or over-isolation, affecting usability or privacy respectively.
-Second, integrating the approach on the application side is straightforward by just replacing the browser library dependency, but extending the approach to other browsers would require their cooperation and modification, as browsers use different engines and theirfore have different cookie management mechanisms.
+Second, integrating the approach on the application side is straightforward by just replacing the browser library dependency, but extending the approach to other browsers would require their cooperation and modification, as browsers use different engines and therefore have different cookie management mechanisms.
 
 Moreover, our threat model assumes non-malicious developers.
 If an app developer intentionally collaborates with a tracking library or exfiltrates tokens, the current design cannot prevent data leakage.
@@ -119,4 +119,4 @@ Similarly, by storing the capability tokens encrypted in the app's private stora
 \section{Summary}
 
 Overall, the discussion highlights that capability-based, policy-driven cookie isolation offers a practical path to mitigating cross-app tracking while maintaining the flexibility required for legitimate web integrations.
-The results confirm that it is possible to reconcile privacy and usability within the app–browser ecosystem, providing both developers and users with meaningful control over cookie behavior.
+The results confirm that it is possible to reconcile privacy and usability within the app–browser ecosystem, providing developers with meaningful control over cookie behavior.
