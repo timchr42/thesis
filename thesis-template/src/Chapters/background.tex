@@ -65,13 +65,12 @@ Whenever an app opens a CT or TWA to display web content, the request is execute
 This means that all cookies set by the visited domain are stored in the browser's global cookie jar and automatically reused in subsequent sessions — even if they originate from different apps.
 While this shared state enables seamless Single Sign-On and personalization, it also allows a tracking entity to correlate activity across multiple apps that interact with the same web domain.
 
-HyTrack leverages this design as follows: a seemingly benign third-party library, included in several independent apps, silently opens a CT or TWA to a tracking domain controlled by the library’s author.
+HyTrack leverages this design as follows: a seemingly benign third-party library, included in several independent apps, opens a CT or TWA to a tracking domain controlled by the library's author.
 When this web page is first loaded, the server sets a unique identifier in a cookie, which is then stored in the shared browser state.
 When another app using the same library later opens a CT or TWA to the same tracking domain, the browser automatically attaches the existing cookie, thereby revealing that both apps are used by the same user.
-This creates a powerful cross-app identity link that persists outside Android’s app sandbox and is invisible to both users and app developers.
+This creates a powerful cross-app identity link that persists outside Android’s app sandbox and is invisible to both users.
 
-Even more concerning, HyTrack's tracking identifiers are resilient to deletion.
-Because Android’s automatic backup mechanisms restore application data, including browser-managed cookies, the tracking identifier can survive browser resets, app reinstallations, and even factory resets.
+Even more concerning, HyTrack's tracking identifiers are resilient to deletion, because Android's automatic backup mechanisms restore application data.
 In effect, HyTrack achieves evercookie-like persistence at the system level, reviving deleted identifiers upon device restoration.
 
 The feasibility of this attack stems from three fundamental weaknesses in the current CT and TWA model:
@@ -88,9 +87,9 @@ The feasibility of this attack stems from three fundamental weaknesses in the cu
     \textbf{Lack of App Context in the Browser:}
     The browser has no knowledge of which app initiated a given request and therefore cannot enforce app-specific cookie isolation or policy controls.
 
-  \item
-    \textbf{Unrestricted Third-Party Inclusion:}
-    Any third-party library embedded across multiple apps can open CTs or TWAs, gaining access to the shared browser state and enabling tracking across unrelated apps.
+  %\item
+  %  \textbf{Unrestricted Third-Party Inclusion:}
+  %  Any third-party library embedded across multiple apps can open CTs or TWAs, gaining access to the shared browser state and enabling tracking across unrelated apps.
 \end{enumerate}
 
 By exploiting these design characteristics, HyTrack bridges the isolation between native and web contexts, effectively transforming legitimate web-integration features into a cross-app tracking channel.
@@ -114,13 +113,13 @@ We adopt these goals as guiding principles for the design of our capability-base
 
 \subsection{Mitigation Approaches}
 \label{sec:hytrack-mitigations}
-The HyTrack authors discuss two potential mitigation strategies and highlight their resspective trade-offs in respect to their design goals.
+The HyTrack authors outline two potential mitigation strategies and discuss the trade-offs each entails with respect to their design goals.
 
 \paragraph{Browser State Partitioning.}
 Browser state partitioning would allow each app to use its own cookie storage and hence prevent cross-app tracking.
 The seamless integration of web content remains intact, as no changes to the UI are necessary, but by completely removing the browser's shared state, benign uses like Single Sign-On (SSO) or ad personalization would be broken. 
 
-\paragraph{Forces User Interaction.}
+\paragraph{Forced User Interaction.}
 In contrast, Forced User Interaction avoids this problem by explicitly requiring user consent before launching a CT or TWA.
 But this introduces a significant usability issue, as the user is forced to interact with the browser every time a web content is loaded, which not only degrades user experience but also breaks seamless integration of web content into the app.
 Furthermore, this approach hands control and responsibility to the user, which is not ideal from a security perspective, as the user might be unaware of the consequences of their actions and may inadvertently enable tracking by failing to interact with the browser as required.

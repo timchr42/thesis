@@ -11,7 +11,7 @@
 %\section{The Threat Model}
 
 The developer of an Android application unknowingly includes a third-party library that uses the HyTrack technique for their own purposes, such as advertising.
-We want to prevent this library from tracking the apps user across multiple apps and empower the app developer to use any third-party library without risking user privacy in regards to cross-app tracking via HyTrack.
+We want to prevent this library from tracking the user across multiple apps and empower the app developer to use any third-party library without risking user privacy in regards to cross-app tracking via HyTrack.
 
 For this, we assume that the app developer is not malicious and does not intend to violate user privacy. 
 Otherwise, developers could simply choose to omit using our mitigation framework and directly use the HyTrack library on their will.
@@ -23,7 +23,7 @@ As the tracking library is included in the app, it has the same permissions as t
 Additionally, we have to assume collaboration between the tracking library and other apps to share stored tokens and meta data of the mitigation framework.
 Attemps such as sending policy to their own benefit and thus circumventing the mitigation are also possible.
 
-As we hook our defense in the androidx browser library, any developer that wants to use the malicous tracking library -- or any other library that relies on Custom Tabs or Trusted Web Activities -- automatically uses our mitigatin framework.
+As we hook our defense in the androidx browser library, any developer that wants to use the malicous tracking library -- or any other library that relies on Custom Tabs or Trusted Web Activities -- automatically uses our framework.
 Thus, the developer cannot choose to omit the mitigation, but still disable it by not giving a policy at all.
 Therefore, only the androidx browser library needs to be updated, instead of relying on the developer to additionally include the mitigation library, which could be forgotten or omitted intentionally. %TODO cite research here
 
