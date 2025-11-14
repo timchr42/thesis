@@ -607,7 +607,7 @@ From a software engineering perspective, the ideal architecture would place thes
 This would provide a single source of truth and eliminate code duplication.
 
 GeckoView supports such cross-layer calls through its \texttt{@WrapForNative} annotation, allowing Java code to invoke native C++ functions.
-However, these calls require an active \texttt{GeckoRuntime} instance ~\cite{firefox:rni:runtime}.
+However, these calls require an active \texttt{GeckoRuntime} instance ~\cite{firefox:jni:runtime}.
 In our case, token generation and content-provider based utility calls occur before the browser process is fully initialized, meaning no runtime is yet available.
 Attempting to temporarily bootstrap a runtime solely for token processing proved unreliable and introduced substantial complexity.
 
