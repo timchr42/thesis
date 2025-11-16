@@ -81,21 +81,21 @@ The prototype consists of three main components that together cover policy distr
 
 \begin{itemize}
   \item 
-Custom Installer Application -- responsible for installing test apps and transmitting their declared policies to the browser.
+    \textbf{Custom Installer Application:} Responsible for installing test apps and transmitting their declared policies to the browser.
 
 \item
-Byetrack Helper Library -- a reusable client-side library that manages capability tokens, communication with the browser, and transparent token injection into outgoing intents.
+  \textbf{Byetrack Helper Library:} A reusable client-side library that manages capability tokens, communication with the browser, and transparent token injection into outgoing intents.
 
 \item
-Modified AndroidX Browser Library -- a drop-in replacement for the standard AndroidX Browser module that automatically integrates Byetrack logic into every Custom Tab (CT) and Trusted Web Activity (TWA) invocation.
+\textbf{Modified AndroidX Browser Library:} A drop-in replacement for the standard AndroidX Browser module that automatically integrates Byetrack logic into every CT and TWA invocation.
 
 \end{itemize}
 
-We selected Mozilla Firefox for Android (Fenix) as the browser base due to its open architecture and direct access to the \texttt{GeckoView} engine.
+We selected Mozilla Firefox for Android (Fenix) ~\cite{firefox:fenix} as the browser base due to its open architecture and direct access to the GeckoView ~\cite{firefox:geckoview} engine.
 Within Fenix, Byetrack is implemented across two layers:
 a Java layer that handles policy ingestion and token generation, and
 a native C++ layer within Gecko responsible for enforcing cookie isolation and network-level restrictions.
-Both layers communicate through structured JNI bindings and share a common cryptographic key for token signing and verification.
+Both layers communicate through structured Java Native Interface (JNI) ~\cite{firefox:jni} bindings and share a common cryptographic key for token signing and verification.
 
 \section{Policy Format}
 
@@ -107,27 +107,28 @@ Both layers communicate through structured JNI bindings and share a common crypt
 \end{figure}
 
 The Byetrack policy defines the configuration of capability tokens, specifying which domains may receive them and under which isolation context (global or private). 
-It is expressed as a structured JSON object divided into two top-level sections: \textit{predefined} and \textit{wildcard}.
+It is expressed as a structured JSON object divided into two top-level sections: predefined and wildcard (\autoref{fig:policy_schema}).
 
 Each section further distinguishes between two isolation scopes:
-\begin{itemize}
-  \item global -- referring to tokens or capabilities that are valid across all browser profiles or trusted applications (e.g. legitimate SSO domains).
-  \item private -- referring to tokens restricted to the local application or site context (e.g. third-party trackers like the authors of HyTrack describe).
-\end{itemize}
+\begin{enumerate}
+  \item \textbf{Global:} Cookies associated with these capabilities are stored in the browser's default cookie jar and are therefore shared across all apps using CTs/TWAs.
+  \item \textbf{Private:} Cookies associated with these capabilities are kept in the app-local cookie jar and are therefore not shared with other apps.
+\end{enumerate}
 
-\paragraph{Predefined Section.} The predefined section specifies explicit capability bindings between domains and the cookies that are allowed to be associated with them.
+The predefined section specifies explicit capability bindings between domains and the cookies that are allowed to be associated with them.
 These entries define exactly which cookie names are permitted for which domains.
 Each key corresponds to a domain, and the associated list defines cookie names that are explicitly authorized for that domain.
-The distinction between global and private in the predefined section allows a domain to hold both a global token and a private token.
-The two scopes are treated independently and can coexist safely.
 
-\paragraph{Wildcard Section.} The wildcard section defines simplified or implicit rules for domains where explicit cookie level definitions are not necessary.
+The wildcard section defines simplified or implicit rules for domains where explicit cookie level definitions are not necessary.
 Instead of listing cookie names, the wildcard policy only specifies domains that shall receive capability tokens defined by the isolation scope.
 
-The wildcard and predefined entries operate independently -- a domain can appear in both lists if necessary.
+The wildcard and predefined entries operate independently --- a domain can appear in both lists if necessary.
 For example, a domain may have a global predefined token for a specific cookie and a private wildcard token for general use.
+The two scopes are treated independently and can coexist safely.
+Furthermore, the distinction between global and private in the predefined section allows a domain to hold both a global token and a private token.
 This allows flexible, layered control over cookie behavior.
 An example policy with explanaition can be found in the appendix \autoref{appendix:policy}.
+
 
 \section{Capability Token Structure}
 \label{sec:token}
@@ -195,11 +196,11 @@ Thus, the content provider offered the most reliable and maintainable IPC soluti
 \section{Browser (Fenix)}
 The browser serves as the policy enforcement point in our architecture. 
 Its modifications fall into two main categories:
-(1) token generation and transmitting in \texttt{GeckoView} -- Mozilla's WebView like Java library for Android that exposes the Gecko engine's functionality --, and
-(2) the actual cookie enforcement within the C++ back-end of \texttt{Gecko} -- the engine that powers the web browser ~\cite{firefox:frontbackend, firefox:gecko}.
+(1) token generation and transmitting in \texttt{GeckoView}, Mozilla's WebView like Java library for Android that exposes the Gecko engine's functionality, and
+(2) the actual cookie enforcement within the C++ back-end of \texttt{Gecko}, the engine that powers the web browser ~\cite{firefox:frontbackend, firefox:gecko}.
 
 This separation maintains a clear trust boundary between high-level policy logic and low-level enforcement. 
-Although their responsibilities overlap conceptually -- especially cryptographic operations on the tokens -- , direct invocation across these layers proved impractical, despite the possibility for \texttt{GeckoView} code to communicate between Java and C++ via the Java Native Interface (JNI) ~\cite{firefox:jni} (see \autoref{subsec:jni_bridging}).
+Although their responsibilities overlap conceptually --- especially cryptographic operations on the tokens ---, direct invocation across these layers proved impractical, despite the possibility for \texttt{GeckoView} code to communicate between Java and C++ via the JNI (see \autoref{subsec:jni_bridging}).
 
 \subsection{Token Generation}
 \label{subsec:token_generation}
@@ -240,8 +241,7 @@ When the content provider receives a policy from the installer, it first parses 
 Each collection represents either a mapping from domains to explicit cookie names (for predefined entries), or a list of domains (for wildcard entries).
 
 \textbf{Predefined Conflict Detection:} The first downgrade check handles domain-level and cookie-level conflicts within predefined entries.
-If a domain appears in both predefined global and predefined private, the global entry is removed entirely.
-If the same cookie name is found under both sections for the same domain, the global cookie is removed, keeping only the private one.
+If a domain appears in both predefined global and predefined private for the same cookie name, the global cookie is removed, keeping only the private one.
 This logic is realized by iterating over the global map and comparing it to the private map and similarly for cookie-level checks.
 
 \textbf{Wildcard Conflict Detection:} A similar check is applied to wildcard entries.
@@ -256,7 +256,7 @@ An example can be found in \autoref{appendix:policy}.
 
 % Actual Generation Part
 Once all conflicts are resolved, the downgraded policy structures are passed into the token generation routines -- processing of the predefined map and wildcard list.
-These functions iterate over the filtered domain and cookie lists, creating one encrypted capability token per entry using \textsc{generateSingleToken(domain, cookieName, "*", globalJar, packageName, versionName, rights)}.
+These functions iterate over the filtered domain and cookie lists, creating one encrypted capability token per entry using \texttt{generateSingleToken(domain, cookie\_name, "*", globalJar, package\_name, version\_name, rights)}.
 As a result, only conflict-free and least-privilege token objects of the format described in \autoref{sec:token} are generated:
 
 Note that the classic wildcard tokens omit the \texttt{cookie\_name} and \texttt{cookie\_value} fields, using \texttt{"*"} as placeholder value to indicate that they apply to all cookies for the given domain.
@@ -266,14 +266,15 @@ This is due to the reason that wildcard tokens stay the way they are and are use
 
 Each token object is then encoded as a compact JSON object and serialized into a Base64-encoded string.
 Finally, the encoded string is signed using hmacSHA256 and the signature attached to the token object separated with a dot, similar to JWTs ~\cite{rfc7519}, before encrypting it using AES-CBC with a random IV using the browsers secret key.
-This makes the tokens tamper-evident and ensures that only the browser can generate valid tokens.
+The signature makes the tokens tamper-evident, while encryption ensures confidentiality of the token contents.
 
 Once generated, tokens are sent to the app in a map from domain to the String representation of the JSON array via the same content provider that received the policy so that the app can persist them locally (\autoref{sec:byetracklib}).
 
 \subsection{Launching Custom Tabs \& TWAs with Tokens}
 The browser performs this process in two stages: (1) threading capability data from the Android layer down into the Gecko engine, and (2) enforcing cookie isolation inside Gecko's networking stack.
 
-\paragraph{Stage 1 – Threading of Capability Data.}
+\subsubsection{Threading of Capability Data}
+%\paragraph{Stage 1 – Threading of Capability Data.}
 The threading mechanism ensures that all capability-related data (tokens and caller information) are propagated consistently through the Android and GeckoView layers until they reach the browser engine.
 
 In Fenix, all incoming intents that trigger a custom tab launch are handled by the \texttt{CustomTabsIntentProcessor} class, which resides in the Android Components library -- Mozilla's reusable collection of browser building blocks.
