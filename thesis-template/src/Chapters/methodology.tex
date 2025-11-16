@@ -47,7 +47,7 @@ To make our design unspoofable, we also needed to conduct modifications to the d
 
 \subsection{Developer Policy}
 Developers define a JSON policy that specifies which domains may share browser state and, optionally, which cookies are expected from each domain.
-This allows granular control beyond simple trusted/untrusted domain distinctions -- for example, isolating third-party cookies while permitting integration with a developer's own authentication domain or SSO provider.
+This allows granular control beyond simple trusted/untrusted domain distinctions, for example, isolating third-party cookies while permitting integration with a developer's own authentication domain or SSO provider.
 If no policy is provided, the browser falls back to "ambient mode", where all cookies are stored in the shared jar for backwards compatibility.
 
 \subsection{Capability Initialization}
@@ -82,15 +82,12 @@ When the app is updated, the installer retransmits the policy so that the browse
   \label{fig:app_browser_interaction}
 \end{figure}
 
-When an app opens a URL through a Custom Tab (CT) or Trusted Web Activity (TWA), the stored wildcard and (initially empty) final tokens are attached to the intent that launches the browser.
+We describe the methodology flow of the app–browser interaction in our Byetrack framework for CT and TWA launches, as shown in Figure~\ref{fig:app_browser_interaction}.
+
+When an app opens a URL through a CT or TWA, the stored wildcard and (initially empty) final tokens are attached to the intent that launches the browser.
 Upon receipt, the browser decrypts and validates each token by checking its signature, package name, version number, and target domain.
 Invalid tokens are discarded.
-
-The browser then uses the valid capabilities to:
-\begin{enumerate}[label=\arabic*.]
-  \item Determine how to store cookies received from the web server.
-  \item Construct cookie headers for outgoing requests.
-\end{enumerate}
+The browser then uses the valid capabilities to determine how to store cookies received from the web server and to construct cookie headers for outgoing requests.
 
 \paragraph{Cookie Reception.}  
 For every received cookie, the browser applies the following logic (in order of priority):
@@ -104,7 +101,8 @@ For every received cookie, the browser applies the following logic (in order of 
 \end{enumerate}
 
 \paragraph{Cookie Transmission.}  
-When constructing requests, the browser attaches the cookies encapsulated in final capabilities to the regular cookies from the global jar, ensuring that each request accurately reflects both app-specific and shared state according to the developer policy.
+When constructing requests, the browser merges the cookie header derived from the final capabilities with the cookies stored in the global jar.
+The latter appear in the global jar only when the app possesses a capability that authorizes global cookie storage, ensuring that each request reflects both app-specific and permitted shared state.
 
 % ---------------------------------------------------------------------------
 
@@ -117,8 +115,9 @@ To improve transparency and developer control, the browser exposes limited utili
 \end{enumerate}
 Access to these utilities is strictly controlled through capability rights: read operations require read rights, and modifications require write rights.
 
-\section{Design Advantages} % move this to another section?
-Beyond preventing cross-app tracking, our design offers several key benefits:
+\section{Design Advantages}
+Beyond preventing cross-app tracking, our design provides the following key benefits, while requiring only that developers adopt our modified browser library and include a simple JSON policy file in their app.
+
 \begin{itemize}
   \item
     \textbf{Fine-Grained Control:} Developers can precisely specify which cookies are shared or isolated.
@@ -137,8 +136,13 @@ This would simplify the browser's responsibilities to enforcement only, reducing
 It would also solve the bootstrapping problem of generating the initial capabiltities the current design faces: if an app is installed on a device, the installer notifies the browser of the new app and its policy so the browser can generate capabilities accordingly.
 If this browser is not installed yet, the app cannot receive capabilities until the browser is installed and the app is reinstalled or updated.
 
-Having the installer generate capabilities would allow the app to receive them immediately upon installation, regardless of the browser's presence and whether it even supports the framework or not.
-However, it would require shared cryptographic secrets between the installer and browser, thereby enlarging the trusted computing base and attack surface.  
+A practical workaround for avoiding the need to reinstall or update existing apps after the browser's installation is to slightly adjust how browser applications are handled by our custom installer.
+A browser does not require any capabilities for cookie access, since it acts as the policy enforcement point itself.
+Consequently, when a browser application is installed, the installer can iterate over all already installed apps, collect their policies, and forward them to the newly installed browser.
+The browser can then generate and issue the appropriate capabilities to each app retroactively.
+
+Having the installer generate the capabilities directly would eliminate the need for this workaround, as it would allow an app to receive its capabilities immediately upon installation --- independent of whether a browser is present or whether it supports the framework at all.
+However, this would require the installer and the browser to share a long-term secret key, introducing difficult key-distribution and key-management challenges and tightly coupling the security of both components.
 For this and simplicitly reasons, the proof-of-concept implementation designates the browser as the sole trusted component for capability generation and enforcement and assumes the browser is present before app installation.
 
 
