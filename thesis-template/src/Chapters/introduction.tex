@@ -11,13 +11,13 @@
 
 % Motivation for CTs and TWAs
 In recent years, Android applications have increasingly integrated web content into their interfaces to enhance user experience and streamline features such as authentication and monetization.
-To enable this, developers commonly rely on Custom Tabs (CTs) and Trusted Web Activities (TWAs) -- technologies that allow seamless, browser-backed web integration while preserving native-like performance and appearance.
+To enable this, developers commonly rely on Custom Tabs (CTs) ~\cite{android:customtabs} and Trusted Web Activities (TWAs) ~\cite{android:trustedwebactivities} --- technologies that allow seamless, browser-backed web integration while preserving native-like performance and appearance.
 This integration enables web-based functionality such as Single Sign-On (SSO) or in-app advertising without forcing users to leave the application or manage separate browser sessions.
 
 % Problem Statement
 However, these benefits come at a cost.
-CTs and TWAs share the browser’s cookie storage across all apps, providing session continuity but also introducing severe privacy vulnerabilities.
-Recent research by Wessels et~al.~\cite{USENIX:Wessels:2025} demonstrated HyTrack, a novel tracking technique that exploits this shared browser state to persistently identify users across different applications and the web -- even surviving device changes, cookie clearing, or browser switching.
+CTs and TWAs share the browser's cookie storage across all apps, providing session continuity but also introducing severe privacy vulnerabilities.
+Recent research by Wessels et~al.~\cite{USENIX:Wessels:2025} demonstrated HyTrack, a novel tracking technique that exploits this shared browser state to persistently identify users across different applications and the web, even surviving device changes, cookie clearing, or browser switching.
 
 HyTrack operates by embedding a third-party library into multiple unrelated apps.
 Each app, unaware of the library's true purpose, opens a CT or TWA to the same tracking domain.
@@ -26,7 +26,7 @@ When another app using the same library loads content from the same domain, the 
 Due to Android's automatic backup mechanisms, the tracking ID can even be restored after a factory reset, rendering it more persistent than the evercookie~\cite{kamkar2010evercookie}.
 
 % Solution - HyTrack mitigation
-In this thesis, we present Byetrack -- to the best of our knowledge, the first capability-based mitigation framework that addresses these privacy issues without breaking legitimate use cases of CTs and TWAs.
+In this thesis, we present Byetrack --- to the best of our knowledge, the first mitigation framework that addresses these privacy issues while preserving the legitimate use cases of CTs and TWAs.
 Byetrack allows developers to preserve the benefits of CTs and TWAs, such as SSO and monetization, while preventing invisible cross-app tracking demonstrated by HyTrack.
 Our approach applies the principle of capability-based security: fine-grained, unforgeable tokens that grant specific access rights to a resource.
 In this context, the browser issues capabilities based on a developer-defined policy, which explicitly determines which domains may access the shared browser state.

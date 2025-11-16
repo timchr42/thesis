@@ -8,42 +8,76 @@
 
 % (- Introduce Capabilities/Tokens?)
 
+Before deving into the design and implementation of our capability-based mitigation against HyTrack, we first cover Capabilities and Capability-based Security (\autoref{sec:capabilities}), as well as provide a detailed overview of Custom Tabs and Trusted Web Activities on Android (\autoref{sec:customtabs-twas}).
+Finally, we revisit the HyTrack attack, its weaknesses, goals, and proposed mitigations (\autoref{sec:hytrack}), and outline our threat model in (\autoref{sec:threat_model}).
+
 \section{Capabilities and Capability-based Security}
+\label{sec:capabilities}
 %What are Capabilities?
 
 % Capability defintion taken from my report
 A capability is an unforgeable and tamperproof token of authority that grants its holder specific access rights to a protected object.
-Unlike access-control lists (ACLs), which base decisions on user or process identity, capabilities combine an object reference with an associated permission set, thereby enabling object-centric and decentralized access control.
+Unlike traditional access-control lists (ACLs), which base decisions on user or process identity, capabilities combine an object reference with an associated permission set, thereby enabling object-centric and decentralized access control.
 A capability system enforces the principle of least privilege by ensuring that possession of a capability is both necessary and sufficient for performing an operation on the referenced object.
+This follows the classic understanding established in early capability systems such as Hydra ~\cite{wulf1974hydra} and EROS ~\cite{shapiro1999eros}, where capabilities are described as "prima facie evidence of authority".
 
-Because the right to access is embodied in the token itself, capabilities can be transferred between processes when permitted by the system’s policy, allowing explicit and fine-grained delegation of authority without relying on a central policy check.
-Different implementations vary in how capabilities are stored, propagated, and revoked, but all provide stronger isolation guarantees than identity-based models.
+Because the right to access is embodied in the capability itself, no central authority needs to be consulted at the moment of use.
+Classical capability systems even allow controlled delegation by transferring capabilities between processes.
+In contrast, Byetrack deliberately prohibits capability transfer altogether, ensuring that capabilities remain bound to the originating application.
+Different implementations vary in how capabilities are stored, propagated, and revoked, yet all enable finer-grained control over authority than identity-based approaches.
 
 In the context of this thesis, capability-based control offers an elegant way to isolate shared browser state and restrict the propagation of cookies, ensuring that only entities explicitly possessing a valid capability may access a particular storage domain.
 
 \section{Custom Tabs and Trusted Web Activities on Android}
+\label{sec:customtabs-twas}
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+
+\begin{tabular}{@{}lcccc@{}}
+
+\toprule
+Capability & Browser & WebView & Custom Tab & Trusted Web Activity \\ 
+\midrule
+Integration possible  & \Circle & \CIRCLE & \CIRCLE & \CIRCLE \\
+Shares browser state  & \CIRCLE \tnote{1} & \Circle & \CIRCLE & \CIRCLE \\
+Can hide URL bar      & \Circle & \Circle & \Circle & \CIRCLE \\
+Can control size      & \Circle & \CIRCLE & \LEFTcircle \tnote{2} & \Circle \\
+Can open any URL      & \CIRCLE & \CIRCLE & \CIRCLE & \Circle \tnote{3} \\
+\bottomrule
+\end{tabular}
+\Circle: unsupported, \CIRCLE: supported, \LEFTcircle: partially supported, 1: Owns the shared state, 2: Custom Tabs can be reduced to 50\% programmatically and minimized by users, 3: Requires associatation via asset links.
+\begin{tablenotes}
+\footnotesize
+\item This table is taken from Wessel et al.'s HyTrack paper~\cite{USENIX:Wessels:2025}.
+\end{tablenotes}
+\end{threeparttable}
+\caption{Overview of Web Content Integration Mechanisms on Android.}
+\label{tab:webcontent-overview}
+\end{table}
 
 To integrate web content into Android applications, developers can use several mechanisms that differ in terms of security, performance, and user experience.
-Among these, Custom Tabs (CTs) and Trusted Web Activities (TWAs) have emerged as the most popular alternatives to traditional WebViews, offering better performance and tighter integration with the user's default browser.
+Among these, Custom Tabs (CTs) ~\cite{android:customtabs} and Trusted Web Activities (TWAs) ~\cite{android:trustedwebactivities} have emerged as the most popular alternatives to traditional WebViews ~\cite{android:webviews}, offering better performance and tighter integration with the user's default browser.
 
-Custom Tabs were introduced to allow apps to display web content within the app's interface while leveraging the full capabilities of the user's browser.
-Unlike a WebView, which runs a separate, minimal web engine within the app, a Custom Tab is rendered by the installed browser itself.
-This means that all browser features -- such as optimized rendering, password managers, saved credentials, and cookies -- remain available.
-Developers can also customize the browser's UI elements, such as toolbar color and menu items, to visually align the Custom Tab with their app's theme.
+CTs were introduced to allow apps to display web content within the app's interface while leveraging the full capabilities of the user's browser.
+Unlike a WebView, which runs a separate, minimal web engine within the app, a CT is rendered by the installed browser itself.
+This means that all browser features such as optimized rendering, password managers, saved credentials, and cookies remain available.
+Developers can also customize the browser's UI elements, such as toolbar color and menu items, to visually align the CT with their app's theme.
 As a result, users perceive a seamless transition between native and web content without leaving the app context.
 
-Trusted Web Activities (TWAs) extend this concept further by removing nearly all browser UI elements, including the URL bar, and displaying web content in full-screen mode.
+TWAs extend this concept further by removing nearly all browser UI elements, including the URL bar, and displaying web content in full-screen mode.
 This allows developers to integrate entire Progressive Web Apps (PWAs) or other web-based experiences into their native apps while maintaining a consistent appearance.
-For security reasons, launching a TWA requires a Digital Asset Link (DAL) -- a mutual verification between the app and the website -- ensuring that both belong to the same trusted party.
-If this trust relationship cannot be verified, Android automatically downgrades the TWA to a regular Custom Tab.
+For security reasons, launching a TWA requires a Digital Asset Link (DAL) \cite{android:digitalassetlinks} --- a mutual verification between the app and the website ---, ensuring that both belong to the same trusted party.
+If this trust relationship cannot be verified, Android automatically downgrades the TWA to a regular CT.
 
 A key advantage of both CTs and TWAs is that they share the browser's state.
 This means users can stay logged in to websites, reuse stored cookies, and maintain personalized settings across different apps and browsing sessions.
 This behavior improves usability and supports features like Single Sign-On (SSO), as authentication tokens from the browser can be reused within an app's embedded web view.
 However, as later discussed in Section \ref{sec:hytrack}, this same feature also introduces significant privacy risks.
-The shared cookie storage allows any app -- intentionally or not -- to access browser state information used by others, thereby enabling persistent cross-app and cross-web tracking techniques such as HyTrack.
+The shared cookie storage allows any app to access browser state information used by others, thereby enabling persistent cross-app and cross-web tracking techniques such as HyTrack.
 
-In summary, Custom Tabs and Trusted Web Activities offer a powerful bridge between the native and web ecosystems on Android.
+In summary, CTs and TWAs offer a powerful bridge between the native and web ecosystems on Android.
 They combine the convenience and functionality of a full browser with the visual coherence of an app-embedded experience.
 Yet, the same integration that improves usability also blurs traditional security and privacy boundaries between apps and the web, which is exploited by for persistent-cross app tracking in the form of the HyTrack attack.
 
@@ -53,31 +87,36 @@ Yet, the same integration that improves usability also blurs traditional securit
 \begin{figure}[h]
   \centering
   \includegraphics[width=1\textwidth]{hytrack_Flow_colored.pdf}
+
+  \begin{tablenotes}
+  \footnotesize
+  \item This table is adapted from Wessel et al.'s HyTrack paper~\cite{USENIX:Wessels:2025}.
+  \end{tablenotes}
   \caption{High-level Overview of the HyTrack Attack Flow.}
   \label{fig:hytrack_overview}
 \end{figure}
 
 HyTrack, introduced by Wessels et al. \cite{USENIX:Wessels:2025}, exposes a fundamental privacy flaw in this shared-state model.
 It demonstrates that third-party libraries embedded in multiple apps can exploit the browser's global cookie storage to identify and track users across applications and even into their normal web browsing sessions.
-By leveraging standard Android features—rather than any explicit vulnerability—HyTrack highlights how the very mechanisms designed to make CTs and TWAs seamless for users can also undermine Android's app isolation guarantees.
+By leveraging standard Android features --- rather than any explicit vulnerability --- HyTrack highlights how the very mechanisms designed to make CTs and TWAs seamless for users can also undermine Android's app isolation guarantees.
 
 Whenever an app opens a CT or TWA to display web content, the request is executed within the context of the user’s default browser.
-This means that all cookies set by the visited domain are stored in the browser's global cookie jar and automatically reused in subsequent sessions — even if they originate from different apps.
+This means that all cookies set by the visited domain are stored in the browser's global cookie jar and automatically reused in subsequent sessions, even if they originate from different apps.
 While this shared state enables seamless Single Sign-On and personalization, it also allows a tracking entity to correlate activity across multiple apps that interact with the same web domain.
 
-HyTrack leverages this design as follows: a seemingly benign third-party library, included in several independent apps, opens a CT or TWA to a tracking domain controlled by the library's author.
+HyTrack leverages this design as follows (\autoref{fig:hytrack_overview}): a seemingly benign third-party library, included in several independent apps, opens a CT or TWA to a tracking domain controlled by the library's author.
 When this web page is first loaded, the server sets a unique identifier in a cookie, which is then stored in the shared browser state.
 When another app using the same library later opens a CT or TWA to the same tracking domain, the browser automatically attaches the existing cookie, thereby revealing that both apps are used by the same user.
 This creates a powerful cross-app identity link that persists outside Android’s app sandbox and is invisible to both users.
 
-Even more concerning, HyTrack's tracking identifiers are resilient to deletion, because Android's automatic backup mechanisms restore application data.
+Even more concerning, HyTrack's tracking identifiers are resilient to deletion, because the tracking library can store the identifier in the app's local storage and even use Google Play Services' backup feature to restore it after a device reset.
 In effect, HyTrack achieves evercookie-like persistence at the system level, reviving deleted identifiers upon device restoration.
 
+\subsection{Weaknesses in Custom Tabs and Trusted Web Activities}
 The feasibility of this attack stems from three fundamental weaknesses in the current CT and TWA model:
 
-\subsection{Weaknesses in Custom Tabs and Trusted Web Activities}
 \label{sec:hytrack-weaknesses}
-\begin{enumerate}[label=W\arabic*)]
+\begin{enumerate}
   \item 
     \textbf{Implicit and Persistent Cookie Sharing:}
     All apps using CTs or TWAs share a single, persistent global browser cookie jar, regardless of developer intent.
@@ -87,9 +126,9 @@ The feasibility of this attack stems from three fundamental weaknesses in the cu
     \textbf{Lack of App Context in the Browser:}
     The browser has no knowledge of which app initiated a given request and therefore cannot enforce app-specific cookie isolation or policy controls.
 
-  %\item
-  %  \textbf{Unrestricted Third-Party Inclusion:}
-  %  Any third-party library embedded across multiple apps can open CTs or TWAs, gaining access to the shared browser state and enabling tracking across unrelated apps.
+  \item
+    \textbf{Unrestricted Third-Party Inclusion:}
+    Any third-party library that is embedded in multiple apps can launch CTs or TWAs, thereby accessing the shared browser state and enabling cross-app tracking.
 \end{enumerate}
 
 By exploiting these design characteristics, HyTrack bridges the isolation between native and web contexts, effectively transforming legitimate web-integration features into a cross-app tracking channel.
@@ -100,7 +139,7 @@ By exploiting these design characteristics, HyTrack bridges the isolation betwee
 The authors of HyTrack identified three essential goals that any practical mitigation against cross-app tracking must fulfill~\cite{USENIX:Wessels:2025}.
 We adopt these goals as guiding principles for the design of our capability-based framework:
 
-\begin{enumerate}[label=G\arabic*)]
+\begin{enumerate}
   \item \textbf{Support for Web Platform Features:}
   Any mitigation should preserve the full functionality of web content, including support for cookies, JavaScript, and modern browser APIs.
 
@@ -111,7 +150,7 @@ We adopt these goals as guiding principles for the design of our capability-base
   Isolation between applications must prevent tracking via shared state, while still allowing legitimate sharing scenarios such as Single Sign-On (SSO).
 \end{enumerate}
 
-\subsection{Mitigation Approaches}
+\subsection{Mitigation Approaches proposed by HyTrack}
 \label{sec:hytrack-mitigations}
 The HyTrack authors outline two potential mitigation strategies and discuss the trade-offs each entails with respect to their design goals.
 
@@ -124,13 +163,27 @@ In contrast, Forced User Interaction avoids this problem by explicitly requiring
 But this introduces a significant usability issue, as the user is forced to interact with the browser every time a web content is loaded, which not only degrades user experience but also breaks seamless integration of web content into the app.
 Furthermore, this approach hands control and responsibility to the user, which is not ideal from a security perspective, as the user might be unaware of the consequences of their actions and may inadvertently enable tracking by failing to interact with the browser as required.
 
-\paragraph{Other Strategies.}
 Other strategies, such as limiting CTs and TWAs to First-Party Domains or disabling them for specific domains via browser options ultimately reflect the aforementioned approaches, relying on either browser state partitioning or forced user interaction.
 Therefore, these are not effective countermeasures against HyTrack.
 
-\input{src/Chapters/threat_model.tex}
-% -------------------------------------------------Draft Capability Section -------------------------------------
+\subsection{Our Approach}
+\label{sec:hytrack-our-approach}
+TODO?
 
-%\section{Capabilities}
-%We try to leverage the nature of capabilities as unforgeable tokens that grant the holder specific access rights to a resource.
+\section{Threat Model}
+\label{sec:threat_model}
+% Describe what components are trusted/untrusted / State assumption of HyTrack again (?) and our approach
+The HyTrack attack consists of three main parties: the app developer, the tracking company providing a third-party library, and the user.
+The tracking company aims to track the user across multiply apps and the web.
+For this, it provides a library that the app developer can include in their app, advertising it as an analytics or advertising SDK.
+The developer of an Android application unknowingly includes this library, which under the hood employs the HyTrack technique to conduct the tracking.
+
+We want to prevent this library from tracking the app's user across multiple apps and empower app developer to use any third-party library without risking user privacy in regards to cross-app tracking via HyTrack.
+
+For this, we consider the app developer as benign but privacy-unaware.
+The app itself is untrusted after installation, as it includes the malicious tracking library, which can include arbitrary code with the same privileges.
+We assume the installer and the browser are trusted, as they initialize and enforce the mitigation.
+
+As we hook our defense in the Androidx browser library ~\cite{android:androidxbrowser}, any developer that wants to use the malicous tracking library or any other library that relies on CTs or TWAs automatically uses our framework if they configure and provide a policy file.
+Therefore, only the AndroidX Browser library needs to be updated, rather than requiring developers to include an additional mitigation library --- a step that is frequently forgotten or deliberately omitted, as shown in prior work~\cite{derr2017keep,huang2019up}.
 
