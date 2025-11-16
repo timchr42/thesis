@@ -3,35 +3,37 @@
 \chapter{Methodology}
 \label{chap:method}
 
-\paragraph{Main Goal.} The main research goal is to prevent HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by addressing the underlying weaknesses of CustomTabs (CTs) and TrustedWebActivities(TWAs) (\autoref{sec:hytrack-weaknesses}), while adhering to the design goals defined by Wessels et al. (\autoref{sec:hytrack-goals}).
+%\paragraph{Main Goal.}
+The main research goal is to prevent HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by addressing the underlying weaknesses of CustomTabs (CTs) and TrustedWebActivities(TWAs) (\autoref{sec:hytrack-weaknesses}), while adhering to the design goals defined by Wessels et al. (\autoref{sec:hytrack-goals}).
 Unlike previously discussed mitigation strategies such as Browser State Partitioning or Forced User Interaction (\autoref{sec:hytrack-mitigations}), the proposed approach aims to maintain usability and compatibility while providing strong privacy guarantees.
 
-% DUPLICATE from above therefore commented out
-%To address this gap, this work develops and evaluates a privacy-preserving extension for Android applications that use Custom Tabs (CTs) and Trusted Web Activities (TWAs).
-%The proposed framework prevents HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by eliminating the architectural weaknesses identified in \autoref{sec:hytrack-weaknesses}, while adhering to the design goals of usability, compatibility, and controlled access to shared state (see \autoref{sec:hytrack-goals}).
+%\paragraph{Core Idea.}
+The core idea is to encapsulate cookie access within fine-grained capability tokens, created and validated by the browser according to a developer-defined policy.
+Depending on the policy configuration, the app receives capabilities that either allow the domain's cookies to be shared across apps or restrict them to app-specific storage.
+When the app launches a URL in the browser, it transmits these capabilities along with the request.
+These capabilities determine how the browser handles cookies for that session, effectively isolating or sharing them based on the developer's intentions.
+This ensures that cookies from "trusted" domains intended for benign cross-app sharing are accessible to multiple apps, while cookies from "untrusted" domains remain isolated within each app's private storage and are only sent to the corresponding web server.
 
-\paragraph{Core Idea.} The core idea is to encapsulate cookie access within fine-grained capability tokens, created and validated by the browser according to a developer-defined policy.
-Depending on the policy configuration, cookies are stored either in a shared global jar or in app-specific storage, analogous to the Partitioned attribute in CHIPS \cite{googlechips}.
-This design prevents unauthorized cross-app tracking while preserving legitimate use cases such as Single Sign-On and session continuity.
+Consequently, this design prevents unauthorized cross-app tracking while preserving legitimate use cases such as Single Sign-On and session continuity.
 Because the system operates solely at the app–browser boundary, it maintains full compatibility with existing web platform features and requires no changes to the browser UI.
 
 \section{Capability Tokens}
-Against the natural feature of capabilities being delegatable, we need to bind them to the app identity to prevent malicious third-party libraries from using capabilities from other apps that were granted more privileges, thus circumventing the mitigation.
+Because capabilities are, by design, delegatable, we must bind them to the app's identity.
+Without this binding, a malicious third-party library embedded in multiple apps could mount a collusion attack by reusing capabilities issued to another (more privileged) app, thereby bypassing the mitigation entirely.
 Therefore, we include the app's unique package name in the capability tokens, so that the browser can verify that the token is only used by the app it was issued to.
 A global jar flag indicates whether the cookie belongs to the shared global jar or to the app-specific isolated jar.
-The cookie data itself -- name and value -- is encapsulated in the token, along with rights defining the permitted actions (reading, writing, or both) on the cookie data later on.
+The cookie data itself, name and value, is encapsulated in the token, along with rights defining the permitted actions (reading, writing, or both) on the cookie data later on.
 Similar to JWTs~\cite{rfc7519}, our tokens are signed to identify tampering attemtps.
 Due to the threat model assumptions (\autoref{sec:threat_model}), we additionally need to encrypt the tokens, so that a malicious third-party library embedded in the app cannot read the token contents and echo them back to its web server to circumvent the mitigation.
 
-\paragraph{Types.}
+%\paragraph{Types.}
 We distinguish between \emph{Wildcard} and \emph{Final} capability tokens.
 Final capabilities are fully specified tokens containing explicit cookie names and values.
 They stem from wildcard tokens and represent concrete cookie instances that are used directly for cookie enforcement.
-The wildcard tokens can be divided into three subtypes: Classic Wildcard Capabilities, Predefined Capabilities and Ambient Capabilities.
+The wildcard tokens can be divided into Classic Wildcard and Predefined Capabilities.
 
 The classic wildcard capabilities are partially specified tokens that omit cookie names and values.
 Predefined capabilities are wildcard tokens that specify cookie names but omit values, providing more granular control over individual cookies.
-The ambent capability represents the browser's default behavior -- storing all cookies in the shared global jar -- that is received when no explicit policy is provided by the developer.
 Essentially, the wildcard tokens serve as templates from which final tokens are derived once cookies are received from a web server.
 
 In conclusion, we design our capability tokens to be identity-bound and cryptographically protected data structures that encapsulate cookie information and metadata, enabling fine-grained access control between Android apps and the browser.
@@ -40,7 +42,8 @@ In conclusion, we design our capability tokens to be identity-bound and cryptogr
 \section{Capability-Based Cookie Isolation Flow}
 
 To achieve this, a prototype framework named Byetrack was designed, implemented, and evaluated on Android.
-The framework consists of three main components: a custom installer for policy extraction, a helper library for application integration, and modifications to the Mozilla Fenix browser and its underlying GeckoView engine to enforce cookie isolation via capability tokens.
+The framework consists of three main components: a custom installer for policy extraction, a helper library for application integration, and modifications to Firefox for Android (Fenix Project) ~\cite{firefox:fenix} and its underlying GeckoView engine ~\cite{firefox:geckoview} to enforce cookie isolation via capability tokens.
+To make our design unspoofable, we also needed to conduct modifications to the default Android operating system to securely bind capabilities to app identities.
 
 \subsection{Developer Policy}
 Developers define a JSON policy that specifies which domains may share browser state and, optionally, which cookies are expected from each domain.
@@ -67,7 +70,7 @@ From the sanitized policy, the browser generates capability tokens as follows:
   \item If no policy is provided, a single ambient capability is issued, reverting to the default shared-cookie behavior.
 \end{itemize}
 
-Each token is signed and encrypted before being sent to the app, which stores wildcard and final tokens in private storage for later use.  
+Each token is signed and encrypted before being sent to the app, which stores wildcard and final tokens in private storage for later use (\autoref{fig:initialization_flow}).
 When the app is updated, the installer retransmits the policy so that the browser can reissue capabilities consistent with the new app version.
 
 \subsection{App–Browser Interaction}
