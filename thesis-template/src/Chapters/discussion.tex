@@ -64,6 +64,8 @@ End-users benefit from enhanced privacy without perceivable changes in app or br
 In practice, this simplicity makes the framework suitable for integration into existing Android ecosystems.
 A future version of the AndroidX Browser library could directly embed this logic, enabling widespread adoption without any additional setup effort by developers.
 
+A minor drawback arises from how tokens are reissued when an app is updated: the policy is transmitted again and new tokens are generated, which causes any cookies stored in the app's isolated jar to be discarded.
+
 \section{Performance Overhead}
 
 \begin{table}[h]

@@ -326,7 +326,7 @@ When a network request is initiated, the \texttt{HttpBaseChannel} uses the \text
 
 %(HttpBaseChannel::AddCookiesToRequest calls CookieService::GetCookieStringFromHttp & HttpBaseChannel::SetCookieHeaders calls CookieService::SetCookieStringFromHttp are the two functions responsible for these tasks, respectively.)
 \paragraph{Outgoing Cookies.}
-The main flow for attaching cookies to outgoing requests occurs in \texttt{HttpBaseChannel}'s \texttt{AddCookiesToRequest()}.
+The main flow for attaching cookies to outgoing requests occurs in \texttt{HttpBaseChannel}'s \texttt{\justify AddCookiesToRequest()}.
 Here, the \texttt{CookieService}'s  \texttt{GetCookieStringFromHttp} function is called to retrieve the appropriate cookies for the target domain.
 Similarly, we use the top-level browsing context to retrieve our prebuilt cookie header string based on the final capabilities associated during the document load phase.
 The outgoing request header is constructed by appending our capability-based cookie string to the existing Cookie header, separated by a semicolon.
@@ -581,7 +581,7 @@ As a result, any solution along these lines would break backwards compatibility 
 This implies that legacy apps that would now use our Byetrack-enabled browser library could no longer open Custom Tabs with a standard, non-Byetrack-aware browser, limiting usability and adoption.
 For this reason, although these designs provide interesting security properties, they were ultimately not pursued.
 
-\paragraph{Custom Android SDK Extension for Secure Caller Identity Propagation}
+\paragraph{Custom Android SDK Extension for Secure Caller Identity Propagation.}
 To maintain compatibility with existing apps, we ultimately opted for a solution that allows the app to launch Custom Tabs using the standard API while still securely conveying the caller's identity.
 While the \texttt{ActivityTaskManagerService} ~\cite{android:activitytaskmanagerservice} internally tracks the calling UID for permission checks and task management, this information is not encoded in the Intent object itself and therefore becomes inaccessible to the receiving application.
 To address this, we extended the Android framework with a custom, SDK-level enhancement that embeds the caller's UID directly into the Intent object.
@@ -597,6 +597,19 @@ This approach provides a trustworthy, non-spoofable channel for conveying the ca
 However, this solution requires applications to compile against our customized Android SDK, since the new accessor for \texttt{mRealCallingUid} is not part of the standard API.
 This may limit adoption in practice.
 Ideally, Android would natively expose the verified caller identity within \texttt{Intent}, which would eliminate the need for a custom SDK while retaining the security properties demonstrated by our implementation.
+
+% ---------------------------------------
+%Und was du hier auch noch diskutieren könntest wäre ein Option wo du Apps zwingst ihre Identity zu sharen. Also der Browser bearbeitet den Request nur wenn
+%https://developer.android.com/reference/android/app/ActivityOptions#setShareIdentityEnabled(boolean)
+%
+%der Setter gecalled wurde. Das würde ähnlich zur Injection der Tokens funktionieren und könnte auch ohne OS modification funktionieren. Bin ich aber selber erst gestern Abend drüber gestolpert, sonst wäre das einen Versuch wert gewesen.
+\paragraph{Android Identity Sharing Mechanism.}
+Another possible direction would be to rely on Android's built-in identity-sharing mechanism, which allows an activity to learn the identity of its caller when launching a new activity.
+This can be enabled by setting \texttt{ActivityOptions.setShareIdentityEnabled(boolean)} to true ~\cite{android:setshareidentityenabled}.
+
+However, adopting this mechanism would require every app that launches a Custom Tab to explicitly enable identity sharing and for the browser to reject any launch request that does not set this flag.
+This would break compatibility with existing apps, similar to the other approaches discussed above.
+If Android were to enable this flag by default for all Custom Tab launches, no additional SDK modifications would be necessary, as the underlying functionality already exists.
 
 \subsection{Bridging Between Java and Native Layers}
 \label{subsec:jni_bridging}

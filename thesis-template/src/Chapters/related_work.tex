@@ -32,7 +32,7 @@ However, this also breaks legitimate third-party services that rely on shared co
 
 Google is actively working on a similar mechanism under the name CHIPS (Cookies Having Independent Partitioned State)~\cite{googlechips}.
 CHIPS allows third-party cookies to be partitioned by the top-level site with an optional \texttt{Partitioned} flag, enabling legitimate services like SSO to maintain function while avoiding broad tracking vectors.
-However, CHIPS is not applicable to Android's embedded web contents like CTs or TWAs, as the top-level site is the tracker itself.
+However, CHIPS is not applicable to Android's embedded web contents like CTs or TWAs, as the top-level site can be the tracker itself.
 Our solution can be seen as extending this paradigm to the app level.
 
 % --------------------------JWT-Tokens-Relation--------------------------------

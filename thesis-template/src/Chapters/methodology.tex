@@ -55,7 +55,7 @@ If no policy is provided, the browser falls back to "ambient mode", where all co
 \begin{figure}[h]
   \centering
   \includegraphics[width=1\textwidth]{TokenInitSequenceDiagram.pdf}
-  \vspace{2mm}
+
   {\footnotesize\textit{Note: The grey arrows represent the original installation flow.}}
   \caption{Flow of capability initialization during app installation.}
   \label{fig:initialization_flow}
@@ -91,7 +91,7 @@ The browser then uses the valid capabilities to determine how to store cookies r
 
 \paragraph{Cookie Reception.}  
 For every received cookie, the browser applies the following logic (in order of priority):
-\begin{enumerate}[label=\arabic*.]
+\begin{enumerate}
   \item If the token is ambient, the cookie is stored in the global jar (default behavior).
   \item If a private predefined capability matches the cookie name, the cookie value is filled in and returned to the app for local storage.
   \item If a private wildcard capability exists, the cookie is filled in accordingly and returned to the app.
@@ -107,13 +107,10 @@ The latter appear in the global jar only when the app possesses a capability tha
 % ---------------------------------------------------------------------------
 
 \subsection{Utility Interfaces}
-To improve transparency and developer control, the browser exposes limited utility functions that allow the app to:
-\begin{enumerate}[label=\arabic*)]
-  \item Retrieve the names of cookies encapsulated in final capabilities.
-  \item Read their corresponding values.
-  \item Write or update cookie values.  
-\end{enumerate}
-Access to these utilities is strictly controlled through capability rights: read operations require read rights, and modifications require write rights.
+To improve transparency and developer control, the browser exposes a small set of utility interfaces that allow an app to list the cookie names contained in its final capabilities and to read or update their corresponding values.
+These utilities are necessary because, without them, an app could not access the cookies stored in its isolated jar, as they are encapsulated in encrypted capability tokens that the app cannot interpret on its own.
+
+Access to these interfaces is strictly governed by capability rights: reading a value requires read permission, while updating it requires write permission.
 
 \section{Design Advantages}
 Beyond preventing cross-app tracking, our design provides the following key benefits, while requiring only that developers adopt our modified browser library and include a simple JSON policy file in their app.
