@@ -38,7 +38,7 @@ Addressing such cases would require additional mechanisms such as signed policie
 
 \section{Developer Empowerment and Transparency}
 
-Beyond mitigating HyTrack’s tracking capabilities, our approach introduces a new dimension of developer transparency and control.
+Beyond mitigating HyTrack's tracking capabilities, our approach introduces a new dimension of developer transparency and control.
 Developers can explicitly define which domains and cookies should remain private, preventing accidental leakage of sensitive identifiers to third parties.
 This transforms the browser from a monolithic storage manager into a configurable privacy mediator, empowering developers to reason about and enforce their privacy boundaries.
 
@@ -49,7 +49,7 @@ This developer-centric perspective distinguishes our approach from existing brow
 
 Our mitigation mechanism is designed to coexist with, and complement, existing browser-level cookie isolation techniques such as CHIPS~\cite{googlechips}.
 If a capability authorizes access to the shared cookie jar, cookies are stored using Firefox’s native partitioning logic.
-Otherwise, storage occurs solely in the app’s local context.
+Otherwise, storage occurs solely in the app's local context.
 This hybrid model preserves the benefits of CHIPS while adding a developer-driven control layer on top, allowing flexible yet secure isolation boundaries.
 Such compatibility is critical for deployability, as it allows gradual integration into browsers without requiring the removal or modification of existing standards.
 
@@ -116,7 +116,7 @@ While providing the strongest isolation guarantees, this mode also introduces th
 While our mitigation addresses HyTrack's cross-app tracking channel effectively, several limitations remain.
 First, the system relies on correctly defined policies; incomplete or misconfigured policies may lead to under- or over-isolation, affecting usability or privacy respectively.
 Second, integrating the approach on the application side is straightforward by just replacing the browser library dependency, but extending the approach to other browsers would require their cooperation and modification, as browsers use different engines and therefore might have different cookie management mechanisms.
-Despite this, the changes would still be relatively small, as most modern browsers are chromium-based and share similar architectures.
+Despite this, the changes would still be relatively small, as most modern browsers are Chromium-based and share similar architectures.
 
 Moreover, our threat model assumes non-malicious developers.
 If an app developer intentionally collaborates with a tracking library or exfiltrates tokens, the current design cannot prevent data leakage.

@@ -18,12 +18,12 @@ Consequently, this design prevents unauthorized cross-app tracking while preserv
 Because the system operates solely at the app–browser boundary, it maintains full compatibility with existing web platform features and requires no changes to the browser UI.
 
 \section{Capability Tokens}
-Because capabilities are, by design, delegatable, we must bind them to the app's identity.
+Because capabilities are delegable by design, we must bind them to the app's identity.
 Without this binding, a malicious third-party library embedded in multiple apps could mount a collusion attack by reusing capabilities issued to another (more privileged) app, thereby bypassing the mitigation entirely.
 Therefore, we include the app's unique package name in the capability tokens, so that the browser can verify that the token is only used by the app it was issued to.
 A global jar flag indicates whether the cookie belongs to the shared global jar or to the app-specific isolated jar.
 The cookie data itself, name and value, is encapsulated in the token, along with rights defining the permitted actions (reading, writing, or both) on the cookie data later on.
-Similar to JWTs~\cite{rfc7519}, our tokens are signed to identify tampering attemtps.
+Similar to JWTs~\cite{rfc7519}, our tokens are signed to identify tampering attempts.
 Due to the threat model assumptions (\autoref{sec:threat_model}), we additionally need to encrypt the tokens, so that a malicious third-party library embedded in the app cannot read the token contents and echo them back to its web server to circumvent the mitigation.
 
 %\paragraph{Types.}
@@ -126,14 +126,15 @@ Beyond preventing cross-app tracking, our design provides the following key bene
   \item
   \textbf{No Web Server Changes:} Web servers operate unmodified. The browser transparently enforces the capability model according to the app's policy it initially received.
   \item
-  \textbf{Backwards Compatibility:} Apps without a policy fall back to the standard shared cookie behavior, ensuring compatibility with existing systems. Also unmodified browsers continue to function correctly with apps using the framework, as unrecognized capabilities are ignored.
+  \textbf{Backwards Compatibility:} Apps without a policy fall back to the standard shared cookie behavior, ensuring compatibility with existing systems.
+  Also, unmodified browsers continue to function correctly with apps using the framework, as unrecognized capabilities are ignored.
 \end{itemize}
 
 \section{Alternative Design Considerations}
 An alternative architecture would delegate capability generation to the installer rather than the browser.  
 This would simplify the browser's responsibilities to enforcement only, reducing its complexity and eliminating installer–browser communication for each app.
 
-It would also solve the bootstrapping problem of generating the initial capabiltities the current design faces: if an app is installed on a device, the installer notifies the browser of the new app and its policy so the browser can generate capabilities accordingly.
+It would also solve the bootstrapping problem of generating the initial capabilities the current design faces: if an app is installed on a device, the installer notifies the browser of the new app and its policy, so the browser can generate capabilities accordingly.
 If this browser is not installed yet, the app cannot receive capabilities until the browser is installed and the app is reinstalled or updated.
 
 A practical workaround for avoiding the need to reinstall or update existing apps after the browser's installation is to slightly adjust how browser applications are handled by our custom installer.
@@ -143,7 +144,7 @@ The browser can then generate and issue the appropriate capabilities to each app
 
 Having the installer generate the capabilities directly would eliminate the need for this workaround, as it would allow an app to receive its capabilities immediately upon installation --- independent of whether a browser is present or whether it supports the framework at all.
 However, this would require the installer and the browser to share a long-term secret key, introducing difficult key-distribution and key-management challenges and tightly coupling the security of both components.
-For this and simplicitly reasons, the proof-of-concept implementation designates the browser as the sole trusted component for capability generation and enforcement and assumes the browser is present before app installation.
+For this and simplicity reasons, the proof-of-concept implementation designates the browser as the sole trusted component for capability generation and enforcement and assumes the browser is present before app installation.
 
 
 %\subsection{Token Fields}

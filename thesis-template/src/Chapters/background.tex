@@ -55,7 +55,7 @@ Can open any URL      & \CIRCLE & \CIRCLE & \CIRCLE & \Circle \tnote{3} \\
 \label{tab:webcontent-overview}
 \end{table}
 
-To integrate web content into Android applications, developers can use several mechanisms that differ in terms of security, performance, and user experience (~\autoref{tab:webcontent-overview}).
+To integrate web content into Android applications, developers can use several mechanisms that differ in terms of security, performance, and user experience (\autoref{tab:webcontent-overview}).
 Among these, Custom Tabs (CTs) ~\cite{android:customtabs} and Trusted Web Activities (TWAs) ~\cite{android:trustedwebactivities} have emerged as the most popular alternatives to traditional WebViews ~\cite{android:webviews}, offering better performance and tighter integration with the user's default browser.
 
 CTs were introduced to allow apps to display web content within the app's interface while leveraging the full capabilities of the user's browser.
@@ -104,7 +104,7 @@ When another app using the same library later opens a CT or TWA to the same trac
 This creates a powerful cross-app identity link that persists outside Android’s app sandbox and is invisible to both users.
 
 Even more concerning, HyTrack's tracking identifiers are resilient to deletion, because the tracking library can store the identifier in the app's local storage and even use Google Play Services' backup feature to restore it after a device reset.
-In effect, HyTrack achieves evercookie-like persistence at the system level, reviving deleted identifiers upon device restoration.
+In effect, HyTrack achieves Evercookie-like persistence at the system level, reviving deleted identifiers upon device restoration.
 
 \subsection{Weaknesses in Custom Tabs and Trusted Web Activities}
 The feasibility of this attack stems from three fundamental weaknesses in the current CT and TWA model:
@@ -166,7 +166,7 @@ Therefore, these are not effective countermeasures against HyTrack.
 % Capability defintion taken from my report
 A capability is an unforgeable and tamperproof token of authority that grants its holder specific access rights to a protected object.
 Unlike traditional access-control lists (ACLs), which base decisions on user or process identity, capabilities combine an object reference with an associated permission set, thereby enabling object-centric and decentralized access control.
-A capability system enforces the principle of least privilege by ensuring that possession of a capability is both necessary and sufficient for performing an operation on the referenced object.
+A capability system enforces the principle of least privilege (PoLP) by ensuring that possession of a capability is both necessary and sufficient for performing an operation on the referenced object.
 This follows the classic understanding established in early capability systems such as Hydra ~\cite{wulf1974hydra} and EROS ~\cite{shapiro1999eros}, where capabilities are described as ``prima facie evidence of authority''.
 
 Because the right to access is embodied in the capability itself, no central authority needs to be consulted at the moment of use.
@@ -197,12 +197,12 @@ The tracking company aims to track the user across multiply apps and the web.
 For this, it provides a library that the app developer can include in their app, advertising it as an analytics or advertising SDK.
 The developer of an Android application unknowingly includes this library, which under the hood employs the HyTrack technique to conduct the tracking.
 
-We want to prevent this library from tracking the app's user across multiple apps and empower app developer to use any third-party library without risking user privacy in regards to cross-app tracking via HyTrack.
+We want to prevent this library from tracking the app's user across multiple apps and empower app developer to use any third-party library without risking user privacy regarding cross-app tracking via HyTrack.
 
 For this, we consider the app developer as benign but privacy-unaware.
 The app itself is untrusted after installation, as it includes the malicious tracking library, which can include arbitrary code with the same privileges.
 We assume the installer and the browser are trusted, as they initialize and enforce the mitigation.
 
-As we hook our defense in the Androidx browser library ~\cite{android:androidxbrowser}, any developer that wants to use the malicous tracking library or any other library that relies on CTs or TWAs automatically uses our framework if they configure and provide a policy file.
+As we hook our defense in the AndroidX browser library ~\cite{android:androidxbrowser}, any developer that wants to use the malicious tracking library or any other library that relies on CTs or TWAs automatically uses our framework if they configure and provide a policy file.
 Therefore, only the AndroidX Browser library needs to be updated, rather than requiring developers to include an additional mitigation library --- a step that is frequently forgotten or deliberately omitted, as shown in prior work~\cite{derr2017keep,huang2019up}.
 
