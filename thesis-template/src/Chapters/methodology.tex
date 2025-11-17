@@ -73,6 +73,8 @@ From the sanitized policy, the browser generates capability tokens as follows:
 Each token is signed and encrypted before being sent to the app, which stores wildcard and final tokens in private storage for later use (\autoref{fig:initialization_flow}).
 When the app is updated, the installer retransmits the policy so that the browser can reissue capabilities consistent with the new app version.
 
+Because the app must already be installed before its policy can be transmitted to the browser, there is a small window in which a race condition may occur: if the app launches a CT or TWA before the capability tokens have been issued and stored, the browser will receive no tokens and will therefore discard any cookies set during that initial request.
+
 \subsection{App–Browser Interaction}
 
 \begin{figure}[h]
