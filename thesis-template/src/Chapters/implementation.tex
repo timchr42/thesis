@@ -228,7 +228,7 @@ predefined & predefined & $\times$ (take private)\tnote{1} \\
 \end{tablenotes}
 
 \end{threeparttable}
-\caption{Allowed combinations of global and private policy entries}
+\caption{Allowed combinations of global and private policy entries.}
 \label{tab:policy-downgrade}
 \end{table}
 
@@ -256,10 +256,10 @@ An example can be found in \autoref{appendix:policy}.
 
 % Actual Generation Part
 Once all conflicts are resolved, the downgraded policy structures are passed into the token generation routines -- processing of the predefined map and wildcard list.
-These functions iterate over the filtered domain and cookie lists, creating one encrypted capability token per entry using \texttt{generateSingleToken(domain, cookie\_name, "*", globalJar, package\_name, version\_name, rights)}.
+These functions iterate over the filtered domain and cookie lists, creating one encrypted capability token per entry using \texttt{generateSingleToken(domain, cookie\_name, ""*", globalJar, package\_name, version\_name, rights)}.
 As a result, only conflict-free and least-privilege token objects of the format described in \autoref{sec:token} are generated:
 
-Note that the classic wildcard tokens omit the \texttt{cookie\_name} and \texttt{cookie\_value} fields, using \texttt{"*"} as placeholder value to indicate that they apply to all cookies for the given domain.
+Note that the classic wildcard tokens omit the \texttt{cookie\_name} and \texttt{cookie\_value} fields, using ``\texttt{*}'' as placeholder value to indicate that they apply to all cookies for the given domain.
 Ambient tokens extend this paradigm further by also omitting the \texttt{domain} field, effectively applying to all domains.
 For wildcard tokens, the rights filed is set to \texttt{NONE} by default.
 This is due to the reason that wildcard tokens stay the way they are and are used as a blueprint for the browser to generate final tokens when cookies are actually received from the network and hence we do not want developers to accidentally overwrite the cookie value and thereby break the system.
@@ -391,7 +391,7 @@ This ensures that all unmodified web behavior remains intact while Byetrack enfo
 
 Before the token is serialized again and handed back up to the java layer to be sent to the app, we need to make sure that the token does not already exist in the app's private jar.
 For this, we fetch the cookie header stored in the top level browsing context and check if the cookie encapsulated by the token is already present in the header.
-This is done by re-constructing the standard cookie representation "\texttt{token.name}=\texttt{token.value}" and checking if it is contained in the merged cookie header stored in the top level browsing context, used for outgoing requests.
+This is done by re-constructing the standard cookie representation ``\texttt{token.name}=\texttt{token.value}'' and checking if it is contained in the merged cookie header stored in the top level browsing context, used for outgoing requests.
 Note, that for simplictly we only consider the standard cookie representation here and do not check for additional attributes such as \texttt{Path}, \texttt{Domain}, or \texttt{Secure}, which could be added in a more advanced implementation \autoref{chap:future_work}.
 If the token is found there, we discard it as the app already stores it in its private jar and there is no need to return it again.
 Otherwise, the token payload is serialized back into its JSON representation and then Base64-encoded, signed and encrypted the same way as during generation, before it is added to a temporary map stored in the \texttt{HttpBaseChannel} object by using its internal channel.
@@ -405,46 +405,46 @@ The \texttt{EmitByetrackTokensToGeckoView()} helper serializes this in-memory ma
 Before emitting, the function checks a boolean flag and a unique batch identifier to prevent re-emitting the same batch of tokens multiple times for a single channel instance.
 Using mozillas JSON writer utility, the function iterates over the map entries, associating each domain with an array of token strings.
 The output of the JSON follows the same structure as the one used during token generation, ensuring consistency between the two processes and thereby simplifying parsing on the receiving end.
-The function uses the global \texttt{nsIObserverService} to broadcast a notification with the topic "byetrack-final-tokens".
+The function uses the global \texttt{nsIObserverService} to broadcast a notification with the topic ``byetrack-final-tokens''.
 This effectively acts as an IPC bridge between the networking layer in C++ and JavaScript/Java.
 After emitting the tokens, the internal map is cleared to avoid redundant emissions.
 
 By performing this emission inside \texttt{HttpChannelParent}'s \textsc{OnStopRequest()}, we guarantee that the final set of captured tokens is only emitted once the HTTP transaction has completed and all cookies have been processed.
 This ensures that no partial or intermediate state is sent to the embedding application.
 
-On the embedding side, the "byetrack-final-tokens" observer event is handled within \texttt{GeckoViewNavigation}, the same place where the threading in \texttt{GeckoView} started.
-The observer's \textsc{observe()} method processes the serialized JSON map and uses \texttt{GeckoView}'s event dispatch system to send a message of type "GeckoView:Byetrack:FinalTokens" carrying the tokens and the application identity (package name).
-This event is caught on the Java side inside the responsible \texttt{GeckoSession} -- the same locaiton where LoadUri and similar events are processed.
-When the "GeckoView:Byetrack:FinalTokens" event is received, the Java handler constructs a \texttt{ContentValues} ~\cite{android:contentvalues} object containng the token JSON and writes it to the application's registered \texttt{ContentProvider} ~\cite{android:contentprovider}, allowing it to update its local capability store.
+On the embedding side, the \texttt{byetrack-final-tokens} observer event is handled within \texttt{GeckoViewNavigation}, the same place where the threading in \texttt{GeckoView} started.
+The observer's \textsc{observe()} method processes the serialized JSON map and uses \texttt{GeckoView}'s event dispatch system to send a message of type \texttt{GeckoView:Byetrack:FinalTokens} carrying the tokens and the application identity (package name).
+This event is caught on the Java side inside the responsible \texttt{GeckoSession}, the same locaiton where LoadUri and similar events are processed.
+When the \texttt{GeckoView:Byetrack:FinalTokens} event is received, the Java handler constructs a \texttt{ContentValues} ~\cite{android:contentvalues} object containng the token JSON and writes it to the application's registered \texttt{ContentProvider} ~\cite{android:contentprovider}, allowing it to update its local capability store.
 
 
 \subsection{Additional Utility}
 \label{sec:utility}
 
 All additional utility functions are implemented in a separate \texttt{ContentProvider} ~\cite{android:contentprovider} exposed by the browser.
-In this content provider, we leverage the parameter "method" of the \texttt{call} function ~\cite{android:contentprovider:call} to distinguish between the different utility functions.
+In this content provider, we leverage the parameter ``method'' of the \texttt{call} function ~\cite{android:contentprovider:call} to distinguish between the different utility functions.
 This also implies that all results are returned as a Bundle object, which is the standard return type of the call function.
 The data for each function to work on is passed via remaining parameters of the function (\texttt{arg} and \texttt{extras}) if necessary. 
 
 \paragraph{GetTokenNames.} 
-If the method parameter is set to \texttt{"get\_token\_cookie\_names"}, the function expects a list of capability tokens in JSON array format as the \texttt{arg} parameter.
+If the method parameter is set to \texttt{get\_token\_cookie\_names}, the function expects a list of capability tokens in JSON array format as the \texttt{arg} parameter.
 Each token is decoded from its encrypted form using the \texttt{Token.decodeEncrypted()} function, which reconstructs the underlying \texttt{TokenPayload}.
 If the decoded token's \texttt{applicationId} does not match the caller's package name, the request is rejected.
 Otherwise, the function adds the mapping between the token string and its associated cookie name to the resulting \texttt{Bundle}, which is then returned to the caller.
 This enables external applications (e.g., the Byetrack client library) to inspect which cookie names are encapsulated by their issued capability tokens, without disclosing data from other apps.
 
 \paragraph{GetTokenValue.}
-If the method parameter is set to \texttt{"get\_token\_cookie\_value"}, the function expects a single encrypted capability token as the \texttt{arg} parameter.
+If the method parameter is set to \texttt{get\_token\_cookie\_value}, the function expects a single encrypted capability token as the \texttt{arg} parameter.
 Similar to the previous case, the token is decoded and verified against the caller's package name.
 Afterwards, the browser verifies the access rights encoded within the capability token.
-The provider returns the cookie value only if the payload's is readable (\texttt{canRead() is true}, in which case the value is included in the "\texttt{value}" field of the result \texttt{Bundle}.
+The provider returns the cookie value only if the payload's is readable (\texttt{canRead() is true}, in which case the value is included in the ``\texttt{value}'' field of the result \texttt{Bundle}.
 Otherwise, a permission error string is returned.
 This design enforces read isolation and ensures that only apps possessing valid read rights for a specific capability can query associated cookie values.
 
 \paragraph{WriteTokenValue.}
-If the method parameter is set to \texttt{"write\_token\_cookie\_value"}, the provider allows controlled modification of the cookie value embedded in a capability token.
+If the method parameter is set to \texttt{write\_token\_cookie\_value}, the provider allows controlled modification of the cookie value embedded in a capability token.
 Again, the encrypted token is decoded, verified against the caller's package name, and its permissions checked via \textsc{canWrite()}.
-If write access is permitted, the new cookie value is taken from the \texttt{extras} bundle under the key \texttt{"value"}.
+If write access is permitted, the new cookie value is taken from the \texttt{extras} bundle under the key ``\texttt{value}''.
 Since all fields of the payload are immutable, a new \texttt{TokenPayload} instance is created internally with the updated value, re-signed using the browser's signing key, and re-encrypted into a new token string.
 The updated token and its target domain are then returned to the caller.
 This process ensures that all token modifications remain cryptographically verifiable and bound to the correct application context.
@@ -471,7 +471,7 @@ When the browser calls \texttt{insert()}, the library first verifies the calling
 Upon successful verification, the transmitted tokens, typically provided as a key-value map containing both final and wildcard tokens are persisted locally.
 
 Tokens are stored in \texttt{SharedPreferences} ~\cite{android:sharedpreferences} under separate namespaces --- \texttt{final\_token}, \texttt{wildcard\_token}, and \texttt{is\_ambient} --- to distinguish between different token types.
-The additional ambient flag indicates whether the app is currently operating in "ambient mode", which is crucial for correctly interpreting tokens that otherwise share the same structure.
+The additional ambient flag indicates whether the app is currently operating in ``ambient mode'', which is crucial for correctly interpreting tokens that otherwise share the same structure.
 
 \texttt{SharedPreferences} were chosen for simplicity, persistence across restarts, and asynchronous write support, characteristics well suited for our lightweight storage requirements.
 The \texttt{TokenManager} class abstracts all access to this local storage, offering thread-safe read and write operations and providing convenience wrappers to fetch or update specific token sets.

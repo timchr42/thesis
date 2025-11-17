@@ -44,7 +44,7 @@ Our approach extends this idea by including the cookie information and other met
 the browser issues these tokens according to the app's policy, and the app presents them in subsequent requests to either access the browser's shared cookie jar or store cookies in its own app-local storage.
 
 % --------------Security-of-Hybrid-Web/Mobile-Apps----------------------------
-The work of Georgiev et al. titled "Breaking and Fixing Origin-Based Access Control in Hybrid Web Applications"~\cite{georgiev2014breaking} highlights critical failures in how hybrid apps enforce origin boundaries.
+The work of Georgiev et al. titled ``Breaking and Fixing Origin-Based Access Control in Hybrid Web Applications''~\cite{georgiev2014breaking} highlights critical failures in how hybrid apps enforce origin boundaries.
 Specifically, they show that WebViews and hybrid frameworks often bypass or misapply the Same-Origin Policy (SOP), enabling attackers to inject or reuse authentication tokens across apps and domains.
 Their proposed mitigation involves reintroducing stricter origin enforcement tied to app identities.
 Our approach builds on this idea by using capability tokens to encode both the origin and the app context explicitly, thereby preventing unauthorized reuse or delegation.

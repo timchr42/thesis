@@ -4,7 +4,7 @@
 \label{chap:method}
 
 %\paragraph{Main Goal.}
-The main research goal is to prevent HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by addressing the underlying weaknesses of CustomTabs (CTs) and TrustedWebActivities(TWAs) (\autoref{sec:hytrack-weaknesses}), while adhering to the design goals defined by Wessels et al. (\autoref{sec:hytrack-goals}).
+The main research goal is to prevent HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by addressing the underlying weaknesses of CustomTabs (CTs) and TrustedWebActivities (TWAs) (\autoref{sec:hytrack-weaknesses}), while adhering to the design goals defined by Wessels et al.~ (\autoref{sec:hytrack-goals}).
 Unlike previously discussed mitigation strategies such as Browser State Partitioning or Forced User Interaction (\autoref{sec:hytrack-mitigations}), the proposed approach aims to maintain usability and compatibility while providing strong privacy guarantees.
 
 %\paragraph{Core Idea.}
@@ -12,7 +12,7 @@ The core idea is to encapsulate cookie access within fine-grained capability tok
 Depending on the policy configuration, the app receives capabilities that either allow the domain's cookies to be shared across apps or restrict them to app-specific storage.
 When the app launches a URL in the browser, it transmits these capabilities along with the request.
 These capabilities determine how the browser handles cookies for that session, effectively isolating or sharing them based on the developer's intentions.
-This ensures that cookies from "trusted" domains intended for benign cross-app sharing are accessible to multiple apps, while cookies from "untrusted" domains remain isolated within each app's private storage and are only sent to the corresponding web server.
+This ensures that cookies from ``trusted'' domains intended for benign cross-app sharing are accessible to multiple apps, while cookies from ``untrusted'' domains remain isolated within each app's private storage and are only sent to the corresponding web server.
 
 Consequently, this design prevents unauthorized cross-app tracking while preserving legitimate use cases such as Single Sign-On and session continuity.
 Because the system operates solely at the app–browser boundary, it maintains full compatibility with existing web platform features and requires no changes to the browser UI.
@@ -48,7 +48,7 @@ To make our design unspoofable, we also needed to conduct modifications to the d
 \subsection{Developer Policy}
 Developers define a JSON policy that specifies which domains may share browser state and, optionally, which cookies are expected from each domain.
 This allows granular control beyond simple trusted/untrusted domain distinctions, for example, isolating third-party cookies while permitting integration with a developer's own authentication domain or SSO provider.
-If no policy is provided, the browser falls back to "ambient mode", where all cookies are stored in the shared jar for backwards compatibility.
+If no policy is provided, the browser falls back to ``ambient mode'', where all cookies are stored in the shared jar for backwards compatibility.
 
 \subsection{Capability Initialization}
 
@@ -61,7 +61,8 @@ If no policy is provided, the browser falls back to "ambient mode", where all co
   \label{fig:initialization_flow}
 \end{figure}
 
-During app installation, the installer extracts and transmits the policy to the browser.
+\autoref{fig:initialization_flow} illustrates the flow of capability initialization during app installation.
+First, the installer extracts and transmits the policy to the browser.
 The browser validates and sanitizes the policy to ensure minimal privilege, removing conflicting or ambiguous entries.  
 From the sanitized policy, the browser generates capability tokens as follows:
 \begin{itemize}
@@ -70,7 +71,7 @@ From the sanitized policy, the browser generates capability tokens as follows:
   \item If no policy is provided, a single ambient capability is issued, reverting to the default shared-cookie behavior.
 \end{itemize}
 
-Each token is signed and encrypted before being sent to the app, which stores wildcard and final tokens in private storage for later use (\autoref{fig:initialization_flow}).
+Each token is signed and encrypted before being sent to the app, which stores wildcard and final tokens in private storage for later use.
 When the app is updated, the installer retransmits the policy so that the browser can reissue capabilities consistent with the new app version.
 
 Because the app must already be installed before its policy can be transmitted to the browser, there is a small window in which a race condition may occur: if the app launches a CT or TWA before the capability tokens have been issued and stored, the browser will receive no tokens and will therefore discard any cookies set during that initial request.
