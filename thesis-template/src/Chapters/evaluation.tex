@@ -61,7 +61,7 @@ Our results focus on three main aspects: the mitigation of the HyTrack attack, v
 \subsection{Mitigation of HyTrack}
 
 We first replicated the HyTrack attack under baseline conditions.
-When both HyTrack apps were installed without a policy, the tracking domain successfully set and retrieved a persistent identifier cookie shared across both applications--confirming the presence of cross-app tracking as described in the original work.
+When both HyTrack apps were installed without a policy, the tracking domain successfully set and retrieved a persistent identifier cookie shared across both applications, confirming the presence of cross-app tracking as described in the original work.
 
 After applying our mitigation framework with a policy marking the tracking domain as private, this behavior was eliminated.
 The browser correctly issued a capability to the app encapsulating the tracking cookie, instead of storing it in its global jar.
@@ -69,16 +69,7 @@ Consequently, when the second app opened a TWA to the same domain, no cookie was
 Each app thus maintained an independent cookie context, effectively breaking the cross-app tracking channel.
 
 Subsequent requests within each app still reused their local capability tokens, preserving session continuity within the same app.
-These results demonstrate that our mitigation successfully isolates cookie state across apps while preserving per-app continuity--a key goal of our approach.
-
-%\subsection{Elimination of CT/TWA Weaknesses} Move to Background "Our Approach"
-%\begin{itemize}
-%  \item \textbf{Explicit Cookie Isolation:} Cookies are stored only if a capability for the corresponding domain exists.  
-%    Based on the access rights granted by the capability, cookies are either stored in the shared jar or returned to the app for isolated local storage.
-%  \item \textbf{App-Aware Browser Context:} Each capability encodes the app's identity and version, enabling the browser to enforce per-app cookie policies and invalidate outdated tokens.
-%  \item \textbf{Capability-Scoped Access Control:} Third-party domains without valid capabilities cannot access shared state, thereby blocking cross-app tracking.  
-%    Legitimate use cases such as Single Sign-On (SSO) remain supported if the app developer explicitly allows them in the policy.
-%\end{itemize}
+These results demonstrate that our mitigation successfully isolates cookie state across apps while preserving per-app continuity --- a key goal of our approach.
 
 \subsection{Verification of Design Goals}
 

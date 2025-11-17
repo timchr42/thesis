@@ -13,20 +13,6 @@
 
 % --------------------Related Work--------------------------
 
-Tracking mechanisms are typically divided into two broad categories: stateful and stateless tracking.
-Stateless tracking, also known as fingerprinting, infers a user's identity based on a combination of device-specific attributes.
-Consequently, this method is hard to detect and block, but is also inherently less reliable, as small system changes may alter the fingerprint and disrupt identification.
-
-Instead, stateful tracking relies on storing unique identifiers on the client device, most commonly through cookies or local storage.
-When a user revisits a site or interacts with embedded third-party content across domains, these identifiers are sent along with requests, allowing persistent recognition.
-While straightforward and highly effective, stateful tracking has become increasingly restricted through browser policies (e.g., third-party cookie blocking) and mobile platform changes such as the ability to disable the Google Advertising ID (GAID) on Android.
-
-% --------------------Other tracking attacks (Facebook localhost leak)--------------------------
-This problem not only affects the web, but also extends into the mobile ecosystem, as recently demonstrated by the Facebook Localhost Scandal~\cite{localleaks} that exposed a covert tracking method used by Meta and Yandex on Android.
-In this case, their apps (e.g., Instagram) silently listened on localhost ports to receive browser tracking data -- such as mobile browsing sessions and web cookies -- sent from websites embedding Meta Pixel or Yandex scripts.
-This allowed the apps to link web activity to logged-in users, bypassing the browser's and Android's privacy protections.
-Although the practice was discontinued shortly after public disclosure, it highlighted a critical privacy gap between web content and native apps on mobile platforms.
-
 HyTrack \cite{USENIX:Wessels:2025} demonstrates a novel cross-app and cross-web tracking technique in the Android ecosystem by exploiting the shared cookie storage between Custom Tabs (CTs) and Trusted Web Activities (TWAs).
 This allows persistent tracking of users across multiple applications and the browser, even surviving user efforts to reset or sanitize their environments.
 
@@ -34,10 +20,10 @@ This allows persistent tracking of users across multiple applications and the br
 The need to address HyTrack becomes even more critical in light of additional research on Custom Tabs.
 Beer et al.~\cite{10646644} conducted a comprehensive security analysis of CTs and revealed that they can be exploited for state inference, SameSite cookie bypass, and UI-based phishing attacks.
 Their work further shows that Custom Tabs are widely adopted, with over 83\% of top Android apps using them, often via embedded libraries.
-These findings reinforce that CTs are a high-value attack surface and that the shared browser state -- central to HyTrack -- has broader security implications.
+These findings reinforce that CTs are a high-value attack surface and that the shared browser state --- central to HyTrack --- has broader security implications.
 As TWAs are a specialized form of CTs, they are similarly affected, further enabling the tracking to be fully disguised.
 
-While HyTrack highlights a serious privacy vulnerability, no concrete mitigation has been proposed that balances privacy with the legitimate need for seamless web integration -- such as Single Sign-On or ad delivery -- within mobile apps.
+While HyTrack highlights a serious privacy vulnerability, no concrete mitigation has been proposed that balances privacy with the legitimate need for seamless web integration within mobile apps, such as Single Sign-On or ad delivery.
 This can be seen by taking a closer look at the two possible mitigation strategies discussed by the authors, namely Browser State Partitioning and Forced User Interaction.
 
 Modern browsers prominently adopt state partitioning to combat third-party tracking.

@@ -8,25 +8,27 @@
 
 % (- Introduce Capabilities/Tokens?)
 
-Before deving into the design and implementation of our capability-based mitigation against HyTrack, we first cover Capabilities and Capability-based Security (\autoref{sec:capabilities}), as well as provide a detailed overview of Custom Tabs and Trusted Web Activities on Android (\autoref{sec:customtabs-twas}).
-Finally, we revisit the HyTrack attack, its weaknesses, goals, and proposed mitigations (\autoref{sec:hytrack}), and outline our threat model in (\autoref{sec:threat_model}).
+Before presenting the design and implementation of our mitigation, we first provide the necessary background on web tracking (\autoref{sec:tracking-web-mobile}), Android's web content integration mechanisms (\autoref{sec:customtabs-twas}), and the HyTrack attack (\autoref{sec:hytrack}).
+Then, we introduce the concept of capabilities and capability-based security (\autoref{sec:capabilities}), which forms the basis of our approach (\autoref{sec:our-approach}).
+Finally, we summarize the threat model we assume throughout this thesis (\autoref{sec:threat_model}).
 
-\section{Capabilities and Capability-based Security}
-\label{sec:capabilities}
-%What are Capabilities?
 
-% Capability defintion taken from my report
-A capability is an unforgeable and tamperproof token of authority that grants its holder specific access rights to a protected object.
-Unlike traditional access-control lists (ACLs), which base decisions on user or process identity, capabilities combine an object reference with an associated permission set, thereby enabling object-centric and decentralized access control.
-A capability system enforces the principle of least privilege by ensuring that possession of a capability is both necessary and sufficient for performing an operation on the referenced object.
-This follows the classic understanding established in early capability systems such as Hydra ~\cite{wulf1974hydra} and EROS ~\cite{shapiro1999eros}, where capabilities are described as "prima facie evidence of authority".
+\section{Tracking on the Web and Mobile}
+\label{sec:tracking-web-mobile}
 
-Because the right to access is embodied in the capability itself, no central authority needs to be consulted at the moment of use.
-Classical capability systems even allow controlled delegation by transferring capabilities between processes.
-In contrast, Byetrack deliberately prohibits capability transfer altogether, ensuring that capabilities remain bound to the originating application.
-Different implementations vary in how capabilities are stored, propagated, and revoked, yet all enable finer-grained control over authority than identity-based approaches.
+Tracking mechanisms are typically divided into two broad categories: stateful and stateless tracking.
+Stateless tracking, also known as fingerprinting, infers a user's identity based on a combination of device-specific attributes ~\cite{laperdrix2020browser}.
+Consequently, this method is hard to detect and block, but is also inherently less reliable, as small system changes may alter the fingerprint and disrupt identification.
 
-In the context of this thesis, capability-based control offers an elegant way to isolate shared browser state and restrict the propagation of cookies, ensuring that only entities explicitly possessing a valid capability may access a particular storage domain.
+Instead, stateful tracking relies on storing unique identifiers on the client device, most commonly through cookies or local storage.
+When a user revisits a site or interacts with embedded third-party content across domains, these identifiers are sent along with requests, allowing persistent recognition.
+While straightforward and highly effective, stateful tracking has become increasingly restricted through browser policies (e.g., third-party cookie blocking) and mobile platform changes such as the ability to disable the Google Advertising ID (GAID) on Android ~\cite{google:gaid}.
+
+% --------------------Other tracking attacks (Facebook localhost leak)--------------------------
+This problem not only affects the web, but also extends into the mobile ecosystem, as recently demonstrated by the Facebook Localhost Scandal~\cite{localleaks} that exposed a covert tracking method used by Meta and Yandex on Android.
+In this case, their apps (e.g., Instagram) silently listened on localhost ports to receive browser tracking data, such as mobile browsing sessions and web cookies, sent from websites embedding Meta Pixel or Yandex scripts.
+This allowed the apps to link web activity to logged-in users, bypassing the browser's and Android's privacy protections.
+Although the practice was discontinued shortly after public disclosure, it highlighted a critical privacy gap between web content and native apps on mobile platforms.
 
 \section{Custom Tabs and Trusted Web Activities on Android}
 \label{sec:customtabs-twas}
@@ -48,12 +50,8 @@ Can open any URL      & \CIRCLE & \CIRCLE & \CIRCLE & \Circle \tnote{3} \\
 \bottomrule
 \end{tabular}
 \Circle: unsupported, \CIRCLE: supported, \LEFTcircle: partially supported, 1: Owns the shared state, 2: Custom Tabs can be reduced to 50\% programmatically and minimized by users, 3: Requires associatation via asset links.
-\begin{tablenotes}
-\footnotesize
-\item This table is taken from Wessel et al.'s HyTrack paper~\cite{USENIX:Wessels:2025}.
-\end{tablenotes}
 \end{threeparttable}
-\caption{Overview of Web Content Integration Mechanisms on Android.}
+\caption{Overview of Web Content Integration Mechanisms on Android. \\(Taken from Wessel et al.'s HyTrack paper~\cite{USENIX:Wessels:2025})}
 \label{tab:webcontent-overview}
 \end{table}
 
@@ -88,17 +86,13 @@ Yet, the same integration that improves usability also blurs traditional securit
   \centering
   \includegraphics[width=1\textwidth]{hytrack_Flow_colored.pdf}
 
-  \begin{tablenotes}
-  \footnotesize
-  \item This table is adapted from Wessel et al.'s HyTrack paper~\cite{USENIX:Wessels:2025}.
-  \end{tablenotes}
-  \caption{High-level Overview of the HyTrack Attack Flow.}
+  \caption{High-level Overview of the HyTrack Attack Flow. \\(Adapted from Wessel et al.'s HyTrack paper~\cite{USENIX:Wessels:2025})}
   \label{fig:hytrack_overview}
 \end{figure}
 
 HyTrack, introduced by Wessels et al. \cite{USENIX:Wessels:2025}, exposes a fundamental privacy flaw in this shared-state model.
 It demonstrates that third-party libraries embedded in multiple apps can exploit the browser's global cookie storage to identify and track users across applications and even into their normal web browsing sessions.
-By leveraging standard Android features --- rather than any explicit vulnerability --- HyTrack highlights how the very mechanisms designed to make CTs and TWAs seamless for users can also undermine Android's app isolation guarantees.
+By leveraging standard Android features, rather than any explicit vulnerability, HyTrack highlights how the very mechanisms designed to make CTs and TWAs seamless for users can also undermine Android's app isolation guarantees.
 
 Whenever an app opens a CT or TWA to display web content, the request is executed within the context of the user’s default browser.
 This means that all cookies set by the visited domain are stored in the browser's global cookie jar and automatically reused in subsequent sessions, even if they originate from different apps.
@@ -166,9 +160,34 @@ Furthermore, this approach hands control and responsibility to the user, which i
 Other strategies, such as limiting CTs and TWAs to First-Party Domains or disabling them for specific domains via browser options ultimately reflect the aforementioned approaches, relying on either browser state partitioning or forced user interaction.
 Therefore, these are not effective countermeasures against HyTrack.
 
-\subsection{Our Approach}
-\label{sec:hytrack-our-approach}
-TODO?
+\section{Capabilities and Capability-based Security}
+\label{sec:capabilities}
+
+% Capability defintion taken from my report
+A capability is an unforgeable and tamperproof token of authority that grants its holder specific access rights to a protected object.
+Unlike traditional access-control lists (ACLs), which base decisions on user or process identity, capabilities combine an object reference with an associated permission set, thereby enabling object-centric and decentralized access control.
+A capability system enforces the principle of least privilege by ensuring that possession of a capability is both necessary and sufficient for performing an operation on the referenced object.
+This follows the classic understanding established in early capability systems such as Hydra ~\cite{wulf1974hydra} and EROS ~\cite{shapiro1999eros}, where capabilities are described as "prima facie evidence of authority".
+
+Because the right to access is embodied in the capability itself, no central authority needs to be consulted at the moment of use.
+Classical capability systems even allow controlled delegation by transferring capabilities between processes.
+In contrast, Byetrack deliberately prohibits capability transfer altogether, ensuring that capabilities remain bound to the originating application.
+Different implementations vary in how capabilities are stored, propagated, and revoked, yet all enable finer-grained control over authority than identity-based approaches.
+
+
+\section{Our Approach}
+\label{sec:our-approach}
+
+In the context of this thesis, capability-based control offers an elegant way to isolate shared browser state and restrict the propagation of cookies, ensuring that only entities explicitly possessing a valid capability may access a particular storage domain.
+The weaknesses are addressed as follows:
+
+\begin{itemize}
+  \item \textbf{Explicit Cookie Isolation:} Cookies are stored only if a capability for the corresponding domain exists.  
+    Based on the access rights granted by the capability, cookies are either stored in the shared jar or returned to the app for isolated local storage.
+  \item \textbf{App-Aware Browser Context:} Each capability encodes the app's identity and version, enabling the browser to enforce per-app cookie policies and invalidate outdated tokens.
+  \item \textbf{Capability-Scoped Access Control:} Third-party domains without valid capabilities cannot access shared state, thereby blocking cross-app tracking.  
+    Legitimate use cases such as Single Sign-On (SSO) remain supported if the app developer explicitly allows them in the policy.
+\end{itemize}
 
 \section{Threat Model}
 \label{sec:threat_model}
