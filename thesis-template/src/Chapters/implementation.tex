@@ -392,7 +392,6 @@ This ensures that all unmodified web behavior remains intact while Byetrack enfo
 Before the token is serialized again and handed back up to the java layer to be sent to the app, we need to make sure that the token does not already exist in the app's private jar.
 For this, we fetch the cookie header stored in the top level browsing context and check if the cookie encapsulated by the token is already present in the header.
 This is done by re-constructing the standard cookie representation ``\texttt{token.name}=\texttt{token.value}'' and checking if it is contained in the merged cookie header stored in the top level browsing context, used for outgoing requests.
-Note, that for simplicity we only consider the standard cookie representation here and do not check for additional attributes such as \texttt{Path}, \texttt{Domain}, or \texttt{Secure}, which could be added in a more advanced implementation \autoref{chap:future_work}.
 If the token is found there, we discard it as the app already stores it in its private jar and there is no need to return it again.
 Otherwise, the token payload is serialized back into its JSON representation and then Base64-encoded, signed and encrypted the same way as during generation, before it is added to a temporary map stored in the \texttt{HttpBaseChannel} object by using its internal channel.
 This map associates each domain with an array of token strings, allowing multiple tokens for different domains to be staged for return to the application.
