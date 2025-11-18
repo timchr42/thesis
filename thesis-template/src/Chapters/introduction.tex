@@ -11,23 +11,20 @@
 
 % Motivation for CTs and TWAs
 In recent years, Android applications have increasingly integrated web content into their interfaces to enhance user experience and streamline features such as authentication and monetization.
-To enable this, developers commonly rely on Custom Tabs (CTs) ~\cite{android:customtabs} and Trusted Web Activities (TWAs) ~\cite{android:trustedwebactivities} --- technologies that allow seamless, browser-backed web integration while preserving native-like performance and appearance.
+To enable this, developers commonly rely on Custom Tabs (CTs) ~\cite{android:customtabs} and Trusted Web Activities (TWAs) ~\cite{android:trustedwebactivities}, technologies that allow seamless, browser-backed web integration while preserving native-like performance and appearance.
 This integration enables web-based functionality such as Single Sign-On (SSO) or in-app advertising without forcing users to leave the application or manage separate browser sessions.
 
 % Problem Statement
 However, these benefits come at a cost.
 CTs and TWAs share the browser's cookie storage across all apps, providing session continuity but also introducing severe privacy vulnerabilities.
-Recent research by Wessels et~al.~\cite{USENIX:Wessels:2025} demonstrated HyTrack, a novel tracking technique that exploits this shared browser state to persistently identify users across different applications and the web, even surviving device changes, cookie clearing, or browser switching.
+Recent research by Wessels et~al. ~\cite{USENIX:Wessels:2025} demonstrated HyTrack, a novel tracking technique that exploits this shared browser state to persistently identify users across different applications and the web, even surviving device changes, cookie clearing, or browser switching.
 
-HyTrack operates by embedding a third-party library into multiple unrelated apps.
-Each app, unaware of the library's true purpose, opens a CT or TWA to the same tracking domain.
-This domain sets a unique identifier in a cookie stored in the browser's shared cookie jar.
-When another app using the same library loads content from the same domain, the cookie is automatically sent, enabling the tracker to correlate user activity across apps and into the regular browser context.
-Due to Android's automatic backup mechanisms, the tracking ID can even be restored after a factory reset, rendering it more persistent than the evercookie~\cite{kamkar2010evercookie}.
+HyTrack enables persistent cross-app tracking as long as developers integrate the tracking library as instructed.
+Its identifiers can even survive device resets through Android's backup mechanisms, giving it Evercookie-like persistence~\cite{kamkar2010evercookie}.
 
 % Solution - HyTrack mitigation
-In this thesis, we present Byetrack --- to the best of our knowledge, the first mitigation framework that addresses these privacy issues while preserving the legitimate use cases of CTs and TWAs.
-Byetrack allows developers to preserve the benefits of CTs and TWAs, such as SSO and monetization, while preventing invisible cross-app tracking demonstrated by HyTrack.
+In this thesis, we present Byetrack --- to the best of our knowledge, the first mitigation framework that addresses these privacy issues while preserving the legitimate use cases of CTs and TWAs, despite the HyTrack authors' claim that this would require major changes to their underlying design.
+Byetrack allows developers to preserve the benefits of CTs and TWAs, such as SSO and monetization, while preventing invisible cross-app tracking identified by HyTrack.
 Our approach applies the principle of capability-based security: fine-grained, unforgeable tokens that grant specific access rights to a resource.
 In this context, the browser issues capabilities based on a developer-defined policy, which explicitly determines which domains may access the shared browser state.
 All other domains are confined to app-local storage, thereby preventing unauthorized cross-app cookie sharing while preserving trusted integrations.
@@ -36,7 +33,8 @@ All other domains are confined to app-local storage, thereby preventing unauthor
 Beyond mitigating HyTrack-style tracking, Byetrack gives developers the option to fully decouple their web content from the shared browser state, allowing independent cookie management for greater control and privacy.
 
 % Results
-%Our evaluation demonstrates that Byetrack effectively prevents HyTrack's cross-app tracking vector with minimal developer effort: it requires only replacing the original browser library with our modified version that enforces capability-based isolation, leaving existing app logic and web features fully intact.
+Our evaluation demonstrates that Byetrack effectively prevents HyTrack's cross-app tracking vector while preserving Android's core functionality and existing web features.
+On the app side, developers only need to adopt our Byetrack-enabled browser library and provide a small policy file; the remaining support is supplied by a slightly modified Android version.
 
 % Contributions
 %\paragraph{Contributions.}
