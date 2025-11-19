@@ -27,7 +27,7 @@
 % -----------------------------Evaluation---------------------------
 
 In this chapter, we present the evaluation of our mitigation framework against the HyTrack cross-app tracking attack.
-We first describe the experimental setup (\autoref{sec:eval-setup}), before detailing the results (\autoref{sec:eval-results}) that we observed and finally summarizing our findings (\autoref{sec:summary}).
+We first describe the experimental setup (\autoref{sec:eval-setup}), before detailing the results (\autoref{sec:eval-results}) that we observed and finally interpreting our findings (\autoref{sec:interpret-results}).
 
 \section{Experimental Setup}
 \label{sec:eval-setup}
@@ -44,13 +44,13 @@ Integrating our mitigation framework into these apps required no code changes to
 Developers only need to replace the standard AndroidX Browser dependency with our modified version that supports the capability-based mitigation mechanism and add a policy file.
 Instead of installing the apps directly, we used our custom installer, which extracts and forwards the policy to the browser for token generation and issuance.
 
-Simply switching to our enhanced Firefox browser was insufficient, Because the original HyTrack apps rely on the Android Browser Helper library ~\cite{chrome:androidbrowserhelper} for launching TWAs --- a library that (among others) is tailored for establishing TWAs with Chrome for convenience. 
-Therefore, we removed the Android Browser Helper dependency and established the required session connection to Firefox manually, allowing the apps to open TWAs (or Custom Tab fallbacks) in our modified Fenix browser.
+Simply switching to our enhanced Firefox browser was insufficient, Because the original HyTrack apps rely on the Android Browser Helper library~\cite{chrome:androidbrowserhelper} for launching TWAs --- a library that (among others) is tailored for establishing TWAs with Chrome for convenience. 
+Therefore, we removed the Android Browser Helper dependency and established the required session connection to Firefox manually, allowing the apps to open TWAs (or CT fallbacks) in our modified Fenix browser.
 
 \subsection{Test Application}
 \label{sec:eval-test-app}
 To gain deeper insight into the runtime behavior of our framework, we implemented an additional test application.
-This app displays all capability tokens received from the browser when launching a Custom Tab or Trusted Web Activity to a specific domain, along with the corresponding cookies they encapsulate.
+This app displays all capability tokens received from the browser when launching a CT or TWA to a specific domain, along with the corresponding cookies they encapsulate.
 
 The app provides dedicated controls to launch both private and global domains (defined in its policy) to observe the browser's cookie-handling behavior.
 It also illustrates policy downgrading for ambiguous configurations, and allows testing of reading and writing cookie values via the issued capabilities.
@@ -104,9 +104,16 @@ The integration effort for developers remained minimal: replacing the browser li
 
 Overall, these experiments demonstrate that the framework behaves consistently across various configurations and can be adopted with very low developer overhead.
 
-\section{Summary}
-\label{sec:summary}
-In summary, the evaluation confirms that the proposed mitigation framework effectively prevents cross-app tracking by isolating cookies on a per-app basis, maintains full compatibility with existing web features and browser mechanisms, and introduces no significant usability or integration overhead.
+\section{Interpretation of Results}
+\label{sec:interp-results}
+
+The evaluation results demonstrate that our capability-based mitigation framework effectively prevents cross-app tracking via HyTrack without sacrificing web functionality or developer usability.
+By enforcing cookie isolation through app-defined policies, our system successfully breaks the cross-app tracking channel while maintaining per-app continuity and legitimate browser behavior.
+This confirms that capability-based access control, when integrated at the application–browser boundary, is a practical and efficient method to achieve fine-grained privacy guarantees without redesigning core browser storage mechanisms.
+
+Our findings further indicate that the use of a policy-driven model provides a clear balance between privacy and flexibility.
+Developers can selectively isolate untrusted domains while continuing to rely on the shared global cookie jar for legitimate cases such as SSO.
+This result suggests that privacy enforcement can be delegated to the developer, rather than statically enforced by the browser, while still ensuring strong isolation guarantees for users.
 
 % % Hypotheses    (ONLY NEEDED FOR PRPOSAL?)
 % \section{Hypotheses}

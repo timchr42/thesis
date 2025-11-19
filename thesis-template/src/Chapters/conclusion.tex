@@ -11,7 +11,7 @@ Application developers can define fine-grained policies that specify which domai
 During installation, the framework automatically generates cryptographically bound capability tokens for each application, which the browser verifies and enforces at runtime.
 Through this mechanism, Byetrack isolates cookies and related identifiers according to developer-defined trust boundaries, effectively limiting cross-app information leakage without breaking legitimate functionality.
 
-Byetrack extends the AndroidX Browser, Fenix, and GeckoView stacks to integrate policy enforcement directly into the Custom Tabs and Trusted Web Activity workflows.
+Byetrack extends the AndroidX Browser Library and Firefox for Android to integrate policy enforcement directly into the Custom Tabs and Trusted Web Activity workflows.
 Developers can further benefit by designating first-party cookies as private or by predefining specific trusted cookie names, allowing precise control over shared browser state.
 Experimental evaluation confirmed that the framework prevents unauthorized cookie sharing between apps while preserving compatibility with intended Single Sign-On scenarios.
 

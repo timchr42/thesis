@@ -4,7 +4,7 @@
 \label{chap:method}
 
 %\paragraph{Main Goal.}
-The main research goal is to prevent HyTrack's cross-app tracking attack \cite{USENIX:Wessels:2025} by addressing the underlying weaknesses of CustomTabs (CTs) and TrustedWebActivities (TWAs) (\autoref{sec:hytrack-weaknesses}), while adhering to the design goals defined by Wessels et al.~ (\autoref{sec:hytrack-goals}).
+The main research goal is to prevent HyTrack's cross-app tracking attack~\cite{USENIX:Wessels:2025} by addressing the underlying weaknesses of CustomTabs (CTs) and TrustedWebActivities (TWAs) (\autoref{sec:hytrack-weaknesses}), while adhering to the design goals defined by Wessels et al.~ (\autoref{sec:hytrack-goals}).
 Unlike mitigation strategies such as Browser State Partitioning or Forced User Interaction (\autoref{sec:hytrack-mitigations}), the proposed approach aims to maintain usability and compatibility while providing strong privacy guarantees.
 
 %\paragraph{Core Idea.}
@@ -19,10 +19,10 @@ Because the system operates solely at the app–browser boundary, it maintains f
 
 \section{Capability Tokens}
 Because capabilities are delegable by design, we must bind them to the app's identity.
-Without this binding, a malicious third-party library embedded in multiple apps could mount a collusion attack by reusing capabilities issued to another (more privileged) app, thereby bypassing the mitigation entirely.
+Without this binding, a malicious third-party library embedded in multiple apps could mount a collusion attack by reusing capabilities issued to another more privileged app, thereby bypassing the mitigation entirely.
 Therefore, we include the app's unique package name in the capability tokens, so that the browser can verify that the token is only used by the app it was issued to.
 A global jar flag indicates whether the cookie belongs to the shared global jar or to the app-specific isolated jar.
-The cookie data itself, name and value, is encapsulated in the token, along with rights defining the permitted actions (reading, writing, or both) on the cookie data later on.
+The cookie data (name and value) itself is encapsulated in the token, along with rights defining the permitted actions on the data later on (reading, writing, or both).
 Similar to JWTs~\cite{rfc7519}, our tokens are signed to identify tampering attempts.
 Due to the threat model assumptions (\autoref{sec:threat_model}), we additionally need to encrypt the tokens, so that a malicious third-party library embedded in the app cannot read the token contents and echo them back to its web server to circumvent the mitigation.
 
@@ -30,7 +30,7 @@ Due to the threat model assumptions (\autoref{sec:threat_model}), we additionall
 We distinguish between \emph{Wildcard} and \emph{Final} capability tokens.
 Final capabilities are fully specified tokens containing explicit cookie names and values.
 They stem from wildcard tokens and represent concrete cookie instances that are used directly for cookie enforcement.
-The wildcard tokens can be divided into Classic Wildcard and Predefined Capabilities.
+The wildcard tokens can be divided into \emph{Classic Wildcard} and \emph{Predefined Capabilities}.
 
 The classic wildcard capabilities are partially specified tokens that omit cookie names and values.
 Predefined capabilities are wildcard tokens that specify cookie names but omit values, providing more granular control over individual cookies.
@@ -42,13 +42,13 @@ In conclusion, we design our capability tokens to be identity-bound and cryptogr
 \section{Capability-Based Cookie Isolation Flow}
 
 To achieve this, a prototype framework named Byetrack was designed, implemented, and evaluated on Android.
-The framework consists of three main components: a custom installer for policy extraction, a helper library for application integration, and modifications to Firefox for Android (Fenix Project) ~\cite{firefox:fenix} and its underlying GeckoView engine ~\cite{firefox:geckoview} to enforce cookie isolation via capability tokens.
+The framework consists of three main components: a custom installer for policy extraction, a helper library for easier integration into the original AndroidX Browser library~\cite{android:androidxbrowser}, and modifications to Firefox for Android (Fenix Project)~\cite{firefox:fenix} and its underlying GeckoView engine~\cite{firefox:geckoview} to enforce cookie isolation via capability tokens.
 To make our design unspoofable, we also needed to conduct modifications to the default Android operating system to securely bind capabilities to app identities.
 
 \subsection{Developer Policy}
 Developers define a JSON policy that specifies which domains may share browser state and, optionally, which cookies are expected from each domain.
 This allows granular control beyond simple trusted/untrusted domain distinctions, for example, isolating third-party cookies while permitting integration with a developer's own authentication domain or SSO provider.
-If no policy is provided, the browser falls back to ``ambient mode'', where all cookies are stored in the shared jar for backwards compatibility.
+If no policy is provided, the browser falls back to ``ambient mode'', where all cookies are stored in the browser's shared cookie jar for backwards compatibility.
 
 \subsection{Capability Initialization}
 
@@ -88,7 +88,7 @@ Because the app must already be installed before its policy can be transmitted t
 We describe the methodology flow of the app–browser interaction in our Byetrack framework for CT and TWA launches, as shown in Figure~\ref{fig:app_browser_interaction}.
 
 When an app opens a URL through a CT or TWA, the stored wildcard and (initially empty) final tokens are attached to the intent that launches the browser.
-Upon receipt, the browser decrypts and validates each token by checking its signature, package name, version number, and target domain.
+Upon receipt, the browser decrypts and validates each token by checking its signature, package name and version number.
 Invalid tokens are discarded.
 The browser then uses the valid capabilities to determine how to store cookies received from the web server and to construct cookie headers for outgoing requests.
 
@@ -111,7 +111,7 @@ The latter appear in the global jar only when the app possesses a capability tha
 
 \subsection{Utility Interfaces}
 To improve transparency and developer control, the browser exposes a small set of utility interfaces that allow an app to list the cookie names contained in its final capabilities and to read or update their corresponding values.
-These utilities are necessary because, without them, an app could not access the cookies stored in its isolated jar, as they are encapsulated in encrypted capability tokens that the app cannot interpret on its own.
+These utilities are necessary, because without them, an app could not access the cookies stored in its isolated jar, as they are encapsulated in encrypted capability tokens that the app cannot interpret on its own.
 
 Access to these interfaces is strictly governed by capability rights: reading a value requires read permission, while updating it requires write permission.
 

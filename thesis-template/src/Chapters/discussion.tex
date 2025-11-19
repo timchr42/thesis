@@ -13,30 +13,10 @@
 
 % Discussion -> Why it matters, what it implies, what the limitations are, and how it connects to broader context
 
-In this chapter, we discuss the broader implications of these findings, relate them to our threat model and design goals, and analyze the strengths, limitations, and potential extensions of our approach.
-
-\section{Interpretation of Results}
-
-The evaluation results demonstrate that our capability-based mitigation framework effectively prevents cross-app tracking via HyTrack without sacrificing web functionality or developer usability.
-By enforcing cookie isolation through app-defined policies, our system successfully breaks the cross-app tracking channel while maintaining per-app continuity and legitimate browser behavior.
-This confirms that capability-based access control, when integrated at the application–browser boundary, is a practical and efficient method to achieve fine-grained privacy guarantees without redesigning core browser storage mechanisms.
-
-Our findings further indicate that the use of a policy-driven model provides a clear balance between privacy and flexibility.
-Developers can selectively isolate untrusted domains while continuing to rely on the shared global cookie jar for legitimate cases such as SSO.
-This result suggests that privacy enforcement can be delegated to the developer, rather than statically enforced by the browser, while still ensuring strong isolation guarantees for users.
-
-\section{Relation to the Threat Model and Design Goals}
-
-We evaluated our mitigation framework under a threat model in which app developers are benign and knowingly integrate third-party libraries for their functionality benefits, but are unaware that these libraries may perform cross-app tracking.
-Under this model, our approach effectively enforces isolation boundaries by preventing libraries from reusing cookies or tokens across applications.
-The framework assumes trust in the installer and browser components, which serve as the PEP responsible for capability issuance and validation.
-
-All three primary objectives identified by the HyTrack authors (\autoref{sec:hytrack-goals}) --- support for web features, seamless integration, and controlled access to shared browser state --- were satisfied.
-This provides strong evidence that our design can meet practical privacy requirements without degrading functionality or user experience.
-However, in cases where developers themselves act maliciously or deliberately misconfigure their policies, the framework cannot enforce protection.
-Addressing such cases would require additional mechanisms such as signed policies or verified app identities.
+In this chapter, we discuss the broader implications of the results presented in the previous chapter, focusing on how our findings affect developer workflows (\autoref{sec:developer}), compatibility with existing browser mechanisms (\autoref{sec:compatibility}), usability considerations (\autoref{sec:usability-adoption}), and performance aspects of the proposed framework (\autoref{sec:performance-overhead}).
 
 \section{Developer Empowerment and Transparency}
+\label{sec:dev-empowerment}
 
 Beyond mitigating HyTrack's tracking capabilities, our approach introduces a new dimension of developer transparency and control.
 Developers can explicitly define which domains and cookies should remain private, preventing accidental leakage of sensitive identifiers to third parties.
@@ -46,6 +26,7 @@ The ability to read and modify issued capability tokens directly from within the
 This developer-centric perspective distinguishes our approach from existing browser-level isolation mechanisms, which operate opaquely and offer little insight into how cookies are handled internally.
 
 \section{Compatibility with Existing Mechanisms}
+\label{sec:compatibility}
 
 Our mitigation mechanism is designed to coexist with, and complement, existing browser-level cookie isolation techniques such as CHIPS~\cite{googlechips}.
 If a capability authorizes access to the shared cookie jar, cookies are stored using Firefox’s native partitioning logic.
@@ -54,19 +35,26 @@ This hybrid model preserves the benefits of CHIPS while adding a developer-drive
 Such compatibility is critical for deployability, as it allows gradual integration into browsers without requiring the removal or modification of existing standards.
 
 \section{Usability and Adoption Considerations}
+\label{sec:usability-adoption}
 
-From a usability standpoint, our approach introduces no additional friction to either developers or end-users.
-Developers only need to include a policy file and rely on our modified AndroidX Browser library; the rest of the mitigation process occurs transparently.
-No new APIs, permissions, or configuration interfaces are required.
-This low entry barrier encourages incremental adoption, as developers can choose to isolate only certain domains or even only specific cookies without modifying their existing codebase.
-End-users benefit from enhanced privacy without perceivable changes in app or browser behavior.
+The usability and adoption of Byetrack depend largely on how the necessary platform changes are handled.
+If Android were to natively expose the caller UID in Intents --- as demonstrated in our prototype implementation ---, our mitigation introduces virtually no additional friction for developers or end-users.
+In this scenario, developers only need to include a policy file and depend on our modified AndroidX Browser library, as all remaining enforcement occurs transparently in the browser.
+No new APIs, permissions, or configuration steps are required.
 
-In practice, this simplicity makes the framework suitable for integration into existing Android ecosystems.
-A future version of the AndroidX Browser library could directly embed this logic, enabling widespread adoption without any additional setup effort by developers.
+This low integration effort enables incremental adoption: developers can choose to isolate only selected domains or even specific cookies without modifying their existing codebase. End-users benefit from stronger privacy guarantees without any visible change in app or browser behavior.
 
-A minor drawback arises from how tokens are reissued when an app is updated: the policy is transmitted again and new tokens are generated, which causes any cookies stored in the app's isolated jar to be discarded.
+Under such platform support, the framework integrates naturally into the existing Android ecosystem.
+A future release of the AndroidX Browser library could embed this logic directly, allowing widespread deployment without imposing additional work on developers.
+
+If, however, Android does not provide the caller UID in Intents by default, developers would need to build against a modified SDK to enable capability issuance.
+This requirement raises the barrier to adoption and may limit practical deployment.
+Nonetheless, even in this case, the developer-side integration remains minimal once the platform support is present.
+
+A minor usability limitation concerns app updates: when a policy is retransmitted and new tokens are issued, cookies previously stored in an app's isolated jar are discarded.
 
 \section{Performance Overhead}
+\label{sec:performance-overhead}
 
 \begin{table}[h]
 \centering

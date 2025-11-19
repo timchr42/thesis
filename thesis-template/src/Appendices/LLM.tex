@@ -20,17 +20,17 @@
 %
 %Without these tools the project would have taken significantly longer to complete.
 
-In the course of this thesis, I made use of several generative digital assistants strictly within the permitted scope (code generation, literature research, debugging support, and text rewriting/revision).
+During this thesis, I used several generative AI tools within the allowed scope (code generation, literature lookup, debugging help, and text revision).
 
-I used Claude Sonnet 4.0, embedded in Visual Studio Code, mainly to support my understanding of the Firefox/GeckoView codebase and to help integrate my own modifications into it.
-This included locating relevant files, understanding complex control flows, and identifying functions involved in multi-threaded operations.
-Claude was also used to clarify error messages and assist with debugging when manual investigation would have been overly time-consuming.
+Claude Sonnet 4.0, integrated into Visual Studio Code, supported me in navigating and understanding the Firefox/GeckoView codebase.
+It helped me locate relevant files, follow control flows, and identify functions involved in specific behaviors—tasks that would have been very time-consuming manually.
+Claude was also useful when writing the JSON token parser and serializer in Java and C++, and when selecting and using appropriate cryptographic libraries (e.g., HMAC-SHA256, AES-CBC with random IVs).
 
-ChatGPT (GPT-4/5 models) and Claude were additionally used for debugging support by explaining obscure compiler or runtime errors and suggesting possible fixes.
-At no point were these tools used to produce original scientific text; instead, they were used to rewrite, refine, and improve my own drafts to ensure clarity, conciseness, and correctness in technical sections.
+Both ChatGPT (GPT-4/5 models) and Claude were used for debugging support by explaining unclear compiler or runtime errors and suggesting fixes. While some suggestions (especially related to JNI) turned out to be unhelpful, others were surprisingly effective.
+Notably, ChatGPT helped point me toward ActivityStarter as the correct place in Android's source code to propagate the caller UID into an Intent.
 
-During development, I used GitHub Copilot for code auto-completion, especially for boilerplate patterns, common Android structures, and repetitive code segments.
-%Copilot served as an assistive tool to speed up development without generating novel architectural components.
+GitHub Copilot was used for code completion and to speed up writing boilerplate code, common Android patterns, and repetitive structures.
 
-Overall, these tools significantly accelerated the development and writing process by reducing the time spent searching through large codebases, debugging intricate issues, and polishing written text.
-All conceptual contributions, implementation decisions, and written content originate from my own work.
+For writing the thesis itself, I used ChatGPT to rephrase and improve technical sections for clarity, structure, and readability.
+
+Overall, these tools helped speed up the development and writing process by reducing the time needed to search through large codebases, debug complex issues, and refine written text.

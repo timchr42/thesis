@@ -11,13 +11,13 @@
 
 % Motivation for CTs and TWAs
 In recent years, Android applications have increasingly integrated web content into their interfaces to enhance user experience and streamline features such as authentication and monetization.
-To enable this, developers commonly rely on Custom Tabs (CTs) ~\cite{android:customtabs} and Trusted Web Activities (TWAs) ~\cite{android:trustedwebactivities}, technologies that allow seamless, browser-backed web integration while preserving native-like performance and appearance.
+To enable this, developers commonly rely on Custom Tabs (CTs)~\cite{android:customtabs} and Trusted Web Activities (TWAs)~\cite{android:trustedwebactivities}, technologies that allow seamless, browser-backed web integration while preserving native-like performance and appearance.
 This integration enables web-based functionality such as Single Sign-On (SSO) or in-app advertising without forcing users to leave the application or manage separate browser sessions.
 
 % Problem Statement
 However, these benefits come at a cost.
 CTs and TWAs share the browser's cookie storage across all apps, providing session continuity but also introducing severe privacy vulnerabilities.
-Recent research by Wessels et~al. ~\cite{USENIX:Wessels:2025} demonstrated HyTrack, a novel tracking technique that exploits this shared browser state to persistently identify users across different applications and the web, even surviving device changes, cookie clearing, or browser switching.
+Recent research by Wessels et~al.~\cite{USENIX:Wessels:2025} demonstrated HyTrack, a novel tracking technique that exploits this shared browser state to persistently identify users across different applications and the web, even surviving device changes, cookie clearing, or browser switching.
 
 HyTrack enables persistent cross-app tracking as long as developers integrate the tracking library as instructed.
 Its identifiers can even survive device resets through Android's backup mechanisms, giving it Evercookie-like persistence~\cite{kamkar2010evercookie}.

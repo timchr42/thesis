@@ -8,7 +8,7 @@
 
 % (- Introduce Capabilities/Tokens?)
 
-Before presenting the design and implementation of our mitigation, we first provide the necessary background on web tracking (\autoref{sec:tracking-web-mobile}), Android's web content integration mechanisms (\autoref{sec:customtabs-twas}), and the HyTrack attack (\autoref{sec:hytrack}).
+Before presenting the design and implementation of our mitigation, we first provide the necessary background on tracking (\autoref{sec:tracking-web-mobile}), Android's web content integration mechanisms (\autoref{sec:customtabs-twas}), and the HyTrack attack (\autoref{sec:hytrack}).
 Then, we introduce the concept of capabilities and capability-based security (\autoref{sec:capabilities}), which forms the basis of our approach (\autoref{sec:our-approach}).
 Finally, we summarize the threat model we assume throughout this thesis (\autoref{sec:threat_model}).
 
@@ -17,12 +17,12 @@ Finally, we summarize the threat model we assume throughout this thesis (\autore
 \label{sec:tracking-web-mobile}
 
 Tracking mechanisms are typically divided into two broad categories: stateful and stateless tracking.
-Stateless tracking, also known as fingerprinting, infers a user's identity based on a combination of device-specific attributes ~\cite{laperdrix2020browser}.
+Stateless tracking, also known as fingerprinting, infers a user's identity based on a combination of device-specific attributes~\cite{laperdrix2020browser}.
 Consequently, this method is hard to detect and block, but is also inherently less reliable, as small system changes may alter the fingerprint and disrupt identification.
 
 Instead, stateful tracking relies on storing unique identifiers on the client device, most commonly through cookies or local storage.
 When a user revisits a site or interacts with embedded third-party content across domains, these identifiers are sent along with requests, allowing persistent recognition.
-While straightforward and highly effective, stateful tracking has become increasingly restricted through browser policies (e.g., third-party cookie blocking) and mobile platform changes such as the ability to disable the Google Advertising ID (GAID) on Android ~\cite{google:gaid}.
+While straightforward and highly effective, stateful tracking has become increasingly restricted through browser policies (e.g., third-party cookie blocking) and mobile platform changes such as the ability to disable the Google Advertising ID (GAID) on Android~\cite{google:gaid}.
 
 % --------------------Other tracking attacks (Facebook localhost leak)--------------------------
 This problem not only affects the web, but also extends into the mobile ecosystem, as recently demonstrated by the Facebook Localhost Scandal~\cite{localleaks} that exposed a covert tracking method used by Meta and Yandex on Android.
@@ -51,12 +51,12 @@ Can open any URL      & \CIRCLE & \CIRCLE & \CIRCLE & \Circle \tnote{3} \\
 \end{tabular}
 \Circle: unsupported, \CIRCLE: supported, \LEFTcircle: partially supported, 1: Owns the shared state, 2: Custom Tabs can be reduced to 50\% programmatically and minimized by users, 3: Requires associatation via asset links.
 \end{threeparttable}
-\caption{Overview of Web Content Integration Mechanisms on Android. \\(Taken from Wessel et al.'s HyTrack paper~\cite{USENIX:Wessels:2025})}
+\caption{Overview of Web Content Integration Mechanisms on Android \\(Taken from Wessel et al.'s HyTrack paper~\cite{USENIX:Wessels:2025}).}
 \label{tab:webcontent-overview}
 \end{table}
 
 To integrate web content into Android applications, developers can use several mechanisms that differ in terms of security, performance, and user experience (\autoref{tab:webcontent-overview}).
-Among these, Custom Tabs (CTs) ~\cite{android:customtabs} and Trusted Web Activities (TWAs) ~\cite{android:trustedwebactivities} have emerged as the most popular alternatives to traditional WebViews ~\cite{android:webviews}, offering better performance and tighter integration with the user's default browser.
+Among these, Custom Tabs (CTs)~\cite{android:customtabs} and Trusted Web Activities (TWAs)~\cite{android:trustedwebactivities} have emerged as the most popular alternatives to traditional WebViews~\cite{android:webviews}, offering better performance and tighter integration with the user's default browser.
 
 CTs were introduced to allow apps to display web content within the app's interface while leveraging the full capabilities of the user's browser.
 Unlike a WebView, which runs a separate, minimal web engine within the app, a CT is rendered by the installed browser itself.
@@ -66,13 +66,13 @@ As a result, users perceive a seamless transition between native and web content
 
 TWAs extend this concept further by removing nearly all browser UI elements, including the URL bar, and displaying web content in full-screen mode.
 This allows developers to integrate entire Progressive Web Apps (PWAs) or other web-based experiences into their native apps while maintaining a consistent appearance.
-For security reasons, launching a TWA requires a Digital Asset Link (DAL) \cite{android:digitalassetlinks} --- a mutual verification between the app and the website ---, ensuring that both belong to the same trusted party.
+For security reasons, launching a TWA requires a Digital Asset Link (DAL)~\cite{android:digitalassetlinks} --- a mutual verification between the app and the website ---, ensuring that both belong to the same trusted party.
 If this trust relationship cannot be verified, Android automatically downgrades the TWA to a regular CT.
 
 A key advantage of both CTs and TWAs is that they share the browser's state.
 This means users can stay logged in to websites, reuse stored cookies, and maintain personalized settings across different apps and browsing sessions.
 This behavior improves usability and supports features like Single Sign-On (SSO), as authentication tokens from the browser can be reused within an app's embedded web view.
-However, as later discussed in Section \ref{sec:hytrack}, this same feature also introduces significant privacy risks.
+However, as later discussed in \autoref{sec:hytrack}, this same feature also introduces significant privacy risks.
 The shared cookie storage allows any app to access browser state information used by others, thereby enabling persistent cross-app and cross-web tracking techniques such as HyTrack.
 
 In summary, CTs and TWAs offer a powerful bridge between the native and web ecosystems on Android.
@@ -86,11 +86,11 @@ Yet, the same integration that improves usability also blurs traditional securit
   \centering
   \includegraphics[width=1\textwidth]{hytrack_Flow_colored.pdf}
 
-  \caption{High-level Overview of the HyTrack Attack Flow. \\(Adapted from Wessel et al.'s HyTrack paper~\cite{USENIX:Wessels:2025})}
+  \caption{High-level Overview of the HyTrack Attack Flow \\(Adapted from Wessel et al.'s HyTrack paper~\cite{USENIX:Wessels:2025}).}
   \label{fig:hytrack_overview}
 \end{figure}
 
-HyTrack, introduced by Wessels et al. \cite{USENIX:Wessels:2025}, exposes a fundamental privacy flaw in this shared-state model.
+HyTrack, introduced by Wessels et al.~\cite{USENIX:Wessels:2025}, exposes a fundamental privacy flaw in this shared-state model.
 It demonstrates that third-party libraries embedded in multiple apps can exploit the browser's global cookie storage to identify and track users across applications and even into their normal web browsing sessions.
 By leveraging standard Android features, rather than any explicit vulnerability, HyTrack highlights how the very mechanisms designed to make CTs and TWAs seamless for users can also undermine Android's app isolation guarantees.
 
@@ -167,7 +167,7 @@ Therefore, these are not effective countermeasures against HyTrack.
 A capability is an unforgeable and tamperproof token of authority that grants its holder specific access rights to a protected object.
 Unlike traditional access-control lists (ACLs), which base decisions on user or process identity, capabilities combine an object reference with an associated permission set, thereby enabling object-centric and decentralized access control.
 A capability system enforces the principle of least privilege (PoLP) by ensuring that possession of a capability is both necessary and sufficient for performing an operation on the referenced object.
-This follows the classic understanding established in early capability systems such as Hydra ~\cite{wulf1974hydra} and EROS ~\cite{shapiro1999eros}, where capabilities are described as ``prima facie evidence of authority''.
+This follows the classic understanding established in early capability systems such as Hydra~\cite{wulf1974hydra} and EROS~\cite{shapiro1999eros}, where capabilities are described as ``prima facie evidence of authority''.
 
 Because the right to access is embodied in the capability itself, no central authority needs to be consulted at the moment of use.
 Classical capability systems even allow controlled delegation by transferring capabilities between processes.
@@ -202,7 +202,3 @@ We want to prevent this library from tracking the app's user across multiple app
 For this, we consider the app developer as benign but privacy-unaware.
 The app itself is untrusted after installation, as it includes the malicious tracking library, which can include arbitrary code with the same privileges.
 We assume the installer and the browser are trusted, as they initialize and enforce the mitigation.
-
-As we hook our defense in the AndroidX browser library ~\cite{android:androidxbrowser}, any developer that wants to use the malicious tracking library or any other library that relies on CTs or TWAs automatically uses our framework if they configure and provide a policy file.
-Therefore, only the AndroidX Browser library needs to be updated, rather than requiring developers to include an additional mitigation library --- a step that is frequently forgotten or deliberately omitted, as shown in prior work~\cite{derr2017keep,huang2019up}.
-
