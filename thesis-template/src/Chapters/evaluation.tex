@@ -27,7 +27,7 @@
 % -----------------------------Evaluation---------------------------
 
 In this chapter, we present the evaluation of our mitigation framework against the HyTrack cross-app tracking attack.
-We first describe the experimental setup (\autoref{sec:eval-setup}), before detailing the results (\autoref{sec:eval-results}) that we observed and finally interpreting our findings (\autoref{sec:interpret-results}).
+We first describe the experimental setup (\autoref{sec:eval-setup}), before detailing (\autoref{sec:eval-results}) and interpreting the results that we observed (\autoref{sec:interpret-results}).
 
 \section{Experimental Setup}
 \label{sec:eval-setup}
@@ -105,7 +105,7 @@ The integration effort for developers remained minimal: replacing the browser li
 Overall, these experiments demonstrate that the framework behaves consistently across various configurations and can be adopted with very low developer overhead.
 
 \section{Interpretation of Results}
-\label{sec:interp-results}
+\label{sec:interpret-results}
 
 The evaluation results demonstrate that our capability-based mitigation framework effectively prevents cross-app tracking via HyTrack without sacrificing web functionality or developer usability.
 By enforcing cookie isolation through app-defined policies, our system successfully breaks the cross-app tracking channel while maintaining per-app continuity and legitimate browser behavior.
