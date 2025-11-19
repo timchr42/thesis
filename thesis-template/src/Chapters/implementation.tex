@@ -108,7 +108,7 @@ For example, a domain may have a global predefined token for a specific cookie a
 The two scopes are treated independently and can coexist safely.
 Furthermore, the distinction between global and private in the predefined section allows a domain to hold both a global token and a private token.
 This allows flexible, layered control over cookie behavior.
-An example policy with explanation can be found in the appendix \autoref{appendix:policy}.
+An example policy with explanation can be found in the appendix (\autoref{appendix:policy}).
 
 
 \section{Capability Token Structure}
@@ -337,7 +337,7 @@ Based on this decision, the integration proceeds as follows:
 
 \begin{enumerate}
   \item \textbf{StoreNormally:}
-  If the cookie is permitted for global storage (via a predefined or wildcard global token), Byetrack allows the native Gecko insertion flow (\texttt{storage->AddCookie()}) to proceed.
+    If the cookie is permitted for global storage (via a predefined or wildcard global token), Byetrack allows the native Gecko insertion flow (\texttt{storage$\rightarrow$AddCookie()}) to proceed.
   This preserves expected behavior for legitimate cases such as session cookies or user preferences.
 
   \item \textbf{CapturePredefined:}

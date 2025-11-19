@@ -4,7 +4,7 @@
 \label{chap:method}
 
 %\paragraph{Main Goal.}
-The main research goal is to prevent HyTrack's cross-app tracking attack~\cite{USENIX:Wessels:2025} by addressing the underlying weaknesses of CustomTabs (CTs) and TrustedWebActivities (TWAs) (\autoref{sec:hytrack-weaknesses}), while adhering to the design goals defined by Wessels et al.~ (\autoref{sec:hytrack-goals}).
+The main research goal is to prevent HyTrack's cross-app tracking attack~\cite{USENIX:Wessels:2025} by addressing the underlying weaknesses of CustomTabs (CTs) and TrustedWebActivities (TWAs) (\autoref{sec:hytrack-weaknesses}), while adhering to the design goals defined by Wessels et al.~(\autoref{sec:hytrack-goals}).
 Unlike mitigation strategies such as Browser State Partitioning or Forced User Interaction (\autoref{sec:hytrack-mitigations}), the proposed approach aims to maintain usability and compatibility while providing strong privacy guarantees.
 
 %\paragraph{Core Idea.}
@@ -21,7 +21,7 @@ Because the system operates solely at the app–browser boundary, it maintains f
 Because capabilities are delegable by design, we must bind them to the app's identity.
 Without this binding, a malicious third-party library embedded in multiple apps could mount a collusion attack by reusing capabilities issued to another more privileged app, thereby bypassing the mitigation entirely.
 Therefore, we include the app's unique package name in the capability tokens, so that the browser can verify that the token is only used by the app it was issued to.
-A global jar flag indicates whether the cookie belongs to the shared global jar or to the app-specific isolated jar.
+A ``global jar'' flag indicates whether the cookie belongs to the shared global jar or to the app-specific isolated jar.
 The cookie data (name and value) itself is encapsulated in the token, along with rights defining the permitted actions on the data later on (reading, writing, or both).
 Similar to JWTs~\cite{rfc7519}, our tokens are signed to identify tampering attempts.
 Due to the threat model assumptions (\autoref{sec:threat_model}), we additionally need to encrypt the tokens, so that a malicious third-party library embedded in the app cannot read the token contents and echo them back to its web server to circumvent the mitigation.
@@ -142,7 +142,7 @@ A browser does not require any capabilities for cookie access, since it acts as 
 Consequently, when a browser application is installed, the installer can iterate over all already installed apps, collect their policies, and forward them to the newly installed browser.
 The browser can then generate and issue the appropriate capabilities to each app retroactively.
 
-Having the installer generate the capabilities directly would eliminate the need for this workaround, as it would allow an app to receive its capabilities immediately upon installation --- independent of whether a browser is present or whether it supports the framework at all.
+Having the installer generate the capabilities directly would eliminate the need for this workaround, as it would allow an app to receive its capabilities immediately upon installation, independent of whether a browser is present or whether it supports the framework at all.
 However, this would require the installer and the browser to share a long-term secret key, introducing difficult key-distribution and key-management challenges and tightly coupling the security of both components.
 For this and simplicity reasons, the proof-of-concept implementation designates the browser as the sole trusted component for capability generation and enforcement and assumes the browser is present before app installation.
 
